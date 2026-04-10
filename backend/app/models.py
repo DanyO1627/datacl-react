@@ -4,6 +4,7 @@ from app.basededatos import Base
 
 # para probar que funcione la bbdd
 
+
 class Organizacion(Base):
     __tablename__ = "organizaciones"
 
@@ -14,3 +15,5 @@ class Organizacion(Base):
     password = Column(String(200), nullable=False)
     rol = Column(Enum("ORGANIZACION", "ADMIN"), default="ORGANIZACION")
     creado_en = Column(DateTime, default=func.now())
+    rol = Column(Enum("ORGANIZACION", "ADMIN"), default="ORGANIZACION", nullable=False)
+    creado_en = Column(DateTime, server_default=func.now(), nullable=False)
