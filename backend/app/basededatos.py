@@ -23,7 +23,7 @@ Base = declarative_base() # molde que heredarán los modelos / tablas
 
 # generador que fast api usa automaticamente cuando los endpoints piden hablar con la bbdd
 # fast api llama a la función y abre una sesión y se la entrega al endpoint con yield, y con el db.close cierra la sesion
-def get_bd():
+def get_db():
     db = SessionLocal()
     try:
         yield db

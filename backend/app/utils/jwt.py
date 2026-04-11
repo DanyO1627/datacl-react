@@ -1,9 +1,13 @@
 import os
 from datetime import datetime, timedelta, timezone
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from dotenv import load_dotenv
+from sqlalchemy.orm import Session
+from app.basededatos import get_db
+from app import models
 
 load_dotenv() # lee el .env
 
@@ -13,6 +17,8 @@ EXPIRE_MINUTES = 1440
 
 if not SECRET_KEY: 
     raise RuntimeError("SECRET_KEY no está definida en el archivo .env") # raise = lanza esta excepción
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 """
 Recibe un dict con los datos a guardar en el token (ej: {"id": 1, "correo": "..."}).
@@ -37,4 +43,25 @@ def verificar_token(token:str)-> dict:
         raise HTTPException(status_code=401, detail="Token inválido o expirado")
     
     
+def obtener_usuario_actual(
+    token: str = Depends(oauth2_scheme),  # FastAPI extrae el token del header
+    db: Session = Depends(get_db)         # FastAPI inyecta la sesión de BD
+) -> models.Organizacion:
+    """
+    Dependencia para proteger endpoints.
+    Uso: def mi_endpoint(usuario = Depends(obtener_usuario_actual))
+    """
+    payload = verificar_token(token)
 
+    org_id: int = payload.get("id")
+    if org_id is None:
+        raise HTTPException(status_code=401, detail="Token mal formado")
+
+    organizacion = db.query(models.Organizacion).filter(
+        models.Organizacion.id == org_id
+    ).first()
+
+    if organizacion is None:
+        raise HTTPException(status_code=401, detail="La organización no existe")
+
+    return organizacion

@@ -1,6 +1,12 @@
 from pydantic import BaseModel, EmailStr, field_validator
 import re
 
+from fastapi import HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+from app.basededatos import get_db
+from app import models
+
 # registro
 # valida el body del POST /auth/registro
 class OrganizacionRegistro(BaseModel):
@@ -58,3 +64,38 @@ class OrganizacionRespuesta(BaseModel):
     
     model_config= {"from_attributes":True} # para convertir desde el modelo de SQLAlchemy
     # permite que fastap convierta directamente un objeto sql alchemy (desde la bbdd) en JSON sin tener que mapearlo campo por campo.
+    
+    
+    
+# OAuth2PasswordBearer sabe leer el token del header Authorization: Bearer <token>
+# tokenUrl le dice a Swagger dónde está el login para el botón "Authorize"
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+
+def obtener_usuario_actual(
+    token: str = Depends(oauth2_scheme),  # FastAPI extrae el token del header automáticamente
+    db: Session = Depends(get_db)         # FastAPI inyecta la sesión de BD
+) -> models.Organizacion:
+    """
+    Dependencia de FastAPI para proteger endpoints.
+    Se usa así en cualquier endpoint:
+        def mi_endpoint(usuario = Depends(obtener_usuario_actual)):
+    """
+    # Si el token es inválido o expiró, verificar_token lanza 401 solo
+    payload = verificar_token(token)
+
+    # Extraemos el id que guardamos cuando creamos el token
+    org_id: int = payload.get("id")
+
+    if org_id is None:
+        raise HTTPException(status_code=401, detail="Token mal formado")
+
+    # Buscamos la organización en la BD
+    organizacion = db.query(models.Organizacion).filter(
+        models.Organizacion.id == org_id
+    ).first()
+
+    if organizacion is None:
+        raise HTTPException(status_code=401, detail="La organización no existe")
+
+    return organizacion
