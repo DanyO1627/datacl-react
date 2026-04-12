@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.basededatos import engine, Base
 from app import models
+from app.routers import auth 
 
 from fastapi import Depends
 from app.utils.jwt import obtener_usuario_actual
@@ -8,6 +9,7 @@ from app.utils.jwt import obtener_usuario_actual
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="DataCL API")
+app.include_router(auth.router)
 
 @app.get("/")
 def root():
