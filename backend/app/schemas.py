@@ -53,3 +53,8 @@ class OrganizacionRespuesta(BaseModel):
     rol: str
 
     model_config = {"from_attributes": True}
+
+class TokenRespuesta(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    organizacion: OrganizacionRespuesta

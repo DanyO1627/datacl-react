@@ -4,12 +4,11 @@ from passlib.context import CryptContext
 
 from app.basededatos import get_bd
 from app import models
-from app.schemas import OrganizacionRegistro, OrganizacionRespuesta
+from app.schemas import OrganizacionRegistro, OrganizacionRespuesta, OrganizacionLogin, TokenRespuesta
+from app.utils.jwt import crear_token
 
-# El router agrupa todos los endpoints de autenticación bajo el prefijo /auth
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
-# Contexto de hashing — le dice a passlib que use BCrypt
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -28,7 +27,6 @@ def registro(datos: OrganizacionRegistro, db: Session = Depends(get_bd)):
     - Guarda en MySQL y devuelve los datos sin password
     """
 
-    # Verificar correo duplicado
     correo_existente = db.query(models.Organizacion).filter(
         models.Organizacion.correo == datos.correo
     ).first()
@@ -38,7 +36,6 @@ def registro(datos: OrganizacionRegistro, db: Session = Depends(get_bd)):
             detail="El correo ya está registrado"
         )
 
-    # Verificar RUT duplicado
     rut_existente = db.query(models.Organizacion).filter(
         models.Organizacion.rut == datos.rut
     ).first()
@@ -48,10 +45,8 @@ def registro(datos: OrganizacionRegistro, db: Session = Depends(get_bd)):
             detail="El RUT ya está registrado"
         )
 
-    # Hashear la contraseña — nunca se guarda en texto plano
     password_hasheada = pwd_context.hash(datos.password)
 
-    # Crear el objeto ORM (aún no está en la BD)
     nueva_org = models.Organizacion(
         nombre=datos.nombre,
         rut=datos.rut,
@@ -60,9 +55,50 @@ def registro(datos: OrganizacionRegistro, db: Session = Depends(get_bd)):
         rol="ORGANIZACION"
     )
 
-    # Guardar en MySQL
-    db.add(nueva_org)       # agrega a la sesión
-    db.commit()             # confirma y escribe en la BD
-    db.refresh(nueva_org)   # recarga el objeto con el id generado por MySQL
+    db.add(nueva_org)
+    db.commit()
+    db.refresh(nueva_org)
 
-    return nueva_org        # FastAPI convierte esto a JSON usando OrganizacionRespuesta
+    return nueva_org
+
+
+@router.post(
+    "/login",
+    response_model=TokenRespuesta,
+    summary="Iniciar sesión"
+)
+def login(datos: OrganizacionLogin, db: Session = Depends(get_bd)):
+    """
+    Recibe correo y contraseña.
+    Devuelve un token JWT si las credenciales son correctas.
+    """
+
+    organizacion = db.query(models.Organizacion).filter(
+        models.Organizacion.correo == datos.correo
+    ).first()
+
+    if organizacion is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Credenciales incorrectas"
+        )
+
+    password_valida = pwd_context.verify(datos.password, organizacion.password)
+
+    if not password_valida:
+        raise HTTPException(
+            status_code=401,
+            detail="Credenciales incorrectas"
+        )
+
+    token = crear_token({
+        "id": organizacion.id,
+        "correo": organizacion.correo,
+        "rol": organizacion.rol
+    })
+
+    return TokenRespuesta(
+        access_token=token,
+        token_type="bearer",
+        organizacion=organizacion
+    )

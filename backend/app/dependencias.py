@@ -13,10 +13,20 @@ def obtener_usuario_actual(
 ) -> models.Organizacion:
     """
     Dependencia para proteger endpoints que requieren login.
-    Por ahora lanza error siempre — se completa en el sprint de login
-    cuando exista verificar_token.
+    Se usa así en cualquier endpoint:
+        def mi_endpoint(usuario = Depends(obtener_usuario_actual)):
     """
-    raise HTTPException(
-        status_code=501,
-        detail="Login aún no implementado — sprint 1"
-    )
+    payload = verificar_token(token)
+
+    org_id: int = payload.get("id")
+    if org_id is None:
+        raise HTTPException(status_code=401, detail="Token mal formado")
+
+    organizacion = db.query(models.Organizacion).filter(
+        models.Organizacion.id == org_id
+    ).first()
+
+    if organizacion is None:
+        raise HTTPException(status_code=401, detail="La organización no existe")
+
+    return organizacion
