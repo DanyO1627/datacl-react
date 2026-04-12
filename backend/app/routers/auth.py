@@ -5,7 +5,7 @@ from passlib.context import CryptContext
 from app.basededatos import get_db
 from app import models
 from app.schemas import OrganizacionRegistro, OrganizacionRespuesta, OrganizacionLogin, TokenRespuesta
-from app.utils.jwt import crear_token
+from app.utils.jwt import crear_token, obtener_usuario_actual
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
@@ -102,3 +102,20 @@ def login(datos: OrganizacionLogin, db: Session = Depends(get_db)):
         token_type="bearer",
         organizacion=organizacion
     )
+    
+    
+    
+    
+    
+    # CUANDO EVE SUBA SUS CAMBIOS, YO TENGO QUE REEMPLAZAR ESTE PROVISORIO POR EL SUYO
+@router.get(
+    "/me",
+    response_model=OrganizacionRespuesta,
+    summary="Obtener perfil actual"
+)
+def mi_perfil(usuario_actual = Depends(obtener_usuario_actual)):
+    """
+    Devuelve los datos de la organización autenticada.
+    Requiere token JWT válido en el header Authorization.
+    """
+    return usuario_actual
