@@ -36,17 +36,23 @@ html, body, #root {
 .registro-wrapper {
   width: 100%;
   max-width: 480px;
+  position: relative; 
 }
 
 /* ── Logo ── */
 .registro-logo {
+  position: absolute;
+  top: -45px;
+  left: -50px;
+
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 2rem;
+  gap: -6px;
+
+  cursor: pointer;
 }
 
-.registro-logo-circle {
+/* .registro-logo-circle {
   width: 38px;
   height: 38px;
   border-radius: 50%;
@@ -55,7 +61,7 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-}
+} */
 
 .registro-logo-text {
   font-size: 15px;

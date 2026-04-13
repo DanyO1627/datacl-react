@@ -36,14 +36,20 @@ html, body, #root {
 .login-wrapper {
   width: 100%;
   max-width: 480px;
+  position: relative; 
 }
 
 /* ── Logo ── */
 .login-logo {
+  position: absolute;
+  top: -50px;   /* lo sube sobre la card */
+  left: -50px;  /* lo corre a la izquierda */
+  
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 2rem;
+  gap: -10px;
+
+  cursor: pointer;
 }
 
 .login-logo-circle {
@@ -58,10 +64,10 @@ html, body, #root {
 }
 
 .login-logo-text {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--navy);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
 /* ── Card ── */

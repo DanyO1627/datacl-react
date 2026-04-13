@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/login.css";
+import Logo from "../components/Logo"
 
 // Ícono de ojo abierto
 function IconoOjoAbierto() {
@@ -108,16 +109,10 @@ export default function Login() {
 
         {/* Logo */}
         <div className="login-logo">
-          <div className="login-logo-circle">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <circle cx="9" cy="9" r="7" stroke="#052659" strokeWidth="2" />
-              <path d="M6 9h6M9 6v6" stroke="#052659" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </div>
+          <Logo size="sm" onClick={() => navigate("/")} />
           <span className="login-logo-text">DataCL</span>
         </div>
 
-        {/* Card */}
         <div className="login-card">
           <h1 className="login-title">Bienvenido de vuelta</h1>
           <p className="login-subtitle">Ingresa a tu cuenta</p>
@@ -199,6 +194,7 @@ export default function Login() {
             </button>
           </div>
         </div>
+
       </div>
     </div>
   );
