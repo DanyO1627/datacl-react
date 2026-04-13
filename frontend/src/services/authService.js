@@ -45,7 +45,6 @@ export async function login(datos) {
 // OBTENER PERFIL 
 // llama a GET /auth/me con el token JWT para sacar los datos del usuario
 // se usa por ejemplo cuando se carga el nombre de la organización en el dashboard
-//
 // recibe un token JWT como string (lo saca el componente del localStorage o del contexto)
 // y devuelve { id, nombre, correo, rol }
 

@@ -1,0 +1,193 @@
+/* ── Reset global para que el fondo ocupe toda la pantalla ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Variables de color ── */
+:root {
+  --navy:  #021024;
+  --dark:  #052659;
+  --mid:   #5483B3;
+  --light: #7DA0CA;
+  --pale:  #C1E8FF;
+}
+
+/* ── Página completa ── */
+.registro-page {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(160deg, var(--pale) 0%, #e8f4ff 40%, #f0f8ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  padding: 2rem 1rem;
+}
+
+.registro-wrapper {
+  width: 100%;
+  max-width: 480px;
+}
+
+/* ── Logo ── */
+.registro-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2rem;
+}
+
+.registro-logo-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2.5px solid var(--dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.registro-logo-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: 0.04em;
+}
+
+/* ── Card ── */
+.registro-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2.5rem 2.5rem 2rem;
+  box-shadow: 0 4px 32px rgba(5, 38, 89, 0.10), 0 1px 4px rgba(5, 38, 89, 0.06);
+}
+
+.registro-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 4px;
+  text-align: center;
+}
+
+.registro-subtitle {
+  font-size: 14px;
+  color: var(--mid);
+  margin: 0 0 2rem;
+  text-align: center;
+}
+
+/* ── Campos ── */
+.registro-field-group {
+  margin-bottom: 1.1rem;
+}
+
+.registro-input {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 50px;
+  border: none;
+  outline: none;
+  background: #eef4fb;
+  font-size: 14px;
+  color: var(--navy);
+  transition: background 0.18s, box-shadow 0.18s;
+  font-family: 'Georgia', serif;
+  display: block;
+}
+
+.registro-input:focus {
+  background: #e2eef8;
+  box-shadow: 0 0 0 2px var(--light);
+}
+
+.registro-input.has-error {
+  background: #fff0f0;
+  box-shadow: 0 0 0 2px #e05252;
+}
+
+.registro-input::placeholder {
+  color: #8faec8;
+}
+
+.registro-error-text {
+  color: #e05252;
+  font-size: 12px;
+  margin-top: 5px;
+  margin-left: 16px;
+}
+
+/* ── Error del servidor ── */
+.registro-server-error {
+  background: #fff0f0;
+  border-left: 3px solid #e05252;
+  border-radius: 10px;
+  color: #c0392b;
+  font-size: 13px;
+  padding: 10px 16px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* ── Botón ── */
+.registro-btn {
+  width: 100%;
+  padding: 13px;
+  border-radius: 50px;
+  border: none;
+  background: linear-gradient(135deg, var(--dark) 0%, var(--mid) 100%);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 1.4rem;
+  letter-spacing: 0.03em;
+  font-family: 'Georgia', serif;
+  transition: opacity 0.18s, transform 0.12s;
+  display: block;
+}
+
+.registro-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.registro-btn:disabled {
+  background: #b0c8e0;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Link inferior ── */
+.registro-link-row {
+  text-align: center;
+  margin-top: 1.2rem;
+  font-size: 13px;
+  color: var(--mid);
+}
+
+.registro-link {
+  color: var(--dark);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-family: 'Georgia', serif;
+  padding: 0;
+}
+
+.registro-link:hover {
+  color: var(--mid);
+}
