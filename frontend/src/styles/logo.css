@@ -1,0 +1,32 @@
+.logo {
+  display: flex;          /* mejor que inline-flex */
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 16px;     /* 👈 aire a la izquierda */
+}
+ 
+.logo--clickeable {
+  cursor: pointer;
+}
+
+.parent {
+  display: flex;
+  justify-content: space-between; 
+}
+ 
+/* Tamaños */
+.logo--sm .logo__imagen { height: 56px; }
+.logo--md .logo__imagen { height: 72px; }
+.logo--lg .logo__imagen { height: 280px; }
+ 
+.logo--lg .logo__imagen { 
+  height: auto;
+  width: 290px;  
+}
+ 
+/* En fondos oscuros se ve normal,
+   en fondos claros se puede ajustar brillo si hace falta */
+.logo--light .logo__imagen {
+  filter: brightness(0) invert(0); /* ajustar según el PNG */
+}
+ 

@@ -16,6 +16,17 @@ const api = axios.create({
 });
 
 
+// Este interceptor agrega el token automáticamente en TODAS las peticiones
+// sin tener que pasarlo manualmente cada vez
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+
 // REGISTRO
 // Manda los datos del formulario de registro al backend
 // El backend valida, hashea la password y guarda en MySQL
