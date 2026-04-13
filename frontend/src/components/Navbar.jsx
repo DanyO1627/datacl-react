@@ -3,6 +3,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import "../styles/navbar.css"
+import Logo from "./Logo";
 
 export default function Navbar() {
     const navigate = useNavigate();
@@ -11,7 +12,10 @@ export default function Navbar() {
 
         <nav className="navbar">
             {/* Logo — por ahora es solo texto, después puede ser una imagen */}
-            <span className="navbar__logo">DataCL</span>
+            <div className="navbar__logo" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <Logo size="sm" theme="light" onClick={() => navigate("/")} />
+                <span>DataCL</span>
+            </div>
 
             {/* botones de acción */}
             <div className="navbar__acciones">
