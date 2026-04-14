@@ -29,7 +29,7 @@ export default function Error404() {
         {/* Botón que vuelve al inicio */}
         <button
           className="e404__btn"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/dashboard")}
         >
           Volver a la página de inicio
         </button>
