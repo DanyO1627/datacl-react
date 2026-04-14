@@ -131,80 +131,80 @@ export default function Registro() {
   const botonDeshabilitado = cargando || (algunCampoTocado && !formValido);
 
 
- 
-return (
-  <div className="registro-page">
-    <div className="registro-wrapper">
 
-      <div className="registro-logo" onClick={() => navigate("/")}>
-        <Logo size="sm" />
-        <span className="registro-logo-text">DataCL</span>
-      </div>
+  return (
+    <div className="registro-page">
+      <div className="registro-wrapper">
 
-      <div className="registro-card">
-        <h1 className="registro-title">Crear cuenta</h1>
-        <p className="registro-subtitle">Registra tu organización en DataCL</p>
-
-        {serverError && (
-          <div className="registro-server-error">{serverError}</div>
-        )}
-
-        <InputField
-          placeholder="Nombre de la organización"
-          value={form.nombre}
-          onChange={handleChange("nombre")}
-          onBlur={handleBlur("nombre")}
-          error={touched.nombre ? errors.nombre : ""}
-        />
-        <InputField
-          placeholder="RUT de la organización (Ej: 76543210-K)"
-          value={form.rut}
-          onChange={handleChange("rut")}
-          onBlur={handleBlur("rut")}
-          error={touched.rut ? errors.rut : ""}
-        />
-        <InputField
-          type="email"
-          placeholder="Correo electrónico"
-          value={form.correo}
-          onChange={handleChange("correo")}
-          onBlur={handleBlur("correo")}
-          error={touched.correo ? errors.correo : ""}
-        />
-        <InputField
-          type="password"
-          placeholder="Contraseña"
-          value={form.password}
-          onChange={handleChange("password")}
-          onBlur={handleBlur("password")}
-          error={touched.password ? errors.password : ""}
-        />
-        <InputField
-          type="password"
-          placeholder="Confirmar contraseña"
-          value={form.confirmarPassword}
-          onChange={handleChange("confirmarPassword")}
-          onBlur={handleBlur("confirmarPassword")}
-          error={touched.confirmarPassword ? errors.confirmarPassword : ""}
-        />
-
-        <button
-          className="registro-btn"
-          onClick={handleSubmit}
-          disabled={botonDeshabilitado}
-        >
-          {cargando ? "Creando cuenta..." : "Crear cuenta"}
-        </button>
-
-        <div className="registro-link-row">
-          ¿Ya tienes una cuenta?{" "}
-          <button className="registro-link" onClick={() => navigate("/login")}>
-            Inicia sesión
-          </button>
+        <div className="registro-logo" onClick={() => navigate("/")}>
+          <Logo size="sm" />
+          <span className="registro-logo-text">DataCL</span>
         </div>
-      </div>
 
+        <div className="registro-card">
+          <h1 className="registro-title">Crear cuenta</h1>
+          <p className="registro-subtitle">Registra tu organización en DataCL</p>
+
+          {serverError && (
+            <div className="registro-server-error">{serverError}</div>
+          )}
+
+          <InputField
+            placeholder="Nombre de la organización"
+            value={form.nombre}
+            onChange={handleChange("nombre")}
+            onBlur={handleBlur("nombre")}
+            error={touched.nombre ? errors.nombre : ""}
+          />
+          <InputField
+            placeholder="RUT de la organización (Ej: 76543210-K)"
+            value={form.rut}
+            onChange={handleChange("rut")}
+            onBlur={handleBlur("rut")}
+            error={touched.rut ? errors.rut : ""}
+          />
+          <InputField
+            type="email"
+            placeholder="Correo electrónico"
+            value={form.correo}
+            onChange={handleChange("correo")}
+            onBlur={handleBlur("correo")}
+            error={touched.correo ? errors.correo : ""}
+          />
+          <InputField
+            type="password"
+            placeholder="Contraseña"
+            value={form.password}
+            onChange={handleChange("password")}
+            onBlur={handleBlur("password")}
+            error={touched.password ? errors.password : ""}
+          />
+          <InputField
+            type="password"
+            placeholder="Confirmar contraseña"
+            value={form.confirmarPassword}
+            onChange={handleChange("confirmarPassword")}
+            onBlur={handleBlur("confirmarPassword")}
+            error={touched.confirmarPassword ? errors.confirmarPassword : ""}
+          />
+
+          <button
+            className="registro-btn"
+            onClick={handleSubmit}
+            disabled={botonDeshabilitado}
+          >
+            {cargando ? "Creando cuenta..." : "Crear cuenta"}
+          </button>
+
+          <div className="registro-link-row">
+            ¿Ya tienes una cuenta?{" "}
+            <button className="registro-link" onClick={() => navigate("/login")}>
+              Inicia sesión
+            </button>
+          </div>
+        </div>
+
+      </div>
     </div>
-  </div>
-);
+  );
 }

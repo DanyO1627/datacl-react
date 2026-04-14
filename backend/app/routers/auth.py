@@ -26,7 +26,6 @@ def registro(datos: OrganizacionRegistro, db: Session = Depends(get_db)):
     - Hashea la contraseña con BCrypt
     - Guarda en MySQL y devuelve los datos sin password
     """
-
     correo_existente = db.query(models.Organizacion).filter(
         models.Organizacion.correo == datos.correo
     ).first()
@@ -58,7 +57,6 @@ def registro(datos: OrganizacionRegistro, db: Session = Depends(get_db)):
     db.add(nueva_org)
     db.commit()
     db.refresh(nueva_org)
-
     return nueva_org
 
 
@@ -72,24 +70,16 @@ def login(datos: OrganizacionLogin, db: Session = Depends(get_db)):
     Recibe correo y contraseña.
     Devuelve un token JWT si las credenciales son correctas.
     """
-
     organizacion = db.query(models.Organizacion).filter(
         models.Organizacion.correo == datos.correo
     ).first()
 
     if organizacion is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Credenciales incorrectas"
-        )
+        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
 
     password_valida = pwd_context.verify(datos.password, organizacion.password)
-
     if not password_valida:
-        raise HTTPException(
-            status_code=401,
-            detail="Credenciales incorrectas"
-        )
+        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
 
     token = crear_token({
         "id": organizacion.id,
@@ -102,18 +92,14 @@ def login(datos: OrganizacionLogin, db: Session = Depends(get_db)):
         token_type="bearer",
         organizacion=organizacion
     )
-    
-    
-    
-    
-    
-    # CUANDO EVE SUBA SUS CAMBIOS, YO TENGO QUE REEMPLAZAR ESTE PROVISORIO POR EL SUYO
+
+
 @router.get(
     "/me",
     response_model=OrganizacionRespuesta,
     summary="Obtener perfil actual"
 )
-def mi_perfil(usuario_actual = Depends(obtener_usuario_actual)):
+def mi_perfil(usuario_actual=Depends(obtener_usuario_actual)):
     """
     Devuelve los datos de la organización autenticada.
     Requiere token JWT válido en el header Authorization.

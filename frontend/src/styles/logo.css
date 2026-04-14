@@ -15,8 +15,8 @@
 }
  
 /* Tamaños */
-.logo--sm .logo__imagen { height: 56px; }
-.logo--md .logo__imagen { height: 72px; }
+.logo--sm .logo__imagen { height: 90px; }
+.logo--md .logo__imagen { height: 172px; }
 .logo--lg .logo__imagen { height: 280px; }
  
 .logo--lg .logo__imagen { 

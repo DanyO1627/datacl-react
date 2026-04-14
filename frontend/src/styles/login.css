@@ -36,38 +36,24 @@ html, body, #root {
 .login-wrapper {
   width: 100%;
   max-width: 480px;
-  position: relative; 
 }
 
 /* ── Logo ── */
 .login-logo {
-  position: absolute;
-  top: -50px;   /* lo sube sobre la card */
-  left: -50px;  /* lo corre a la izquierda */
-  
   display: flex;
   align-items: center;
-  gap: -10px;
-
-  cursor: pointer;
-}
-
-.login-logo-circle {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 2.5px solid var(--dark);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  gap: 0px;
+  margin-bottom: -0.5rem;
+  margin-left: -70px;
+  margin-top: -30px;
 }
 
 .login-logo-text {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--navy);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
+  margin-left: -40px;  /* ← acerca el texto al logo */
 }
 
 /* ── Card ── */
