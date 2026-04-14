@@ -126,6 +126,27 @@ html, body, #root {
   color: #8faec8;
 }
 
+/* ── Botón volver ── */
+.login-back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--mid);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 0.8rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+.login-back-btn:hover {
+  background: #eef4fb;
+  color: var(--dark);
+}
 /* ── Campo contraseña con ojo ── */
 .login-password-wrapper {
   position: relative;
