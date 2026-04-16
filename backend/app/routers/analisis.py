@@ -1,5 +1,6 @@
 import io
 import pandas as pd
+from pandas.errors import EmptyDataError, ParserError
 from fastapi import APIRouter, UploadFile, File, HTTPException
 
 from app.utils.analisis import PALABRAS_PERSONALES, PALABRAS_SENSIBLES
@@ -8,18 +9,65 @@ router = APIRouter(prefix="/analizar", tags=["analisis"])
 
 
 def _leer_archivo(archivo: UploadFile) -> pd.DataFrame:
-    """Lee un archivo CSV o Excel y devuelve un DataFrame."""
+    """
+    Lee un archivo CSV o Excel y devuelve un DataFrame.
+    Captura todos los errores conocidos de Pandas y devuelve
+    mensajes en español entendibles para el usuario.
+    """
     contenido = archivo.file.read()
     nombre = archivo.filename.lower()
 
-    if nombre.endswith('.csv'):
-        return pd.read_csv(io.BytesIO(contenido))
-    elif nombre.endswith(('.xlsx', '.xls')):
-        return pd.read_excel(io.BytesIO(contenido))
-    else:
+    if not nombre.endswith(('.csv', '.xlsx', '.xls')):
         raise HTTPException(
             status_code=400,
             detail="Formato no soportado. Usa CSV o Excel (.xlsx, .xls)"
+        )
+
+    try:
+        if nombre.endswith('.csv'):
+            return pd.read_csv(io.BytesIO(contenido))
+        else:
+            return pd.read_excel(io.BytesIO(contenido))
+
+    except EmptyDataError:
+        # El archivo existe pero está completamente vacío (0 bytes de datos)
+        raise HTTPException(
+            status_code=400,
+            detail="El archivo no tiene datos"
+        )
+
+    except ParserError:
+        # El archivo tiene contenido pero no se puede interpretar como tabla
+        raise HTTPException(
+            status_code=400,
+            detail="El archivo está corrupto o tiene formato incorrecto"
+        )
+
+    except UnicodeDecodeError:
+        # El archivo tiene caracteres especiales que no son UTF-8
+        # Intenta con latin-1 como segunda oportunidad solo para CSV
+        if nombre.endswith('.csv'):
+            try:
+                return pd.read_csv(io.BytesIO(contenido), encoding='latin-1')
+            except Exception:
+                pass
+        raise HTTPException(
+            status_code=400,
+            detail="El archivo tiene caracteres no reconocidos. Guárdalo en formato UTF-8 e intenta nuevamente"
+        )
+
+    except ValueError as e:
+        # Errores de valor: columnas mal formadas, tipos incompatibles, etc.
+        raise HTTPException(
+            status_code=400,
+            detail=f"El archivo tiene un formato inválido: {str(e)}"
+        )
+
+    except Exception:
+        # Cualquier otro error inesperado — nunca se muestra el traceback al usuario
+        raise HTTPException(
+            status_code=500,
+            detail="Error al procesar el archivo"
         )
 
 
@@ -62,15 +110,20 @@ async def analizar_archivo(archivo: UploadFile = File(...)):
     Nivel 1: recibe un archivo CSV o Excel y clasifica sus columnas
     comparando los nombres directamente contra el diccionario de palabras clave.
     """
-    try:
-        df = _leer_archivo(archivo)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error al leer el archivo: {str(e)}")
+    # _leer_archivo ya maneja todos los errores con mensajes en español
+    df = _leer_archivo(archivo)
 
     if len(df.columns) == 0:
-        raise HTTPException(status_code=400, detail="El archivo no tiene columnas.")
+        raise HTTPException(
+            status_code=400,
+            detail="El archivo no tiene columnas"
+        )
+
+    if len(df) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="El archivo tiene columnas pero no tiene filas de datos"
+        )
 
     columnas = list(df.columns)
     resultado = _deteccion_nivel1(columnas)
@@ -81,7 +134,7 @@ async def analizar_archivo(archivo: UploadFile = File(...)):
         'pendientes': resultado['pendientes'],
         'resumen': {
             'personales': sum(1 for d in resultado['detectados'] if d['tipo'] == 'personal'),
-            'sensibles': sum(1 for d in resultado['detectados'] if d['tipo'] == 'sensible'),
+            'sensibles':  sum(1 for d in resultado['detectados'] if d['tipo'] == 'sensible'),
             'sin_clasificar': len(resultado['pendientes'])
         }
     }
@@ -99,42 +152,51 @@ async def analizar_con_diccionario(
     que nivel 1 no pudo clasificar.
     """
     # Leer archivo principal
-    try:
-        df_datos = _leer_archivo(archivo)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error al leer el archivo principal: {str(e)}")
+    df_datos = _leer_archivo(archivo)
 
-    # Leer diccionario
-    try:
-        df_dic = _leer_archivo(diccionario)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error al leer el diccionario: {str(e)}")
+    # Leer diccionario — misma función, mismos errores manejados
+    df_dic = _leer_archivo(diccionario)
 
-    # Validar que el diccionario tiene exactamente 2 columnas
-    if len(df_dic.columns) != 2:
+    # Validar estructura del diccionario
+    if len(df_dic.columns) < 2:
         raise HTTPException(
             status_code=400,
-            detail=f"El diccionario debe tener exactamente 2 columnas (nombre_tecnico, descripcion). Tiene {len(df_dic.columns)}."
+            detail="El diccionario debe tener exactamente 2 columnas: nombre_tecnico y descripcion"
+        )
+
+    if len(df_dic.columns) > 2:
+        raise HTTPException(
+            status_code=400,
+            detail=f"El diccionario tiene {len(df_dic.columns)} columnas. Solo se permiten 2: nombre_tecnico y descripcion"
+        )
+
+    if len(df_dic) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="El diccionario no tiene filas de datos"
         )
 
     columnas_datos = list(df_datos.columns)
 
     # Nivel 1: detección por nombre de columna
-    resultado_n1 = _deteccion_nivel1(columnas_datos)
-    detectados = resultado_n1['detectados']
+    resultado_n1  = _deteccion_nivel1(columnas_datos)
+    detectados    = resultado_n1['detectados']
     pendientes_n1 = resultado_n1['pendientes']
 
-    # Construir mapa del diccionario: nombre_tecnico -> descripcion
-    col_tecnica = df_dic.columns[0]
+    # Construir mapa del diccionario: nombre_tecnico → descripcion
+    col_tecnica     = df_dic.columns[0]
     col_descripcion = df_dic.columns[1]
-    mapa_dic = {
-        str(row[col_tecnica]).strip().lower(): str(row[col_descripcion]).strip()
-        for _, row in df_dic.iterrows()
-    }
+
+    try:
+        mapa_dic = {
+            str(row[col_tecnica]).strip().lower(): str(row[col_descripcion]).strip()
+            for _, row in df_dic.iterrows()
+        }
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="No se pudo leer el contenido del diccionario. Verifica que las celdas tengan texto válido"
+        )
 
     # Nivel 2: buscar las columnas pendientes en el diccionario
     pendientes_final = []
@@ -144,9 +206,9 @@ async def analizar_con_diccionario(
             tipo = _clasificar_columna(descripcion)
             if tipo:
                 detectados.append({
-                    'columna': col,
-                    'tipo': tipo,
-                    'origen': 'diccionario',
+                    'columna':     col,
+                    'tipo':        tipo,
+                    'origen':      'diccionario',
                     'descripcion': descripcion
                 })
             else:
@@ -156,11 +218,11 @@ async def analizar_con_diccionario(
 
     return {
         'total_columnas': len(columnas_datos),
-        'detectados': detectados,
-        'pendientes': pendientes_final,
+        'detectados':     detectados,
+        'pendientes':     pendientes_final,
         'resumen': {
-            'personales': sum(1 for d in detectados if d['tipo'] == 'personal'),
-            'sensibles': sum(1 for d in detectados if d['tipo'] == 'sensible'),
+            'personales':     sum(1 for d in detectados if d['tipo'] == 'personal'),
+            'sensibles':      sum(1 for d in detectados if d['tipo'] == 'sensible'),
             'sin_clasificar': len(pendientes_final)
         }
     }
