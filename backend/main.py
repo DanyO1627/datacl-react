@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.basededatos import engine, Base
 from app import models
-from app.routers import auth
+from app.routers import auth, analisis
 from app.utils.jwt import obtener_usuario_actual
 
 Base.metadata.create_all(bind=engine)
@@ -19,6 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(analisis.router)
 
 @app.get("/")
 def root():

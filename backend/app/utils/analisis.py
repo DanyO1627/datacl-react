@@ -114,6 +114,25 @@ import io
 import pandas as pd
 
 
+def leer_columnas_csv(contenido: bytes) -> list[str]:
+    """
+    Recibe los bytes de un archivo CSV y devuelve la lista de nombres
+    de columnas en minúsculas.
+
+    Lanza ValueError si el archivo está vacío o no tiene columnas.
+    Lanza ValueError si el archivo es inválido o no se puede parsear.
+    """
+    try:
+        df = pd.read_csv(io.BytesIO(contenido))
+    except Exception as e:
+        raise ValueError(f"No se pudo leer el archivo CSV: {str(e)}")
+
+    if len(df.columns) == 0:
+        raise ValueError("El archivo CSV está vacío o no tiene columnas.")
+
+    return [str(col).strip().lower() for col in df.columns]
+
+
 def leer_columnas_excel(contenido: bytes) -> list[str]:
     """
     Recibe los bytes de un archivo Excel y devuelve la lista de nombres
@@ -131,3 +150,36 @@ def leer_columnas_excel(contenido: bytes) -> list[str]:
         raise ValueError("El archivo Excel está vacío o no tiene columnas.")
 
     return [str(col).strip().lower() for col in df.columns]
+
+
+def clasificar_columnas(columnas: list[str]) -> dict:
+    """
+    Recibe una lista de nombres de columnas y determina si cada una
+    contiene datos personales, sensibles, o ninguno.
+
+    Regla: sensibles tienen prioridad — si una columna coincide con ambas
+    listas, se clasifica como SENSIBLE.
+
+    Retorna:
+    {
+        "detectados": [{"nombre_columna": "...", "tipo": "PERSONAL|SENSIBLE"}],
+        "pendientes": [{"nombre_columna": "..."}]
+    }
+    """
+    detectados = []
+    pendientes = []
+
+    for col in columnas:
+        # Normalizamos: todo minúscula, guiones y underscores como espacio
+        col_normalizada = col.lower().replace('_', ' ').replace('-', ' ')
+
+        # any() recorre la lista y para apenas encuentra la primera coincidencia — es eficiente
+        # Sensibles PRIMERO ( tienen prioridad sobre personales)
+        if any(palabra in col_normalizada for palabra in PALABRAS_SENSIBLES):
+            detectados.append({"nombre_columna": col, "tipo": "SENSIBLE"})
+        elif any(palabra in col_normalizada for palabra in PALABRAS_PERSONALES):
+            detectados.append({"nombre_columna": col, "tipo": "PERSONAL"})
+        else:
+            pendientes.append({"nombre_columna": col})
+
+    return {"detectados": detectados, "pendientes": pendientes}
