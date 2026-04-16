@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Login.css";
+import { useAuth } from "../context/AuthContext";
+import "../styles/login.css";
+import Logo from "../components/Logo"
 
 // Ícono de ojo abierto
 function IconoOjoAbierto() {
+  console.log("LOGIN RENDER");
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-      <circle cx="12" cy="12" r="3"/>
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
     </svg>
   );
 }
@@ -16,21 +19,22 @@ function IconoOjoAbierto() {
 function IconoOjoCerrado() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-      <line x1="1" y1="1" x2="23" y2="23"/>
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+      <line x1="1" y1="1" x2="23" y2="23" />
     </svg>
   );
 }
 
 export default function Login() {
   const navigate = useNavigate();
+  const { iniciarSesion } = useAuth();
 
   const [form, setForm] = useState({ correo: "", password: "" });
-  const [errors, setErrors]           = useState({});
-  const [touched, setTouched]         = useState({});
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [mostrarPassword, setMostrarPassword] = useState(false);
-  const [cargando, setCargando]       = useState(false);
+  const [cargando, setCargando] = useState(false);
   const [serverError, setServerError] = useState("");
 
   const validar = (campos) => {
@@ -73,7 +77,7 @@ export default function Login() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          correo:   form.correo,
+          correo: form.correo,
           password: form.password,
         }),
       });
@@ -81,10 +85,7 @@ export default function Login() {
       const data = await response.json();
 
       if (response.status === 200) {
-        // Guardar el token en localStorage para usarlo en el resto del sistema
-        localStorage.setItem("token", data.access_token);
-        localStorage.setItem("organizacion", JSON.stringify(data.organizacion));
-        // Navegar al dashboard (pantalla principal — próxima pantalla)
+        iniciarSesion(data); // esto guarda todo (token y usuario)
         navigate("/dashboard");
       } else if (response.status === 401) {
         setServerError("Correo o contraseña incorrectos");
@@ -98,9 +99,9 @@ export default function Login() {
     }
   };
 
-  const erroresActivos     = validar(form);
-  const formValido         = Object.keys(erroresActivos).length === 0;
-  const algunCampoTocado   = Object.values(touched).some(Boolean);
+  const erroresActivos = validar(form);
+  const formValido = Object.keys(erroresActivos).length === 0;
+  const algunCampoTocado = Object.values(touched).some(Boolean);
   const botonDeshabilitado = cargando || (algunCampoTocado && !formValido);
 
   return (
@@ -109,17 +110,22 @@ export default function Login() {
 
         {/* Logo */}
         <div className="login-logo">
-          <div className="login-logo-circle">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <circle cx="9" cy="9" r="7" stroke="#052659" strokeWidth="2"/>
-              <path d="M6 9h6M9 6v6" stroke="#052659" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </div>
+          <Logo size="sm" onClick={() => navigate("/")} />
           <span className="login-logo-text">DataCL</span>
         </div>
 
-        {/* Card */}
         <div className="login-card">
+          <button
+            className="login-back-btn"
+            onClick={() => navigate("/")}
+            aria-label="Volver al inicio"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5" />
+              <path d="M12 19l-7-7 7-7" />
+            </svg>
+          </button>
+
           <h1 className="login-title">Bienvenido de vuelta</h1>
           <p className="login-subtitle">Ingresa a tu cuenta</p>
 
@@ -200,6 +206,7 @@ export default function Login() {
             </button>
           </div>
         </div>
+
       </div>
     </div>
   );

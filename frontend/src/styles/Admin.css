@@ -1,0 +1,150 @@
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f0f0f5;
+}
+
+.admin-main {
+  flex: 1;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Header */
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-titulo {
+  font-size: 28px;
+  font-weight: 700;
+  color: #222;
+  margin: 0;
+}
+
+.admin-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-buscador {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  font-size: 14px;
+  width: 240px;
+  outline: none;
+}
+
+.admin-buscador:focus {
+  border-color: #888;
+}
+
+.admin-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #888;
+  border: 2px solid #bbb;
+}
+
+/* Stats */
+.stats-cards {
+  display: flex;
+  gap: 16px;
+}
+
+.stat-card {
+  flex: 1;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  letter-spacing: 0.5px;
+}
+
+.stat-valor {
+  font-size: 32px;
+  font-weight: 700;
+  color: #222;
+}
+
+/* Tabla */
+.tabla-contenedor {
+  background-color: #e0e0eb;
+  border-radius: 12px;
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.tabla-admin {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tabla-admin th {
+  background-color: #fff;
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: #333;
+  border: 1px solid #ddd;
+  letter-spacing: 0.5px;
+}
+
+.tabla-admin td {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #444;
+  border: 1px solid #ddd;
+  background-color: #f7f7f7;
+}
+
+.tabla-admin tr:nth-child(even) td {
+  background-color: #efefef;
+}
+
+.fila-clickeable {
+  cursor: pointer;
+}
+
+.fila-clickeable:hover td {
+  background-color: #dce3f0;
+}
+
+.tabla-vacia {
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  padding: 24px;
+}
+
+.tabla-cargando {
+  text-align: center;
+  color: #666;
+  padding: 24px;
+}

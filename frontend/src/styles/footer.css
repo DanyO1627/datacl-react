@@ -1,0 +1,78 @@
+
+/* ─── 7. FOOTER ────────────────────────────────────────────────
+   El ::before crea la transición desde el azul pálido de la sección anterior.
+   ─────────────────────────────────────────────────────────────── */
+.footer {
+  padding: 52px 6% 40px;
+  background: var(--azul-oscuro);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+
+  position: relative;
+}
+
+/* Línea decorativa divisora */
+.footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 6%;
+  right: 6%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.15),
+    transparent
+  );
+}
+
+.footer__logo {
+  font-family: var(--fuente-titulo);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.03em;
+}
+
+.footer__logo::after {
+  content: ".";
+  color: var(--azul-activo);
+}
+
+.footer__texto {
+  font-size: 0.82rem;
+  font-family: var(--fuente-cuerpo);
+  color: var(--azul-muted);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.footer__links {
+  display: flex;
+  gap: 24px;
+}
+
+.footer__link {
+  font-size: 0.82rem;
+  font-family: var(--fuente-cuerpo);
+  color: var(--azul-claro-txt);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-color: rgba(147, 180, 216, 0.3);
+  text-underline-offset: 3px;
+  transition: all 0.2s ease;
+}
+
+.footer__link:hover {
+  color: #ffffff;
+  text-decoration-color: rgba(255, 255, 255, 0.5);
+}
+

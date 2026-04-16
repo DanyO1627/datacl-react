@@ -1,0 +1,121 @@
+/* PRINCIPAL
+   La barra ocupa todo el alto de la pantalla y tiene ancho fijo.
+   position: fixed la deja pegada aunque el contenido haga scroll. */
+.barra-lateral {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 220px;
+  height: 100vh;
+  background: linear-gradient(180deg, #021024 0%, #052659 100%);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 0 24px;
+  z-index: 50;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+ 
+/* ── Logo ── */
+.barra-lateral__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;  /* ← centra horizontalmente */
+  padding: 16px 16px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 16px;
+}
+ 
+/* ── Navegación ── */
+.barra-lateral__nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 12px;
+  overflow-y: auto;
+}
+ 
+/* ── Link base ── */
+.barra-lateral__link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.875rem;
+  font-family: "Source Sans 3", "Georgia", sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: left;
+  width: 100%;
+}
+ 
+.barra-lateral__link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+ 
+/* ── Link activo — resalta la página actual ── */
+.barra-lateral__link--activo {
+  background: rgba(84, 131, 179, 0.25);
+  color: #ffffff;
+  border-left: 3px solid #7DA0CA;
+  padding-left: 11px; /* compensa el borde de 3px */
+}
+ 
+.barra-lateral__link--activo:hover {
+  background: rgba(84, 131, 179, 0.35);
+}
+ 
+.barra-lateral__icono {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  opacity: 0.85;
+}
+ 
+.barra-lateral__link--activo .barra-lateral__icono {
+  opacity: 1;
+}
+ 
+/* ── Pie — nombre y cerrar sesión ── */
+.barra-lateral__pie {
+  padding: 16px 20px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 8px;
+}
+ 
+.barra-lateral__org {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: "Source Sans 3", sans-serif;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* si el nombre es largo, muestra "..." */
+}
+ 
+.barra-lateral__cerrar {
+  width: 100%;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  font-family: "Source Sans 3", sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  letter-spacing: 0.02em;
+}
+ 
+.barra-lateral__cerrar:hover {
+  background: rgba(224, 82, 82, 0.15);
+  border-color: rgba(224, 82, 82, 0.4);
+  color: #ff8080;
+}

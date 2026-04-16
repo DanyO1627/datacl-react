@@ -1,10 +1,11 @@
 from pydantic import BaseModel, EmailStr, field_validator
 import re
 
+# Valida el body del POST /auth/registro
 class OrganizacionRegistro(BaseModel):
     nombre: str
     rut: str
-    correo: EmailStr
+    correo: EmailStr  # valida automáticamente el formato de email
     password: str
     confirmar_password: str
 
@@ -18,6 +19,7 @@ class OrganizacionRegistro(BaseModel):
     @field_validator("rut")
     @classmethod
     def rut_formato(cls, v: str) -> str:
+        # Acepta formatos: 12345678-9 o 12345678-K
         patron = r"^\d{7,8}-[\dKk]$"
         if not re.match(patron, v.strip()):
             raise ValueError("RUT inválido. Formato esperado: 12345678-9")
@@ -27,7 +29,7 @@ class OrganizacionRegistro(BaseModel):
     @classmethod
     def password_minimo(cls, v: str) -> str:
         if len(v) < 8:
-           raise ValueError("La contraseña debe tener al menos 8 caracteres")
+            raise ValueError("La contraseña debe tener al menos 8 caracteres")
         if len(v) > 72:
             raise ValueError("La contraseña no puede tener más de 72 caracteres")
         return v
@@ -41,19 +43,24 @@ class OrganizacionRegistro(BaseModel):
         return v
 
 
+# Valida el body del POST /auth/login
 class OrganizacionLogin(BaseModel):
     correo: EmailStr
     password: str
 
 
+# Define qué se devuelve al frontend (sin password)
 class OrganizacionRespuesta(BaseModel):
     id: int
     nombre: str
     correo: str
     rol: str
 
+    # permite que FastAPI convierta directamente un objeto SQLAlchemy en JSON
     model_config = {"from_attributes": True}
 
+
+# Lo que devuelve el login: token + datos de la organización
 class TokenRespuesta(BaseModel):
     access_token: str
     token_type: str = "bearer"

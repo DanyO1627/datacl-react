@@ -1,0 +1,122 @@
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.onboarding-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 40px;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: modal-aparecer 0.25s ease;
+}
+
+@keyframes modal-aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.onboarding-titulo {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2b2b3b;
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+.onboarding-subtitulo {
+  font-size: 14px;
+  color: #888;
+  text-align: center;
+  margin: 0 0 28px;
+}
+
+.onboarding-pasos {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.onboarding-paso {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #f7f7fb;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.onboarding-paso-icono {
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.onboarding-paso-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.onboarding-paso-numero {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7c5cbf;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.onboarding-paso-texto {
+  font-size: 14px;
+  color: #444;
+  margin: 0;
+}
+
+.btn-onboarding-comenzar {
+  background-color: #2b2b3b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 13px 32px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.btn-onboarding-comenzar:hover {
+  background-color: #3a3a4f;
+}
+
+.btn-onboarding-saltar {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.btn-onboarding-saltar:hover {
+  color: #666;
+}

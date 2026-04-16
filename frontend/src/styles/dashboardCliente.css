@@ -1,0 +1,163 @@
+:root {
+  --navy: #021024;
+  --dark: #052659;
+  --mid:  #5483B3;
+  --light: #7DA0CA;
+  --pale: #C1E8FF;
+}
+ 
+/* ── Layout principal ──
+   La barra lateral tiene 220px fijos (position: fixed).
+   El contenido principal usa margin-left para no quedar tapado. */
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+  background: #f0f6ff;
+  font-family: "Source Sans 3", "Georgia", sans-serif;
+}
+ 
+/* ── Contenido principal ── */
+.dashboard__contenido {
+  margin-left: 220px; /* mismo ancho que la barra lateral */
+  flex: 1;
+  padding: 40px 48px;
+  min-height: 100vh;
+}
+ 
+/* ── Header ── */
+.dashboard__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(5, 38, 89, 0.08);
+}
+ 
+.dashboard__saludo {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+ 
+/* El nombre de la organización en azul */
+.dashboard__nombre {
+  color: var(--mid);
+}
+ 
+.dashboard__fecha {
+  font-size: 0.875rem;
+  color: var(--mid);
+  text-transform: capitalize; /* "lunes" → "Lunes" */
+  letter-spacing: 0.02em;
+}
+ 
+/* ── Tarjetas métricas ──
+   Apiladas verticalmente como en el mockup */
+.dashboard__metricas {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 720px;
+}
+ 
+/* ── Tarjeta base ── */
+.dashboard__tarjeta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 28px 32px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(5, 38, 89, 0.07);
+  border-left: 4px solid transparent;
+  transition: all 0.2s ease;
+}
+ 
+.dashboard__tarjeta:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 24px rgba(5, 38, 89, 0.12);
+}
+ 
+/* Colores de acento por tarjeta */
+.dashboard__tarjeta--azul   { border-left-color: var(--mid); }
+.dashboard__tarjeta--naranja { border-left-color: #e8973a; }
+.dashboard__tarjeta--verde  { border-left-color: #3a9e6e; }
+ 
+.dashboard__tarjeta-icono {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+ 
+.dashboard__tarjeta-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+ 
+.dashboard__tarjeta-etiqueta {
+  font-size: 0.95rem;
+  color: var(--mid);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+ 
+/* El número "0" grande */
+.dashboard__tarjeta-valor {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1;
+}
+ 
+/* ── Botón flotante FAB ──
+   position: fixed lo pega abajo a la derecha sin importar el scroll */
+.dashboard__fab {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, var(--dark) 0%, var(--mid) 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-family: "Source Sans 3", sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(5, 38, 89, 0.3);
+  transition: all 0.2s ease;
+  letter-spacing: 0.02em;
+  z-index: 40;
+}
+ 
+.dashboard__fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(5, 38, 89, 0.4);
+}
+ 
+/* ── Estado de carga ── */
+.dashboard__cargando {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f6ff;
+}
+ 
+/* Spinner CSS puro — no necesita librería */
+.dashboard__spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(84, 131, 179, 0.2);
+  border-top-color: var(--mid);
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+}
+ 
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}

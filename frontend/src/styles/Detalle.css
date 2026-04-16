@@ -1,0 +1,130 @@
+.detalle-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f0f0f5;
+}
+
+.detalle-main {
+  flex: 1;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.detalle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.detalle-titulo {
+  font-size: 28px;
+  font-weight: 700;
+  color: #222;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.detalle-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #888;
+  border: 2px solid #bbb;
+}
+
+.btn-volver {
+  background: none;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #555;
+  transition: background 0.2s;
+}
+
+.btn-volver:hover {
+  background-color: #e0e0e0;
+  color: #222;
+}
+
+.detalle-contenido {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+.detalle-seccion {
+  border-bottom: 1px solid #ccc;
+}
+
+.detalle-seccion:last-child {
+  border-bottom: none;
+}
+
+.detalle-seccion-titulo {
+  background-color: #fff;
+  padding: 14px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  border-bottom: 1px solid #ccc;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.detalle-seccion-cuerpo {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detalle-seccion-cuerpo p {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.actividad-titulo {
+  font-weight: 700;
+  font-size: 15px !important;
+  margin-bottom: 8px !important;
+}
+
+.nota-seccion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  min-height: 120px;
+  gap: 8px;
+}
+
+.nota-texto {
+  margin: 0;
+  font-size: 14px;
+  color: #444;
+  text-align: center;
+}
+
+.detalle-cargando {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 16px;
+  color: #666;
+}

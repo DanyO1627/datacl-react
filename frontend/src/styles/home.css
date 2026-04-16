@@ -1,0 +1,581 @@
+/* ============================================================
+   frontend/src/styles/home.css
+   
+   CSS UNIFICADO — toda la landing page en un solo archivo.
+   Está organizado por sección en este orden:
+   1. Variables globales
+   2. Navbar
+   3. Hero
+   4. Sección RAT
+   5. Sección Por Qué
+   6. Sección Cómo Funciona
+   7. Footer
+   8. Animaciones
+   ============================================================ */
+
+
+/* ─── 1. VARIABLES GLOBALES ────────────────────────────────────
+   Guardamos los colores y fuentes en variables CSS.
+   Así si mañana cambia el azul principal, lo cambias en un solo lugar
+   y se actualiza en toda la página automáticamente.
+   ─────────────────────────────────────────────────────────────── */
+:root {
+  --azul-oscuro:     #0b2545;   /* navbar, footer, fondos oscuros */
+  --azul-medio:      #1b3a6b;   /* títulos, botones primarios */
+  --azul-activo:     #2563eb;   /* acentos, botones, líneas */
+  --azul-claro:      #dbeafe;   /* fondos de etiquetas, pills */
+  --azul-palido:     #eff4ff;   /* fondo de secciones claras */
+  --azul-muy-palido: #f8faff;   /* fondo del hero */
+  --azul-borde:      #bfdbfe;   /* bordes */
+  --azul-texto:      #4a6fa5;   /* texto secundario */
+  --azul-muted:      #6b8cc7;   /* texto muy secundario */
+  --azul-claro-txt:  #93b4d8;   /* texto sobre fondo oscuro */
+
+  --fuente-titulo: "Playfair Display", Georgia, serif;
+  --fuente-cuerpo: "Source Sans 3", sans-serif;
+
+  --radio: 12px;
+  --radio-pill: 20px;
+  --radio-btn: 8px;
+  --sombra: 0 4px 24px rgba(11, 37, 69, 0.10);
+  --sombra-hover: 0 8px 32px rgba(11, 37, 69, 0.18);
+}
+
+
+
+
+
+
+/* HERO */
+.hero {
+  min-height: 100vh; /* pantalla completa */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 100px 6% 80px;
+
+  background: linear-gradient(160deg, var(--azul-muy-palido) 0%, var(--azul-palido) 55%, var(--azul-claro) 100%);
+
+  position: relative;
+  overflow: hidden;
+}
+
+/* Transición suave hacia la sección blanca que sigue */
+.hero::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 140px;
+  background: linear-gradient(to bottom, transparent, #ffffff);
+  pointer-events: none;
+}
+
+/* Círculo decorativo grande — da profundidad */
+.hero__decorativo {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.07) 0%, transparent 70%);
+  top: -150px;
+  right: -150px;
+  pointer-events: none;
+}
+
+/* Segundo círculo decorativo — esquina inferior izquierda */
+.hero__decorativo-2 {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(27, 58, 107, 0.05) 0%, transparent 70%);
+  bottom: -100px;
+  left: -100px;
+  pointer-events: none;
+}
+
+.hero__etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 18px;
+  background: var(--azul-claro);
+  color: var(--azul-medio);
+  border-radius: var(--radio-pill);
+  font-size: 0.75rem;
+  font-family: var(--fuente-cuerpo);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  border: 1px solid var(--azul-borde);
+  /* animación de entrada */
+  animation: aparecerArriba 0.6s ease 0.1s both;
+}
+
+/* Punto verde "live" antes de la etiqueta */
+.hero__etiqueta::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--azul-activo);
+  display: inline-block;
+}
+
+.hero__titulo {
+  font-size: clamp(2.1rem, 5.1vw, 3.6rem);
+  font-family: var(--fuente-titulo);
+  color: var(--azul-oscuro);
+  font-weight: 700;
+  line-height: 1.12;
+  max-width: 780px;
+  margin-bottom: 24px;
+  animation: aparecerArriba 0.6s ease 0.2s both;
+}
+
+.hero__titulo--acento {
+  color: var(--azul-activo);
+  /* subrayado decorativo */
+  text-decoration: underline;
+  text-decoration-color: rgba(37, 99, 235, 0.25);
+  text-underline-offset: 6px;
+}
+
+.hero__subtitulo {
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  font-family: var(--fuente-cuerpo);
+  color: #3b5998;
+  max-width: 560px;
+  line-height: 1.75;
+  margin-bottom: 44px;
+  animation: aparecerArriba 0.6s ease 0.3s both;
+}
+
+.hero__botones {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+
+}
+
+.hero__btn {
+  padding: 15px 36px;
+  border-radius: var(--radio-btn);
+  font-size: 1rem;
+  font-family: var(--fuente-cuerpo);
+  font-weight: 700;
+  cursor: pointer;
+  
+}
+
+.hero__btn--primario {
+  background: var(--azul-medio);
+  color: #ffffff;
+  border: 2px solid var(--azul-medio);
+  box-shadow: var(--sombra);
+}
+
+.hero__btn--primario:hover {
+  background: var(--azul-oscuro);
+  border-color: var(--azul-oscuro);
+  box-shadow: var(--sombra-hover);
+  transform: translateY(-2px);
+}
+
+.hero__btn--secundario {
+  background: transparent;
+  color: var(--azul-medio);
+  border: 2px solid var(--azul-medio);
+}
+
+.hero__btn--secundario:hover {
+  background: var(--azul-claro);
+  transform: translateY(-2px);
+}
+
+.hero__badge {
+  margin-top: 56px;
+  font-size: 0.78rem;
+  color: var(--azul-muted);
+  font-family: var(--fuente-cuerpo);
+  letter-spacing: 0.04em;
+  animation: aparecerArriba 0.6s ease 0.5s both;
+}
+
+/* Línea decorativa antes del badge */
+.hero__badge::before {
+  content: "— ";
+}
+.hero__badge::after {
+  content: " —";
+}
+
+
+
+
+
+
+
+
+/* SECCIÓN RAT */
+
+.rat {
+  padding: 110px 6% 130px; /* más padding abajo para el degradado */
+  background: #ffffff;
+  text-align: center;
+  position: relative;
+}
+
+
+
+.rat__titulo {
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-family: var(--fuente-titulo);
+  color: var(--azul-oscuro);
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.rat__subtitulo {
+  font-size: 1.05rem;
+  font-family: var(--fuente-cuerpo);
+  color: var(--azul-texto);
+  max-width: 520px;
+  margin: 0 auto 60px;
+  line-height: 1.75;
+}
+
+.rat__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.rat__caja {
+  padding: 40px 30px;
+  background: var(--azul-muy-palido);
+  border: 1px solid var(--azul-borde);
+  border-top: 4px solid var(--azul-activo);
+  border-radius: var(--radio);
+  text-align: left;
+  /* sombra sutil */
+  box-shadow: 0 2px 12px rgba(11, 37, 69, 0.06);
+  transition: all 0.25s ease;
+}
+
+.rat__caja:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sombra-hover);
+  border-top-color: var(--azul-medio);
+}
+
+.rat__caja-icono {
+  font-size: 2.2rem;
+  margin-bottom: 18px;
+  display: block;
+}
+
+.rat__caja-titulo {
+  font-size: 1.1rem;
+  font-family: var(--fuente-cuerpo);
+  font-weight: 700;
+  color: var(--azul-oscuro);
+  margin-bottom: 10px;
+}
+
+.rat__caja-descripcion {
+  font-size: 0.95rem;
+  font-family: var(--fuente-cuerpo);
+  color: var(--azul-texto);
+  line-height: 1.7;
+}
+
+/* Transición suave al fondo oscuro de la siguiente sección */
+.rat::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(to bottom, transparent, var(--azul-oscuro));
+  pointer-events: none;
+}
+
+
+
+
+
+
+
+/* SECCIÓN POR QUÉ  */
+.porque {
+  padding: 130px 6% 130px;
+  background: var(--azul-oscuro);
+  text-align: center;
+  position: relative;
+}
+
+/* Transición suave hacia la sección siguiente */
+
+.porque::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+
+  height: 60px; /* 👈 menos altura */
+
+  background: linear-gradient(
+    to bottom,
+    rgba(11, 37, 69, 0) 30%, /* 👈 empieza más abajo */
+    rgba(11, 37, 69, 0.4) 60%,
+    var(--azul-palido) 100%
+  );
+
+  pointer-events: none;
+}
+
+
+.porque__titulo {
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-family: var(--fuente-titulo);
+  color: #ffffff;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.porque__subtitulo {
+  font-size: 1.05rem;
+  font-family: var(--fuente-cuerpo);
+  color: var(--azul-claro-txt);
+  max-width: 560px;
+  margin: 0 auto 60px;
+  line-height: 1.75;
+}
+
+.porque__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  max-width: 700px;
+  margin: 0 auto 52px;
+}
+
+.porque__caja {
+  padding: 36px 28px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radio);
+  text-align: center;
+  transition: all 0.25s ease;
+}
+
+.porque__caja:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(96, 165, 250, 0.35);
+  transform: translateY(-3px);
+}
+
+.porque__numero {
+  font-size: 2.4rem;
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  color: #60a5fa;
+  margin-bottom: 8px;
+}
+
+.porque__label {
+  font-size: 0.72rem;
+  font-family: var(--fuente-cuerpo);
+  color: var(--azul-claro-txt);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+
+.porque__texto {
+  font-size: 0.95rem;
+  font-family: var(--fuente-cuerpo);
+  color: var(--azul-claro);
+  line-height: 1.65;
+}
+
+.porque__alerta {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 28px;
+  background: rgba(37, 99, 235, 0.15);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  border-radius: var(--radio);
+  max-width: 580px;
+  margin: 0 auto;
+  text-align: left;
+  backdrop-filter: blur(4px);
+}
+
+.porque__alerta-icono {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.porque__alerta-texto {
+  font-size: 0.9rem;
+  font-family: var(--fuente-cuerpo);
+  color: #bfdbfe;
+  line-height: 1.65;
+}
+
+.porque__alerta-texto strong {
+  color: #e0effe;
+  font-weight: 700;
+}
+
+
+
+/* ─── 6. SECCIÓN CÓMO FUNCIONA  */
+
+.como {
+  padding: 130px 6% 110px;
+  background: var(--azul-palido);
+  text-align: center;
+}
+
+.como__titulo {
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-family: var(--fuente-titulo);
+  color: var(--azul-oscuro);
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.como__subtitulo {
+  font-size: 1.05rem;
+  font-family: var(--fuente-cuerpo);
+  color: var(--azul-texto);
+  max-width: 480px;
+  margin: 0 auto 64px;
+  line-height: 1.75;
+}
+
+.como__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  max-width: 1000px;
+  margin: 0 auto 72px;
+}
+
+.como__paso {
+  padding: 32px 22px;
+  background: #ffffff;
+  border: 1px solid var(--azul-borde);
+  border-radius: var(--radio);
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(11, 37, 69, 0.05);
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.como__paso:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sombra-hover);
+}
+
+.como__paso-numero {
+  font-size: 0.72rem;
+  font-family: var(--fuente-cuerpo);
+  font-weight: 700;
+  color: var(--azul-activo);
+  letter-spacing: 0.1em;
+  background: var(--azul-claro);
+  padding: 4px 14px;
+  border-radius: var(--radio-pill);
+  display: inline-block;
+  margin-bottom: 18px;
+  text-transform: uppercase;
+}
+
+.como__paso-titulo {
+  font-size: 1rem;
+  font-family: var(--fuente-cuerpo);
+  font-weight: 700;
+  color: var(--azul-oscuro);
+  margin-bottom: 8px;
+}
+
+.como__paso-descripcion {
+  font-size: 0.875rem;
+  font-family: var(--fuente-cuerpo);
+  color: var(--azul-texto);
+  line-height: 1.65;
+}
+
+
+
+
+
+
+
+
+
+/* CTA final */
+.como__cta {
+  text-align: center;
+  padding: 56px 40px;
+  background: #ffffff;
+  border: 1px solid var(--azul-borde);
+  border-radius: 16px;
+  max-width: 580px;
+  margin: 0 auto;
+  box-shadow: var(--sombra);
+}
+
+.como__cta-titulo {
+  font-size: 1.6rem;
+  font-family: var(--fuente-titulo);
+  color: var(--azul-oscuro);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.como__cta-subtitulo {
+  font-size: 1rem;
+  font-family: var(--fuente-cuerpo);
+  color: var(--azul-texto);
+  margin-bottom: 32px;
+  line-height: 1.65;
+}
+
+.como__cta-btn {
+  padding: 16px 44px;
+  background: var(--azul-medio);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radio-btn);
+  font-size: 1.05rem;
+  font-family: var(--fuente-cuerpo);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 16px rgba(27, 58, 107, 0.3);
+}
+
+.como__cta-btn:hover {
+  background: var(--azul-oscuro);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(11, 37, 69, 0.4);
+}

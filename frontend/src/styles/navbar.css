@@ -1,0 +1,84 @@
+
+/* ─── 2. NAVBAR ────────────────────────────────────────────────
+   sticky: se queda pegada arriba al hacer scroll.
+   backdrop-filter: efecto vidrio esmerilado — se ve el contenido
+   detrás pero difuminado. Muy moderno y usado en sitios gov actuales.
+   ─────────────────────────────────────────────────────────────── */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 6%;
+  height: 68px;
+
+  /* rgba con alpha para ver el blur detrás */
+  background-color: rgba(11, 37, 69, 0.92);
+  /* blur del fondo — como el navbar de macOS */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px); /* Safari */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  /* animación de entrada desde arriba */
+  animation: bajarNavbar 0.5s ease both;
+}
+
+.navbar__logo {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: var(--fuente-titulo);
+  letter-spacing: 0.03em;
+  /* punto decorativo después del logo */
+  position: relative;
+}
+
+.navbar__logo::after {
+  content: ".";
+  color: var(--azul-activo);
+}
+
+.navbar__acciones {
+  display: flex;
+  gap: 10px;
+}
+
+.navbar__btn {
+  padding: 8px 22px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: var(--fuente-cuerpo);
+  font-weight: 600;
+  cursor: pointer;
+  /* transición suave en todas las propiedades */
+  transition: all 0.2s ease;
+  letter-spacing: 0.01em;
+}
+
+.navbar__btn--outline {
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  background: transparent;
+  color: #ffffff;
+}
+
+.navbar__btn--outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+.navbar__btn--solido {
+  border: 1.5px solid var(--azul-activo);
+  background: var(--azul-activo);
+  color: #ffffff;
+  box-shadow: 0 2px 12px rgba(37, 99, 235, 0.35);
+}
+
+.navbar__btn--solido:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.5);
+  transform: translateY(-1px); /* sube ligeramente al hover */
+}

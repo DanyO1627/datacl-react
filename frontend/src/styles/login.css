@@ -1,27 +1,11 @@
-/* ── Reset global para que el fondo ocupe toda la pantalla ── */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html, body, #root {
-  width: 100%;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
-}
-
-/* ── Variables de color ── */
 :root {
-  --navy:  #021024;
-  --dark:  #052659;
-  --mid:   #5483B3;
+  --navy: #021024;
+  --dark: #052659;
+  --mid:  #5483B3;
   --light: #7DA0CA;
-  --pale:  #C1E8FF;
+  --pale: #C1E8FF;
 }
 
-/* ── Página completa ── */
 .login-page {
   width: 100%;
   min-height: 100vh;
@@ -38,23 +22,13 @@ html, body, #root {
   max-width: 480px;
 }
 
-/* ── Logo ── */
 .login-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 2rem;
-}
-
-.login-logo-circle {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 2.5px solid var(--dark);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  gap: 0px;
+  margin-bottom: 0.5rem;
+  margin-left: -70px;
+  margin-top: -30px;
 }
 
 .login-logo-text {
@@ -62,14 +36,35 @@ html, body, #root {
   font-weight: 700;
   color: var(--navy);
   letter-spacing: 0.04em;
+  margin-left: -8px;
 }
 
-/* ── Card ── */
 .login-card {
   background: #ffffff;
   border-radius: 20px;
   padding: 2.5rem 2.5rem 2rem;
   box-shadow: 0 4px 32px rgba(5, 38, 89, 0.10), 0 1px 4px rgba(5, 38, 89, 0.06);
+}
+
+.login-back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--mid);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 0.8rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+.login-back-btn:hover {
+  background: #eef4fb;
+  color: var(--dark);
 }
 
 .login-title {
@@ -87,7 +82,6 @@ html, body, #root {
   text-align: center;
 }
 
-/* ── Campos ── */
 .login-field-group {
   margin-bottom: 1.1rem;
 }
@@ -120,7 +114,6 @@ html, body, #root {
   color: #8faec8;
 }
 
-/* ── Campo contraseña con ojo ── */
 .login-password-wrapper {
   position: relative;
   display: flex;
@@ -148,7 +141,6 @@ html, body, #root {
   color: var(--dark);
 }
 
-/* ── Mensajes de error ── */
 .login-error-text {
   color: #e05252;
   font-size: 12px;
@@ -156,7 +148,6 @@ html, body, #root {
   margin-left: 16px;
 }
 
-/* ── Link olvidé contraseña ── */
 .login-forgot {
   background: none;
   border: none;
@@ -175,7 +166,6 @@ html, body, #root {
   color: var(--dark);
 }
 
-/* ── Error del servidor ── */
 .login-server-error {
   background: #fff0f0;
   border-left: 3px solid #e05252;
@@ -187,7 +177,6 @@ html, body, #root {
   text-align: center;
 }
 
-/* ── Botón principal ── */
 .login-btn {
   width: 100%;
   padding: 13px;
@@ -216,14 +205,12 @@ html, body, #root {
   transform: none;
 }
 
-/* ── Separador ── */
 .login-divider {
   border: none;
   border-top: 1px solid #e8f0f8;
   margin: 1.8rem 0 1.2rem;
 }
 
-/* ── Bloque inferior ── */
 .login-register-block {
   text-align: center;
 }

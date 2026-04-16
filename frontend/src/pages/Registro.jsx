@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Registro.css";
+import "../styles/registro.css";
+import Logo from "../components/Logo";
 
 function validarRut(rut) {
   const patron = /^\d{7,8}-[\dKk]$/;
@@ -35,9 +36,9 @@ export default function Registro() {
     confirmarPassword: "",
   });
 
-  const [errors, setErrors]           = useState({});
-  const [touched, setTouched]         = useState({});
-  const [cargando, setCargando]       = useState(false);
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [cargando, setCargando] = useState(false);
   const [serverError, setServerError] = useState("");
 
   const validar = (campos) => {
@@ -100,10 +101,10 @@ export default function Registro() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nombre:             form.nombre,
-          rut:                form.rut,
-          correo:             form.correo,
-          password:           form.password,
+          nombre: form.nombre,
+          rut: form.rut,
+          correo: form.correo,
+          password: form.password,
           confirmar_password: form.confirmarPassword,
         }),
       });
@@ -124,22 +125,19 @@ export default function Registro() {
     }
   };
 
-  const erroresActivos     = validar(form);
-  const formValido         = Object.keys(erroresActivos).length === 0;
-  const algunCampoTocado   = Object.values(touched).some(Boolean);
+  const erroresActivos = validar(form);
+  const formValido = Object.keys(erroresActivos).length === 0;
+  const algunCampoTocado = Object.values(touched).some(Boolean);
   const botonDeshabilitado = cargando || (algunCampoTocado && !formValido);
+
+
 
   return (
     <div className="registro-page">
       <div className="registro-wrapper">
 
-        <div className="registro-logo">
-          <div className="registro-logo-circle">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <circle cx="9" cy="9" r="7" stroke="#052659" strokeWidth="2"/>
-              <path d="M6 9h6M9 6v6" stroke="#052659" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </div>
+        <div className="registro-logo" onClick={() => navigate("/")}>
+          <Logo size="sm" />
           <span className="registro-logo-text">DataCL</span>
         </div>
 
@@ -205,6 +203,7 @@ export default function Registro() {
             </button>
           </div>
         </div>
+
       </div>
     </div>
   );
