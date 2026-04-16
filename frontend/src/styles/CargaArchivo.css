@@ -1,0 +1,481 @@
+/* ─── Variables (misma paleta del proyecto) ───────────────────── */
+:root {
+  --navy: #021024;
+  --dark: #052659;
+  --mid:  #5483B3;
+  --light: #7DA0CA;
+  --pale: #C1E8FF;
+}
+
+/* ─── Layout general ──────────────────────────────────────────── */
+.ca-layout {
+  min-height: 100vh;
+  background: linear-gradient(160deg, var(--pale) 0%, #e8f4ff 40%, #f0f8ff 100%);
+}
+
+.ca-main {
+  margin-left: 220px; /* misma width que .barra-lateral (position:fixed) */
+  padding: 2.8rem 3rem;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+/* ─── Header ──────────────────────────────────────────────────── */
+.ca-header {
+  margin-bottom: 2rem;
+}
+
+.ca-titulo {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+
+.ca-subtitulo {
+  font-size: 14px;
+  color: var(--mid);
+}
+
+/* ─── Contenido central ───────────────────────────────────────── */
+.ca-contenido {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2.4rem 2.4rem 2rem;
+  max-width: 720px;
+  box-shadow: 0 4px 32px rgba(5, 38, 89, 0.08), 0 1px 4px rgba(5, 38, 89, 0.05);
+}
+
+/* ─── Zona de carga ───────────────────────────────────────────── */
+.ca-zona-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.ca-zona {
+  width: 100%;
+  min-height: 180px;
+  border: 2px dashed #b8d4ec;
+  border-radius: 16px;
+  background: #f4f9ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  padding: 2rem;
+}
+
+.ca-zona:hover {
+  border-color: var(--mid);
+  background: #eef4fb;
+  box-shadow: 0 0 0 3px rgba(84, 131, 179, 0.10);
+}
+
+.ca-zona--arrastrando {
+  border-color: var(--dark);
+  background: #e2eef8;
+  box-shadow: 0 0 0 4px rgba(5, 38, 89, 0.12);
+}
+
+.ca-zona--con-archivo {
+  cursor: default;
+  border-style: solid;
+  border-color: var(--mid);
+}
+
+.ca-nube-icono {
+  color: var(--light);
+}
+
+.ca-zona-texto-principal {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.ca-zona-texto-o {
+  font-size: 13px;
+  color: #9ab5cc;
+}
+
+/* ─── Botón Seleccionar (dentro de zona) ──────────────────────── */
+.ca-btn-seleccionar {
+  padding: 9px 22px;
+  border-radius: 50px;
+  border: 1.5px solid var(--mid);
+  background: transparent;
+  color: var(--dark);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.ca-btn-seleccionar:hover {
+  background: var(--dark);
+  color: #fff;
+  border-color: var(--dark);
+}
+
+/* ─── Archivo seleccionado ────────────────────────────────────── */
+.ca-archivo-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.ca-archivo-icono {
+  color: var(--mid);
+  flex-shrink: 0;
+}
+
+.ca-archivo-detalles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ca-archivo-nombre {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ca-archivo-tamano {
+  font-size: 12px;
+  color: var(--mid);
+}
+
+.ca-btn-quitar {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #aac0d6;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: color 0.15s, background 0.15s;
+}
+
+.ca-btn-quitar:hover {
+  color: #e05252;
+  background: #fff0f0;
+}
+
+/* ─── Input oculto ────────────────────────────────────────────── */
+.ca-input-hidden {
+  display: none;
+}
+
+/* ─── Formatos ────────────────────────────────────────────────── */
+.ca-formatos {
+  font-size: 12px;
+  color: #9ab5cc;
+  margin-left: 4px;
+}
+
+/* ─── Botón Analizar ──────────────────────────────────────────── */
+.ca-btn-analizar {
+  align-self: flex-end;
+  margin-left: auto;
+  padding: 11px 28px;
+  border-radius: 50px;
+  border: none;
+  background: linear-gradient(135deg, var(--dark) 0%, var(--mid) 100%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  transition: opacity 0.18s, transform 0.12s;
+  letter-spacing: 0.02em;
+}
+
+.ca-btn-analizar:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.ca-btn-analizar--disabled,
+.ca-btn-analizar:disabled {
+  background: #c8dcee;
+  cursor: not-allowed;
+  transform: none;
+  color: #a0b8cc;
+}
+
+/* Spinner de carga */
+.ca-btn-spinner-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ca-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: ca-giro 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes ca-giro {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Divisor ─────────────────────────────────────────────────── */
+.ca-divisor {
+  border: none;
+  border-top: 1px solid #e8f0f8;
+  margin: 1.8rem 0 1.4rem;
+}
+
+/* ─── Acordeón diccionario ────────────────────────────────────── */
+.ca-acordeon {
+  width: 100%;
+}
+
+.ca-acordeon-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  gap: 1rem;
+}
+
+.ca-acordeon-check-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ca-check {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--dark);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ca-acordeon-pregunta {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.ca-acordeon-chevron {
+  color: var(--mid);
+  display: flex;
+  align-items: center;
+  transition: transform 0.22s ease;
+  flex-shrink: 0;
+}
+
+.ca-acordeon-chevron--abierto {
+  transform: rotate(180deg);
+}
+
+/* ─── Cuerpo del acordeón ─────────────────────────────────────── */
+.ca-acordeon-body {
+  margin-top: 1rem;
+  padding: 1.2rem 1.4rem;
+  background: #f4f9ff;
+  border-radius: 12px;
+  border: 1px solid #dcedf8;
+  animation: ca-desplegarse 0.2s ease;
+}
+
+@keyframes ca-desplegarse {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ca-acordeon-desc {
+  font-size: 13px;
+  color: var(--mid);
+  margin-bottom: 1rem;
+  line-height: 1.55;
+}
+
+.ca-acordeon-acciones {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.ca-btn-diccionario {
+  padding: 9px 20px;
+  border-radius: 50px;
+  border: none;
+  background: #dde9f4;
+  color: var(--dark);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background 0.18s;
+}
+
+.ca-btn-diccionario:hover {
+  background: #ccdaec;
+}
+
+.ca-btn-seleccionar-dic {
+  padding: 9px 20px;
+  border-radius: 50px;
+  border: 1.5px solid var(--mid);
+  background: transparent;
+  color: var(--dark);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.ca-btn-seleccionar-dic:hover {
+  background: var(--dark);
+  color: #fff;
+  border-color: var(--dark);
+}
+
+/* ─── Fila del botón analizar (alineado derecha) ─────────────── */
+.ca-analizar-row {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ─── Tabla formato diccionario ───────────────────────────────── */
+.ca-formato-tabla-wrap {
+  margin: 0.8rem 0 1.2rem;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #dcedf8;
+  padding: 1rem 1.2rem;
+}
+
+.ca-formato-titulo {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ca-formato-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ca-formato-tabla thead tr {
+  background: #eef4fb;
+}
+
+.ca-formato-tabla th {
+  padding: 7px 12px;
+  text-align: left;
+  color: var(--dark);
+  font-weight: 700;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+.ca-formato-tabla td {
+  padding: 6px 12px;
+  color: var(--navy);
+  border-bottom: 1px solid #f0f6fc;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+}
+
+.ca-formato-tabla td:last-child {
+  font-family: 'Georgia', serif;
+  color: var(--mid);
+}
+
+.ca-formato-nota {
+  font-size: 11px;
+  color: #9ab5cc;
+  margin-top: 0.6rem;
+}
+
+/* ─── Zona carga diccionario ──────────────────────────────────── */
+.ca-dic-zona-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.ca-dic-zona {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border: 1.5px dashed #b8d4ec;
+  border-radius: 10px;
+  background: #f4f9ff;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+  color: var(--mid);
+}
+
+.ca-dic-zona:hover {
+  border-color: var(--mid);
+  background: #eef4fb;
+}
+
+.ca-dic-zona-texto {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.ca-dic-zona-sub {
+  font-size: 11px;
+  color: #9ab5cc;
+}
+
+.ca-dic-archivo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #eef4fb;
+  border-radius: 10px;
+  border: 1px solid #dcedf8;
+}
+
+.ca-dic-archivo-nombre {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
