@@ -1,14 +1,13 @@
 import io
 from typing import Annotated
 import pandas as pd
+from pandas.errors import EmptyDataError, ParserError
 from fastapi import APIRouter, UploadFile, File, HTTPException
 
-# Importamos las tres funciones de utilidad del módulo de análisis
 from app.utils.analisis import leer_columnas_csv, leer_columnas_excel, clasificar_columnas
 
 router = APIRouter(prefix="/analizar", tags=["analisis"])
 
-# Extensiones aceptadas por el sistema
 EXTENSIONES_CSV   = ('.csv',)
 EXTENSIONES_EXCEL = ('.xlsx', '.xls')
 
@@ -30,6 +29,43 @@ def _detectar_tipo_archivo(nombre: str) -> str:
         )
 
 
+def _leer_dataframe(contenido: bytes, tipo: str) -> pd.DataFrame:
+    """
+    Lee bytes y devuelve un DataFrame según el tipo ('csv' o 'excel').
+    Captura errores conocidos de Pandas con mensajes en español.
+    Solo se usa internamente para el diccionario (necesitamos el df completo).
+    """
+    try:
+        if tipo == 'csv':
+            return pd.read_csv(io.BytesIO(contenido))
+        else:
+            return pd.read_excel(io.BytesIO(contenido), sheet_name=0, engine='openpyxl')
+
+    except EmptyDataError:
+        raise HTTPException(status_code=400, detail="El archivo no tiene datos.")
+
+    except ParserError:
+        raise HTTPException(status_code=400, detail="El archivo está corrupto o tiene formato incorrecto.")
+
+    except UnicodeDecodeError:
+        # Segunda oportunidad con latin-1 solo para CSV (común en archivos chilenos con tildes)
+        if tipo == 'csv':
+            try:
+                return pd.read_csv(io.BytesIO(contenido), encoding='latin-1')
+            except Exception:
+                pass
+        raise HTTPException(
+            status_code=400,
+            detail="El archivo tiene caracteres no reconocidos. Guárdalo en formato UTF-8 e intenta nuevamente."
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"El archivo tiene un formato inválido: {str(e)}")
+
+    except Exception:
+        raise HTTPException(status_code=500, detail="Error al procesar el archivo.")
+
+
 @router.post("/archivo")
 async def analizar_archivo(archivo: Annotated[UploadFile, File(...)]):
     """
@@ -46,28 +82,22 @@ async def analizar_archivo(archivo: Annotated[UploadFile, File(...)]):
         "resumen": { "personales": N, "sensibles": N, "sin_clasificar": N }
     }
     """
-    # --- Validación de formato (antes de leer el contenido) ---
     tipo = _detectar_tipo_archivo(archivo.filename)
 
     # Leemos el contenido completo en memoria — nunca se guarda en disco ni en BD
     contenido: bytes = await archivo.read()
 
-    # Archivo vacío (0 bytes)
     if len(contenido) == 0:
         raise HTTPException(status_code=400, detail="El archivo está vacío.")
 
-    # --- Lectura de columnas según tipo de archivo ---
     try:
         if tipo == 'csv':
             columnas = leer_columnas_csv(contenido)
         else:
             columnas = leer_columnas_excel(contenido)
     except ValueError as e:
-        # ValueError es lanzado por leer_columnas_* cuando el archivo no tiene columnas
-        # o cuando pandas no puede parsearlo
         raise HTTPException(status_code=400, detail=str(e))
 
-    # --- Clasificación usando el diccionario de palabras clave ---
     resultado = clasificar_columnas(columnas)
 
     return {
@@ -95,7 +125,6 @@ async def analizar_con_diccionario(
     usa las descripciones del diccionario para intentar clasificar
     las columnas que quedaron pendientes.
     """
-
     # --- Leer archivo principal en memoria ---
     tipo_datos = _detectar_tipo_archivo(archivo.filename)
     contenido_datos: bytes = await archivo.read()
@@ -119,34 +148,40 @@ async def analizar_con_diccionario(
     if len(contenido_dic) == 0:
         raise HTTPException(status_code=400, detail="El archivo diccionario está vacío.")
 
-    try:
-        # Para el diccionario necesitamos el DataFrame completo (2 columnas)
-        df_dic = (
-            pd.read_csv(io.BytesIO(contenido_dic))
-            if tipo_dic == 'csv'
-            else pd.read_excel(io.BytesIO(contenido_dic), sheet_name=0, engine='openpyxl')
-        )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error al leer el diccionario: {e}")
+    # Para el diccionario necesitamos el DataFrame completo para leer ambas columnas
+    df_dic = _leer_dataframe(contenido_dic, tipo_dic)
 
-    # El diccionario debe tener exactamente 2 columnas: nombre_tecnico y descripcion
-    if len(df_dic.columns) != 2:
+    # Validaciones separadas para dar mensajes claros — aporte de Dani
+    if len(df_dic.columns) < 2:
         raise HTTPException(
             status_code=400,
-            detail=f"El diccionario debe tener exactamente 2 columnas. Tiene {len(df_dic.columns)}."
+            detail="El diccionario debe tener exactamente 2 columnas: nombre_tecnico y descripcion."
         )
+    if len(df_dic.columns) > 2:
+        raise HTTPException(
+            status_code=400,
+            detail=f"El diccionario tiene {len(df_dic.columns)} columnas. Solo se permiten 2: nombre_tecnico y descripcion."
+        )
+    if len(df_dic) == 0:
+        raise HTTPException(status_code=400, detail="El diccionario no tiene filas de datos.")
 
     # --- Nivel 1: detección por nombre de columna ---
     resultado_n1 = clasificar_columnas(columnas_datos)
-    detectados = resultado_n1["detectados"]
+    detectados   = resultado_n1["detectados"]
     pendientes_n1 = [p["nombre_columna"] for p in resultado_n1["pendientes"]]
 
     # Construir mapa: nombre_tecnico (minúsculas) → descripcion
     col_tecnica, col_descripcion = df_dic.columns[0], df_dic.columns[1]
-    mapa_dic = {
-        str(row[col_tecnica]).strip().lower(): str(row[col_descripcion]).strip()
-        for _, row in df_dic.iterrows()
-    }
+    try:
+        mapa_dic = {
+            str(row[col_tecnica]).strip().lower(): str(row[col_descripcion]).strip()
+            for _, row in df_dic.iterrows()
+        }
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="No se pudo leer el contenido del diccionario. Verifica que las celdas tengan texto válido."
+        )
 
     # --- Nivel 2: buscar columnas pendientes en el diccionario ---
     pendientes_final = []
@@ -154,7 +189,6 @@ async def analizar_con_diccionario(
         descripcion = mapa_dic.get(col.lower())
 
         if descripcion:
-            # Reutilizamos clasificar_columnas sobre la descripción del campo
             resultado_desc = clasificar_columnas([descripcion])
             if resultado_desc["detectados"]:
                 tipo_col = resultado_desc["detectados"][0]["tipo"]
