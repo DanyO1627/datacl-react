@@ -7,7 +7,7 @@ from app.basededatos import get_db
 from app.utils.jwt import obtener_usuario_actual
 from app.utils.riesgo import calcular_probabilidad, calcular_impacto, determinar_nivel_riesgo
 from app import models
-from app.schemas import TratamientoCrear, TratamientoEditar, TratamientoRespuesta, TratamientoListado
+from app.schemas import TratamientoCrear, TratamientoEditar, TratamientoRespuesta, TratamientoListado, CampoRatRespuesta
 
 router = APIRouter(prefix="/tratamientos", tags=["Tratamientos"])
 
@@ -192,3 +192,31 @@ def eliminar_tratamiento(
     db.delete(tratamiento)
     db.commit()
     return {"mensaje": "Tratamiento eliminado correctamente.", "id": tratamiento_id}
+
+
+
+
+@router.get("/{tratamiento_id}/campos", response_model=list[CampoRatRespuesta])
+def obtener_campos_rat(
+    tratamiento_id: int,
+    usuario=Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+    """
+    Devuelve todos los campos_rat de un tratamiento
+    Primero verifica que el tratamiento pertenece a la organización del token
+    Si no hay campos devuelve lista vacía (no error)
+    """
+    # Verificar que el tratamiento existe Y pertenece al usuario del token
+    tratamiento = db.query(models.Tratamiento).filter(
+        models.Tratamiento.id == tratamiento_id,
+        models.Tratamiento.organizacion_id == usuario.id
+    ).first()
+
+    if not tratamiento:
+        raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
+
+    # Devolver los campos — si no hay, SQLAlchemy devuelve lista vacía automáticamente
+    return db.query(models.CampoRat).filter(
+        models.CampoRat.tratamiento_id == tratamiento_id
+    ).all()

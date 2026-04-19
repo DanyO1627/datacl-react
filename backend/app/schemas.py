@@ -141,3 +141,15 @@ class TratamientoListado(BaseModel):
     estado: str
     creado_en: datetime
     model_config = {"from_attributes": True}
+    
+    
+class CampoRatRespuesta(BaseModel):
+    id: int
+    tratamiento_id: int
+    nombre_columna: str
+    tipo_dato: Optional[str] = None
+    es_sensible: bool
+    fuente: str
+    creado_en: datetime
+
+    model_config = {"from_attributes": True}
