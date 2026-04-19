@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.basededatos import engine, Base
 from app import models
-from app.routers import auth, admin, informes, analisis, tratamientos
+from app.routers import auth, admin, informes, analisis, tratamientos, organizaciones
 from app.utils.jwt import obtener_usuario_actual
 
 Base.metadata.create_all(bind=engine)
@@ -22,6 +22,7 @@ app.include_router(admin.router)
 app.include_router(informes.router)
 app.include_router(analisis.router)
 app.include_router(tratamientos.router)
+app.include_router(organizaciones.router)
 
 @app.get("/")
 def root():
