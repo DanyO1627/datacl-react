@@ -1,9 +1,11 @@
 from typing import Optional
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.basededatos import get_db
 from app.utils.jwt import obtener_usuario_actual
+from app.utils.riesgo import calcular_probabilidad, calcular_impacto, determinar_nivel_riesgo
 from app import models
 from app.schemas import TratamientoCrear, TratamientoEditar, TratamientoRespuesta, TratamientoListado
 
@@ -26,6 +28,10 @@ def crear_tratamiento(
     - El organizacion_id viene del JWT, no del body
     - Estado siempre PENDIENTE al crear
     """
+    probabilidad = calcular_probabilidad(datos)
+    impacto      = calcular_impacto(datos)
+    nivel_riesgo = determinar_nivel_riesgo(probabilidad, impacto)
+
     nuevo_tratamiento = models.Tratamiento(
         organizacion_id          = usuario_actual.id,
         nombre                   = datos.nombre,
@@ -37,7 +43,11 @@ def crear_tratamiento(
         medidas_seguridad        = datos.medidas_seguridad,
         sale_extranjero          = datos.sale_extranjero,
         decisiones_automatizadas = datos.decisiones_automatizadas,
-        estado                   = "PENDIENTE"
+        estado                   = "PENDIENTE",
+        probabilidad             = probabilidad,
+        impacto                  = impacto,
+        nivel_riesgo             = nivel_riesgo,
+        fecha_evaluacion         = datetime.now(),
     )
     db.add(nuevo_tratamiento)
     db.commit()
@@ -125,6 +135,36 @@ def editar_tratamiento(
         tratamiento.nivel_riesgo = datos.nivel_riesgo.upper()
     if datos.estado is not None:
         tratamiento.estado = datos.estado.upper()
+
+    tratamiento.probabilidad     = calcular_probabilidad(tratamiento)
+    tratamiento.impacto          = calcular_impacto(tratamiento)
+    tratamiento.nivel_riesgo     = determinar_nivel_riesgo(tratamiento.probabilidad, tratamiento.impacto)
+    tratamiento.fecha_evaluacion = datetime.now()
+
+    db.commit()
+    db.refresh(tratamiento)
+    return tratamiento
+
+
+@router.post("/{tratamiento_id}/evaluar", response_model=TratamientoRespuesta)
+def evaluar_tratamiento(
+    tratamiento_id: int,
+    usuario=Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+    """Recalcula probabilidad, impacto y nivel_riesgo de un tratamiento existente."""
+    tratamiento = db.query(models.Tratamiento).filter(
+        models.Tratamiento.id == tratamiento_id,
+        models.Tratamiento.organizacion_id == usuario.id
+    ).first()
+
+    if not tratamiento:
+        raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
+
+    tratamiento.probabilidad     = calcular_probabilidad(tratamiento)
+    tratamiento.impacto          = calcular_impacto(tratamiento)
+    tratamiento.nivel_riesgo     = determinar_nivel_riesgo(tratamiento.probabilidad, tratamiento.impacto)
+    tratamiento.fecha_evaluacion = datetime.now()
 
     db.commit()
     db.refresh(tratamiento)

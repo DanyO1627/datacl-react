@@ -60,9 +60,9 @@ def listar_organizaciones(
                     "rut": org.rut,
                     "organizacion": org.nombre,
                     "correo": org.correo,
-                    "tratamiento": t.tipo,
+                    "tratamiento": t.nombre,
                     "estado": t.estado,
-                    "fecha_tratamiento": t.fecha
+                    "fecha_tratamiento": t.creado_en
                 })
         else:
             resultado.append({
@@ -91,7 +91,7 @@ def obtener_organizacion(org_id: int, db: Session = Depends(get_bd)):
 
     ultimo_tratamiento = None
     if org.tratamientos:
-        ultimo_tratamiento = max(org.tratamientos, key=lambda t: t.fecha).fecha
+        ultimo_tratamiento = max(org.tratamientos, key=lambda t: t.creado_en).creado_en
 
     return {
         "id": org.id,
@@ -105,9 +105,9 @@ def obtener_organizacion(org_id: int, db: Session = Depends(get_bd)):
         "tratamientos": [
             {
                 "id": t.id,
-                "tipo": t.tipo,
+                "nombre": t.nombre,
                 "estado": t.estado,
-                "fecha": t.fecha
+                "fecha": t.creado_en
             }
             for t in org.tratamientos
         ]
