@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Optional
 
-from app.basededatos import get_bd
+from app.basededatos import get_db as get_bd
 from app import models
 
 router = APIRouter(prefix="/admin", tags=["Admin"])

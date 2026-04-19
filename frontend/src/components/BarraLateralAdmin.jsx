@@ -4,36 +4,41 @@ import "../styles/sidebar.css";
 
 export default function BarraLateralAdmin() {
   const navigate = useNavigate()
-  const { logout } = useAuth()
+  const { cerrarSesion } = useAuth()
 
-  function cerrarSesion() {
-    logout()
+  function handleCerrarSesion() {
+    cerrarSesion()
     navigate('/login')
   }
 
   return (
     <aside className="sidebar">
       <nav className="sidebar-nav">
-        <NavLink
-          to="/admin"
-          end
-          className={({ isActive }) => 'sidebar-link' + (isActive ? ' activo' : '')}
-        >
-          <span className="sidebar-icon">🛡️</span>
-          <span>Panel de administración</span>
+        <NavLink to="/dashboardAdmin" end className={({ isActive }) => 'sidebar-link' + (isActive ? ' activo' : '')}>
+          <span className="sidebar-icon">🏠</span>
+          <span>Inicio</span>
         </NavLink>
-        <NavLink
-          to="/admin/organizaciones"
-          className={({ isActive }) => 'sidebar-link' + (isActive ? ' activo' : '')}
-        >
-          <span className="sidebar-icon">🏢</span>
-          <span>Organizaciones</span>
+        <NavLink to="/admin" className={({ isActive }) => 'sidebar-link' + (isActive ? ' activo' : '')}>
+          <span className="sidebar-icon">📋</span>
+          <span>tratamientos</span>
+        </NavLink>
+        <NavLink to="/admin/archivo" className={({ isActive }) => 'sidebar-link' + (isActive ? ' activo' : '')}>
+          <span className="sidebar-icon">📁</span>
+          <span>archivo</span>
+        </NavLink>
+        <NavLink to="/admin/informes" className={({ isActive }) => 'sidebar-link' + (isActive ? ' activo' : '')}>
+          <span className="sidebar-icon">📄</span>
+          <span>Informes</span>
+        </NavLink>
+        <NavLink to="/admin/config" className={({ isActive }) => 'sidebar-link' + (isActive ? ' activo' : '')}>
+          <span className="sidebar-icon">⚙️</span>
+          <span>admin</span>
         </NavLink>
       </nav>
 
       <div className="sidebar-footer">
         <span className="sidebar-usuario">admin</span>
-        <button className="btn-cerrar-sesion" onClick={cerrarSesion}>
+        <button className="btn-cerrar-sesion" onClick={handleCerrarSesion}>
           cerrar sesión
         </button>
       </div>

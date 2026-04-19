@@ -3,20 +3,20 @@ import { useAuth } from '../context/AuthContext'
 import BarraLateralAdmin from '../components/BarraLateralAdmin'
 import '../styles/dashboard.css'
 //enlace //
-const API = 'http://127.0.0.1:8002'
+const API = 'http://localhost:8000'
 
 export default function DashboardAdmin() {
-  const { getToken } = useAuth()
+  const { token } = useAuth()
   const [totalOrgs, setTotalOrgs] = useState('—')
 
   useEffect(() => {
-    cargarStats()
-  }, [])
+    if (token) cargarStats()
+  }, [token])
 
   async function cargarStats() {
     try {
       const res = await fetch(`${API}/admin/stats`, {
-        headers: { Authorization: `Bearer ${getToken()}` }
+        headers: { Authorization: `Bearer ${token}` }
       })
       if (res.ok) {
         const data = await res.json()

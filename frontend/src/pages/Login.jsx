@@ -86,7 +86,7 @@ export default function Login() {
 
       if (response.status === 200) {
         iniciarSesion(data); // esto guarda todo (token y usuario)
-        navigate("/dashboard");
+        navigate(data.organizacion?.rol === 'ADMIN' ? '/dashboardAdmin' : '/dashboard');
       } else if (response.status === 401) {
         setServerError("Correo o contraseña incorrectos");
       } else {

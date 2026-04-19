@@ -1,23 +1,28 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import Sidebar from '../components/Sidebar'
+import { useAuth } from '../context/AuthContext'
+import BarraLateralAdmin from '../components/BarraLateralAdmin'
+import logo from '../assets/DataCLlogo.png'
 import '../styles/detalle.css'
 
-const API = 'http://127.0.0.1:8002'
+const API = 'http://localhost:8000'
 
 export default function Detalle() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { token } = useAuth()
   const [org, setOrg] = useState(null)
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
-    cargarDetalle()
-  }, [id])
+    if (token) cargarDetalle()
+  }, [id, token])
 
   async function cargarDetalle() {
     try {
-      const res = await fetch(`${API}/admin/organizaciones/${id}`)
+      const res = await fetch(`${API}/admin/organizaciones/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       if (!res.ok) throw new Error('No encontrada')
       const data = await res.json()
       setOrg(data)
@@ -38,7 +43,7 @@ export default function Detalle() {
 
   return (
     <div className="detalle-layout">
-      <Sidebar nombreUsuario="admin" />
+      <BarraLateralAdmin />
 
       <main className="detalle-main">
         <div className="detalle-header">
@@ -46,7 +51,7 @@ export default function Detalle() {
             ← Volver
           </button>
           <h1 className="detalle-titulo">DETALLE</h1>
-          <div className="detalle-logo">logo</div>
+          <img src={logo} alt="DataCL" className="detalle-logo" />
         </div>
 
         <div className="detalle-contenido">

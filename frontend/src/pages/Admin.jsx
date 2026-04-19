@@ -1,26 +1,32 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Sidebar from '../components/Sidebar'
+import { useAuth } from '../context/AuthContext'
+import BarraLateralAdmin from '../components/BarraLateralAdmin'
+import logo from '../assets/DataCLlogo.png'
 import '../styles/admin.css'
 
-const API = 'http://127.0.0.1:8002'
-//admin@datacl.cl//
-//admin123//
+const API = 'http://localhost:8000'
+
 export default function Admin() {
   const navigate = useNavigate()
+  const { token } = useAuth()
   const [stats, setStats] = useState({ total: 0, completos: 0, pendientes: 0 })
   const [organizaciones, setOrganizaciones] = useState([])
   const [buscar, setBuscar] = useState('')
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
-    cargarStats()
-    cargarOrganizaciones()
-  }, [])
+    if (token) {
+      cargarStats()
+      cargarOrganizaciones()
+    }
+  }, [token])
 
   async function cargarStats() {
     try {
-      const res = await fetch(`${API}/admin/stats`)
+      const res = await fetch(`${API}/admin/stats`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       const data = await res.json()
       setStats(data)
     } catch (e) {
@@ -34,7 +40,9 @@ export default function Admin() {
       const url = termino
         ? `${API}/admin/organizaciones?buscar=${encodeURIComponent(termino)}`
         : `${API}/admin/organizaciones`
-      const res = await fetch(url)
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       const data = await res.json()
       setOrganizaciones(data)
     } catch (e) {
@@ -57,7 +65,7 @@ export default function Admin() {
 
   return (
     <div className="admin-layout">
-      <Sidebar nombreUsuario="admin" />
+      <BarraLateralAdmin />
 
       <main className="admin-main">
         <div className="admin-header">
@@ -70,7 +78,7 @@ export default function Admin() {
               value={buscar}
               onChange={handleBuscar}
             />
-            <div className="admin-logo">logo</div>
+            <img src={logo} alt="DataCL" className="admin-logo" />
           </div>
         </div>
 

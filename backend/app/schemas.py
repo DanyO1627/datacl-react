@@ -4,11 +4,12 @@ from datetime import datetime
 import re
 
 
-# Valida el body del POST /auth/registro
+# ── Schemas de autenticación ───────────────────────────────────────────────
+
 class OrganizacionRegistro(BaseModel):
     nombre: str
     rut: str
-    correo: EmailStr  # valida automáticamente el formato de email
+    correo: EmailStr
     password: str
     confirmar_password: str
 
@@ -22,7 +23,6 @@ class OrganizacionRegistro(BaseModel):
     @field_validator("rut")
     @classmethod
     def rut_formato(cls, v: str) -> str:
-        # Acepta formatos: 12345678-9 o 12345678-K
         patron = r"^\d{7,8}-[\dKk]$"
         if not re.match(patron, v.strip()):
             raise ValueError("RUT inválido. Formato esperado: 12345678-9")
@@ -45,33 +45,25 @@ class OrganizacionRegistro(BaseModel):
             raise ValueError("Las contraseñas no coinciden")
         return v
 
-# Valida el body del POST /auth/login
 class OrganizacionLogin(BaseModel):
     correo: EmailStr
     password: str
 
-# Define qué se devuelve al frontend (sin password)
 class OrganizacionRespuesta(BaseModel):
     id: int
     nombre: str
     correo: str
     rol: str
-
-    # permite que FastAPI convierta directamente un objeto SQLAlchemy en JSON
     model_config = {"from_attributes": True}
 
-# Lo que devuelve el login: token + datos de la organización
 class TokenRespuesta(BaseModel):
     access_token: str
     token_type: str = "bearer"
     organizacion: OrganizacionRespuesta
 
 
-# ── Schemas de tratamientos ──
+# ── Schemas de tratamientos ────────────────────────────────────────────────
 
-# Para crear un tratamiento — POST /tratamientos
-# Solo nombre es obligatorio, el resto es opcional porque el formulario es de 3 pasos
-# y el usuario puede guardar como PENDIENTE antes de completarlo todo
 class TratamientoCrear(BaseModel):
     nombre: str
     finalidad: Optional[str] = None
@@ -90,10 +82,6 @@ class TratamientoCrear(BaseModel):
             raise ValueError("El nombre del tratamiento no puede estar vacío")
         return v.strip()
 
-
-# Para editar un tratamiento — PUT /tratamientos/{id}
-# Todos los campos son opcionales porque el usuario puede editar solo uno
-# Si no manda un campo, ese campo no se toca en la BD
 class TratamientoEditar(BaseModel):
     nombre: Optional[str] = None
     finalidad: Optional[str] = None
@@ -104,13 +92,12 @@ class TratamientoEditar(BaseModel):
     medidas_seguridad: Optional[str] = None
     sale_extranjero: Optional[bool] = None
     decisiones_automatizadas: Optional[bool] = None
-    nivel_riesgo: Optional[str] = None  
+    nivel_riesgo: Optional[str] = None
     estado: Optional[str] = None
 
     @field_validator("nombre")
     @classmethod
     def nombre_no_vacio(cls, v: str) -> str:
-        # Solo valida si el campo llegó — si es None lo ignoramos
         if v is not None and not v.strip():
             raise ValueError("El nombre del tratamiento no puede estar vacío")
         return v.strip() if v else v
@@ -129,9 +116,6 @@ class TratamientoEditar(BaseModel):
             raise ValueError("estado debe ser PENDIENTE o COMPLETO")
         return v
 
-
-# Para devolver un tratamiento completo — GET /tratamientos/{id}
-# Incluye todos los campos que el frontend necesita mostrar
 class TratamientoRespuesta(BaseModel):
     id: int
     organizacion_id: int
@@ -148,18 +132,12 @@ class TratamientoRespuesta(BaseModel):
     estado: str
     creado_en: datetime
     actualizado_en: Optional[datetime] = None
-
     model_config = {"from_attributes": True}
 
-
-# Para el listado — GET /tratamientos
-# Solo los campos necesarios para mostrar la tabla/lista
-# Menos datos = respuesta más rápida
 class TratamientoListado(BaseModel):
     id: int
     nombre: str
     nivel_riesgo: Optional[str] = None
     estado: str
     creado_en: datetime
-
     model_config = {"from_attributes": True}

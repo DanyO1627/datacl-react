@@ -22,24 +22,24 @@ class Organizacion(Base):
 class Tratamiento(Base):
     __tablename__ = "tratamientos"
 
-    id                      = Column(Integer, primary_key=True, index=True)
-    organizacion_id         = Column(Integer, ForeignKey("organizaciones.id", ondelete="CASCADE"), nullable=False)
-    nombre                  = Column(String(200), nullable=False)
-    finalidad               = Column(Text, nullable=True)
-    base_legal              = Column(String(100), nullable=True)
-    datos_sensibles         = Column(Boolean, default=False, nullable=False)
-    destinatarios           = Column(Text, nullable=True)
-    plazo_conservacion      = Column(String(100), nullable=True)
-    medidas_seguridad       = Column(Text, nullable=True)
-    sale_extranjero         = Column(Boolean, default=False, nullable=False)
+    id                       = Column(Integer, primary_key=True, index=True)
+    organizacion_id          = Column(Integer, ForeignKey("organizaciones.id", ondelete="CASCADE"), nullable=False)
+    nombre                   = Column(String(200), nullable=False)
+    finalidad                = Column(Text, nullable=True)
+    base_legal               = Column(String(100), nullable=True)
+    datos_sensibles          = Column(Boolean, default=False, nullable=False)
+    destinatarios            = Column(Text, nullable=True)
+    plazo_conservacion       = Column(String(100), nullable=True)
+    medidas_seguridad        = Column(Text, nullable=True)
+    sale_extranjero          = Column(Boolean, default=False, nullable=False)
     decisiones_automatizadas = Column(Boolean, default=False, nullable=False)
-    nivel_riesgo            = Column(String(10), nullable=True)   # BAJO, MEDIO o ALTO
-    estado                  = Column(Enum("PENDIENTE", "COMPLETO"), default="PENDIENTE", nullable=False)
-    probabilidad            = Column(String(10), nullable=True)   # Sprint 4
-    impacto                 = Column(String(10), nullable=True)   # Sprint 4
-    fecha_evaluacion        = Column(DateTime, nullable=True)     # Sprint 4
-    creado_en               = Column(DateTime, server_default=func.now(), nullable=False)
-    actualizado_en          = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    nivel_riesgo             = Column(String(10), nullable=True)
+    estado                   = Column(Enum("PENDIENTE", "COMPLETO"), default="PENDIENTE", nullable=False)
+    probabilidad             = Column(String(10), nullable=True)
+    impacto                  = Column(String(10), nullable=True)
+    fecha_evaluacion         = Column(DateTime, nullable=True)
+    creado_en                = Column(DateTime, server_default=func.now(), nullable=False)
+    actualizado_en           = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
     organizacion = relationship("Organizacion", back_populates="tratamientos")
     campos       = relationship("CampoRat", back_populates="tratamiento", cascade="all, delete-orphan")

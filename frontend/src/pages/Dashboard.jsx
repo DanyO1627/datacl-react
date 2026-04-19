@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar'
 import OnboardingModal from '../components/OnboardingModal'
 import '../styles/dashboard.css'
 
-const API = 'http://127.0.0.1:8002'
+const API = 'http://localhost:8000'
 
 export default function Dashboard() {
   const { usuario, getToken } = useAuth()
