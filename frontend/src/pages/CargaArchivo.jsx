@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { analizarArchivo } from "../services/analisisService";
 import BarraLateral from "../components/BarraLateral";
 import "../styles/CargaArchivo.css";
 
@@ -11,6 +13,8 @@ export default function CargaArchivo() {
   const [archivoDiccionario, setArchivoDiccionario] = useState(null);
   const inputRef = useRef(null);
   const inputDiccionarioRef = useRef(null);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   // ── Drag & drop ───────────────────────────────────────────────
   const handleDragOver = useCallback((e) => {
@@ -69,9 +73,29 @@ export default function CargaArchivo() {
   //
   async function handleAnalizar() {
     if (!archivo) return;
+
     setCargando(true);
-    await new Promise((r) => setTimeout(r, 2000)); // simulación — reemplazar con fetch
-    setCargando(false);
+    setError(null); // limpia error anterior
+
+    try {
+      const resultado = await analizarArchivo(
+        archivo,
+        tieneDiccionario ? archivoDiccionario : null
+      );
+      // Navega a pantalla de resultados del análisis: pasando los resultados en el state
+      // dani los lee con: const { state } = useLocation()
+      navigate("/resultados-analisis", { state: resultado });
+
+    } catch (err) {
+      // FastAPI devuelve el mensaje en err.response.data.detail
+      const mensaje =
+        err.response?.data?.detail ||
+        "Error al conectar con el servidor. Verifica que el backend esté corriendo.";
+      setError(mensaje);
+    } finally {
+      // finally siempre se ejecuta — haya error o no
+      setCargando(false);
+    }
   }
 
   return (
@@ -109,9 +133,9 @@ export default function CargaArchivo() {
                 <>
                   <div className="ca-nube-icono">
                     <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="16 16 12 12 8 16"/>
-                      <line x1="12" y1="12" x2="12" y2="21"/>
-                      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                      <polyline points="16 16 12 12 8 16" />
+                      <line x1="12" y1="12" x2="12" y2="21" />
+                      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
                     </svg>
                   </div>
                   <p className="ca-zona-texto-principal">Arrastra tu archivo aquí</p>
@@ -127,8 +151,8 @@ export default function CargaArchivo() {
                 <div className="ca-archivo-info">
                   <div className="ca-archivo-icono">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
                     </svg>
                   </div>
                   <div className="ca-archivo-detalles">
@@ -141,8 +165,8 @@ export default function CargaArchivo() {
                     title="Quitar archivo"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                      <line x1="18" y1="6" x2="6" y2="18"/>
-                      <line x1="6" y1="6" x2="18" y2="18"/>
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                   </button>
                 </div>
@@ -152,6 +176,14 @@ export default function CargaArchivo() {
             <p className="ca-formatos">Formatos aceptados: CSV, Excel (.xlsx), .sql</p>
 
             <div className="ca-analizar-row">
+
+              {/* Mensaje de error del backend (solo aparece si hay error) */}
+              {error && (
+                <p style={{ color: "#e53e3e", fontSize: "0.875rem", marginBottom: "0.5rem" }}>
+                  {error}
+                </p>
+              )}
+
               <button
                 className={`ca-btn-analizar ${!archivo || cargando ? "ca-btn-analizar--disabled" : ""}`}
                 disabled={!archivo || cargando}
@@ -198,7 +230,7 @@ export default function CargaArchivo() {
               </div>
               <span className={`ca-acordeon-chevron ${diccionarioAbierto ? "ca-acordeon-chevron--abierto" : ""}`}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9"/>
+                  <polyline points="6 9 12 15 18 9" />
                 </svg>
               </span>
             </div>
@@ -247,10 +279,10 @@ export default function CargaArchivo() {
                       onClick={() => inputDiccionarioRef.current?.click()}
                     >
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="12" y1="18" x2="12" y2="12"/>
-                        <line x1="9" y1="15" x2="15" y2="15"/>
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="12" y1="18" x2="12" y2="12" />
+                        <line x1="9" y1="15" x2="15" y2="15" />
                       </svg>
                       <span className="ca-dic-zona-texto">Subir diccionario</span>
                       <span className="ca-dic-zona-sub">CSV o JSON</span>
@@ -259,8 +291,8 @@ export default function CargaArchivo() {
                     <div className="ca-dic-archivo">
                       <div className="ca-archivo-icono" style={{ color: "var(--mid)" }}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                          <polyline points="14 2 14 8 20 8"/>
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
                         </svg>
                       </div>
                       <span className="ca-dic-archivo-nombre">{archivoDiccionario.name}</span>
@@ -270,8 +302,8 @@ export default function CargaArchivo() {
                         title="Quitar diccionario"
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                          <line x1="18" y1="6" x2="6" y2="18"/>
-                          <line x1="6" y1="6" x2="18" y2="18"/>
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
                       </button>
                     </div>
