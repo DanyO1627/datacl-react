@@ -64,6 +64,14 @@ class TokenRespuesta(BaseModel):
 
 # ── Schemas de tratamientos ────────────────────────────────────────────────
 
+# Schema para cada campo que llega desde el análisis de Python
+# Va dentro de la lista campos_detectados al crear un tratamiento
+class CampoRatEntrada(BaseModel):
+    nombre_columna: str
+    tipo_dato: Optional[str] = None
+    es_sensible: bool = False
+    fuente: str = "AUTOMATICO"
+
 class TratamientoCrear(BaseModel):
     nombre: str
     finalidad: Optional[str] = None
@@ -74,6 +82,7 @@ class TratamientoCrear(BaseModel):
     medidas_seguridad: Optional[str] = None
     sale_extranjero: bool = False
     decisiones_automatizadas: bool = False
+    campos_detectados: list[CampoRatEntrada] = [] 
 
     @field_validator("nombre")
     @classmethod
