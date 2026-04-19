@@ -1,4 +1,6 @@
+from typing import Optional
 from pydantic import BaseModel, EmailStr, field_validator
+from datetime import datetime
 import re
 
 # Valida el body del POST /auth/registro
@@ -65,3 +67,27 @@ class TokenRespuesta(BaseModel):
     access_token: str
     token_type: str = "bearer"
     organizacion: OrganizacionRespuesta
+
+
+# Lo que devuelve GET /tratamientos (un ítem de la lista)
+class TratamientoListado(BaseModel):
+    id: int
+    tipo: str
+    estado: str
+    nivel_riesgo: str
+    fecha: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# Body del PUT /tratamientos/{id}
+class TratamientoEditar(BaseModel):
+    tipo: Optional[str] = None
+    estado: Optional[str] = None
+    nivel_riesgo: Optional[str] = None
+
+
+# Body del POST /tratamientos
+class TratamientoCrear(BaseModel):
+    tipo: str
+    nivel_riesgo: Optional[str] = "BAJO"

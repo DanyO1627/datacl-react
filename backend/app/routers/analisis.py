@@ -6,21 +6,51 @@ from app.utils.analisis import PALABRAS_PERSONALES, PALABRAS_SENSIBLES
 
 router = APIRouter(prefix="/analizar", tags=["analisis"])
 
+TAMANO_MAXIMO = 5 * 1024 * 1024  # 5 MB
+EXTENSIONES_PERMITIDAS = ('.csv', '.xlsx', '.xls')
 
-def _leer_archivo(archivo: UploadFile) -> pd.DataFrame:
-    """Lee un archivo CSV o Excel y devuelve un DataFrame."""
-    contenido = archivo.file.read()
+
+def _validar_archivo(archivo: UploadFile, contenido: bytes):
+    """Valida extensión, tamaño y que no esté vacío."""
     nombre = archivo.filename.lower()
 
-    if nombre.endswith('.csv'):
-        return pd.read_csv(io.BytesIO(contenido))
-    elif nombre.endswith(('.xlsx', '.xls')):
-        return pd.read_excel(io.BytesIO(contenido))
-    else:
+    if not nombre.endswith(EXTENSIONES_PERMITIDAS):
         raise HTTPException(
             status_code=400,
-            detail="Formato no soportado. Usa CSV o Excel (.xlsx, .xls)"
+            detail="Formato no soportado. Use CSV o Excel."
         )
+
+    if len(contenido) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="El archivo está vacío."
+        )
+
+    if len(contenido) > TAMANO_MAXIMO:
+        raise HTTPException(
+            status_code=400,
+            detail="El archivo supera el tamaño máximo permitido (5MB)."
+        )
+
+
+def _leer_archivo(archivo: UploadFile) -> tuple[pd.DataFrame, bytes]:
+    """Lee un archivo CSV o Excel y devuelve un DataFrame y los bytes leídos."""
+    contenido = archivo.file.read()
+    _validar_archivo(archivo, contenido)
+
+    nombre = archivo.filename.lower()
+    try:
+        if nombre.endswith('.csv'):
+            df = pd.read_csv(io.BytesIO(contenido))
+        else:
+            df = pd.read_excel(io.BytesIO(contenido), engine='openpyxl')
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"No se pudo leer el archivo: {str(e)}")
+
+    if len(df.columns) == 0:
+        raise HTTPException(status_code=400, detail="El archivo está vacío.")
+
+    return df, contenido
 
 
 def _clasificar_columna(texto: str) -> str | None:
@@ -62,16 +92,7 @@ async def analizar_archivo(archivo: UploadFile = File(...)):
     Nivel 1: recibe un archivo CSV o Excel y clasifica sus columnas
     comparando los nombres directamente contra el diccionario de palabras clave.
     """
-    try:
-        df = _leer_archivo(archivo)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error al leer el archivo: {str(e)}")
-
-    if len(df.columns) == 0:
-        raise HTTPException(status_code=400, detail="El archivo no tiene columnas.")
-
+    df, _ = _leer_archivo(archivo)
     columnas = list(df.columns)
     resultado = _deteccion_nivel1(columnas)
 
@@ -99,20 +120,10 @@ async def analizar_con_diccionario(
     que nivel 1 no pudo clasificar.
     """
     # Leer archivo principal
-    try:
-        df_datos = _leer_archivo(archivo)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error al leer el archivo principal: {str(e)}")
+    df_datos, _ = _leer_archivo(archivo)
 
     # Leer diccionario
-    try:
-        df_dic = _leer_archivo(diccionario)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error al leer el diccionario: {str(e)}")
+    df_dic, _ = _leer_archivo(diccionario)
 
     # Validar que el diccionario tiene exactamente 2 columnas
     if len(df_dic.columns) != 2:

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import '../styles/informes.css'
 import BarraLateral from '../components/BarraLateral'
 
-const API = 'http://127.0.0.1:8002'
+const API = 'http://localhost:8000'
 
 export default function Informes() {
   const [informes, setInformes] = useState([])

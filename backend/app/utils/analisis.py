@@ -114,6 +114,26 @@ import io
 import pandas as pd
 
 
+def leer_columnas_csv(contenido: bytes) -> list[str]:
+    """
+    Recibe los bytes de un archivo CSV y devuelve la lista de nombres
+    de columnas en minúsculas.
+
+    Lanza ValueError si el archivo está vacío o es inválido.
+    """
+    try:
+        df = pd.read_csv(io.BytesIO(contenido))
+    except pd.errors.EmptyDataError:
+        raise ValueError("El archivo está vacío.")
+    except Exception as e:
+        raise ValueError(f"No se pudo leer el archivo CSV: {str(e)}")
+
+    if len(df.columns) == 0:
+        raise ValueError("El archivo está vacío.")
+
+    return df.columns.str.lower().tolist()
+
+
 def leer_columnas_excel(contenido: bytes) -> list[str]:
     """
     Recibe los bytes de un archivo Excel y devuelve la lista de nombres

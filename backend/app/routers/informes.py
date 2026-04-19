@@ -7,7 +7,7 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 
-from app.basededatos import get_bd
+from app.basededatos import get_db as get_bd
 from app import models
 
 router = APIRouter(prefix="/informes", tags=["Informes"])
