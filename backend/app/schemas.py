@@ -3,7 +3,6 @@ from typing import Optional
 from datetime import datetime
 import re
 
-# ── Schemas de autenticación (existentes) ──────────────────────────────────
 
 # Valida el body del POST /auth/registro
 class OrganizacionRegistro(BaseModel):
@@ -68,7 +67,7 @@ class TokenRespuesta(BaseModel):
     organizacion: OrganizacionRespuesta
 
 
-# ── Schemas de tratamientos (Novedad) ──────────────────────────────────────
+# ── Schemas de tratamientos ──
 
 # Para crear un tratamiento — POST /tratamientos
 # Solo nombre es obligatorio, el resto es opcional porque el formulario es de 3 pasos
