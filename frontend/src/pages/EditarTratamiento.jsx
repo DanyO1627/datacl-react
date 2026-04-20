@@ -8,15 +8,13 @@ const API = 'http://localhost:8000'
 
 const PASOS = ['Información básica', 'Datos tratados', 'Nivel de riesgo']
 
-const TIPOS_TRATAMIENTO = [
-  'Gestión de clientes',
-  'Recursos humanos',
-  'Nómina y remuneraciones',
-  'Marketing y comunicaciones',
-  'Seguridad y vigilancia',
-  'Salud y bienestar laboral',
-  'Servicios financieros',
-  'Otro',
+const BASES_LEGALES = [
+  'Consentimiento del titular',
+  'Obligación legal',
+  'Interés legítimo',
+  'Ejecución de contrato',
+  'Interés vital',
+  'Misión de interés público',
 ]
 
 export default function EditarTratamiento() {
@@ -30,7 +28,15 @@ export default function EditarTratamiento() {
   const [error, setError] = useState('')
 
   const [form, setForm] = useState({
-    tipo: '',
+    nombre: '',
+    finalidad: '',
+    base_legal: '',
+    datos_sensibles: false,
+    destinatarios: '',
+    plazo_conservacion: '',
+    medidas_seguridad: '',
+    sale_extranjero: false,
+    decisiones_automatizadas: false,
     estado: 'PENDIENTE',
     nivel_riesgo: 'BAJO',
   })
@@ -44,9 +50,17 @@ export default function EditarTratamiento() {
         if (!res.ok) throw new Error('No encontrado')
         const data = await res.json()
         setForm({
-          tipo: data.tipo,
-          estado: data.estado,
-          nivel_riesgo: data.nivel_riesgo,
+          nombre: data.nombre || '',
+          finalidad: data.finalidad || '',
+          base_legal: data.base_legal || '',
+          datos_sensibles: data.datos_sensibles || false,
+          destinatarios: data.destinatarios || '',
+          plazo_conservacion: data.plazo_conservacion || '',
+          medidas_seguridad: data.medidas_seguridad || '',
+          sale_extranjero: data.sale_extranjero || false,
+          decisiones_automatizadas: data.decisiones_automatizadas || false,
+          estado: data.estado || 'PENDIENTE',
+          nivel_riesgo: data.nivel_riesgo || 'BAJO',
         })
       } catch {
         setError('No se pudo cargar el tratamiento.')
@@ -58,15 +72,25 @@ export default function EditarTratamiento() {
   }, [id, token])
 
   function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const { name, value, type, checked } = e.target
+    setForm({ ...form, [name]: type === 'checkbox' ? checked : value })
   }
 
-  function siguiente() {
-    if (paso < 3) setPaso(paso + 1)
-  }
-
-  function anterior() {
-    if (paso > 1) setPaso(paso - 1)
+  async function recalcular() {
+    try {
+      const res = await fetch(`${API}/tratamientos/${id}/evaluar`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      setForm(f => ({
+        ...f,
+        nivel_riesgo: data.nivel_riesgo,
+      }))
+    } catch {
+      setError('No se pudo recalcular el riesgo.')
+    }
   }
 
   async function guardar() {
@@ -112,7 +136,6 @@ export default function EditarTratamiento() {
         <div className="editar-card">
           <h1 className="editar-titulo">Editar tratamiento</h1>
 
-          {/* Barra de progreso */}
           <div className="editar-progreso">
             {PASOS.map((nombre, i) => (
               <div key={i} className={`editar-paso ${paso === i + 1 ? 'activo' : ''} ${paso > i + 1 ? 'completado' : ''}`}>
@@ -122,34 +145,76 @@ export default function EditarTratamiento() {
             ))}
           </div>
 
-          {/* Paso 1 */}
+          {/* Paso 1 — Información básica */}
           {paso === 1 && (
             <div className="editar-seccion">
               <h2 className="editar-subtitulo">Información básica</h2>
-              <p className="editar-descripcion">
-                Indica el tipo de tratamiento de datos que realiza tu organización.
-              </p>
+              <p className="editar-descripcion">Datos principales del tratamiento RAT.</p>
+
               <div className="campo">
-                <label>Tipo de tratamiento</label>
-                <select name="tipo" value={form.tipo} onChange={handleChange}>
+                <label>Nombre del tratamiento</label>
+                <input name="nombre" value={form.nombre} onChange={handleChange} placeholder="Ej: Gestión de clientes" />
+              </div>
+
+              <div className="campo">
+                <label>Finalidad</label>
+                <input name="finalidad" value={form.finalidad} onChange={handleChange} placeholder="¿Para qué se usan los datos?" />
+              </div>
+
+              <div className="campo">
+                <label>Base legal</label>
+                <select name="base_legal" value={form.base_legal} onChange={handleChange}>
                   <option value="">Selecciona una opción</option>
-                  {TIPOS_TRATAMIENTO.map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
+                  {BASES_LEGALES.map(b => <option key={b} value={b}>{b}</option>)}
                 </select>
+              </div>
+
+              <div className="campo">
+                <label>Destinatarios</label>
+                <input name="destinatarios" value={form.destinatarios} onChange={handleChange} placeholder="¿Quién recibe los datos?" />
               </div>
             </div>
           )}
 
-          {/* Paso 2 */}
+          {/* Paso 2 — Datos tratados */}
           {paso === 2 && (
             <div className="editar-seccion">
               <h2 className="editar-subtitulo">Datos tratados</h2>
-              <p className="editar-descripcion">
-                Indica el estado actual de este tratamiento.
-              </p>
+              <p className="editar-descripcion">Características de los datos personales involucrados.</p>
+
               <div className="campo">
-                <label>Estado del tratamiento</label>
+                <label>Plazo de conservación</label>
+                <input name="plazo_conservacion" value={form.plazo_conservacion} onChange={handleChange} placeholder="Ej: 5 años" />
+              </div>
+
+              <div className="campo">
+                <label>Medidas de seguridad</label>
+                <input name="medidas_seguridad" value={form.medidas_seguridad} onChange={handleChange} placeholder="Ej: Cifrado, control de acceso" />
+              </div>
+
+              <div className="campo">
+                <label style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <input type="checkbox" name="datos_sensibles" checked={form.datos_sensibles} onChange={handleChange} />
+                  Incluye datos sensibles
+                </label>
+              </div>
+
+              <div className="campo">
+                <label style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <input type="checkbox" name="sale_extranjero" checked={form.sale_extranjero} onChange={handleChange} />
+                  Sale al extranjero
+                </label>
+              </div>
+
+              <div className="campo">
+                <label style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <input type="checkbox" name="decisiones_automatizadas" checked={form.decisiones_automatizadas} onChange={handleChange} />
+                  Incluye decisiones automatizadas
+                </label>
+              </div>
+
+              <div className="campo">
+                <label>Estado</label>
                 <select name="estado" value={form.estado} onChange={handleChange}>
                   <option value="PENDIENTE">Pendiente</option>
                   <option value="COMPLETO">Completo</option>
@@ -158,13 +223,11 @@ export default function EditarTratamiento() {
             </div>
           )}
 
-          {/* Paso 3 */}
+          {/* Paso 3 — Nivel de riesgo */}
           {paso === 3 && (
             <div className="editar-seccion">
               <h2 className="editar-subtitulo">Nivel de riesgo</h2>
-              <p className="editar-descripcion">
-                Clasifica el nivel de riesgo que representa este tratamiento.
-              </p>
+              <p className="editar-descripcion">Clasifica el nivel de riesgo de este tratamiento.</p>
               <div className="campo">
                 <label>Nivel de riesgo</label>
                 <select name="nivel_riesgo" value={form.nivel_riesgo} onChange={handleChange}>
@@ -173,12 +236,7 @@ export default function EditarTratamiento() {
                   <option value="ALTO">Alto</option>
                 </select>
               </div>
-
-              <button
-                className="btn-recalcular"
-                type="button"
-                onClick={() => alert('Disponible en próxima versión')}
-              >
+              <button className="btn-recalcular" type="button" onClick={recalcular}>
                 Recalcular nivel de riesgo
               </button>
             </div>
@@ -186,15 +244,14 @@ export default function EditarTratamiento() {
 
           {error && <p className="editar-error">{error}</p>}
 
-          {/* Navegación */}
           <div className="editar-navegacion">
             {paso > 1 && (
-              <button className="btn-anterior" onClick={anterior}>
+              <button className="btn-anterior" onClick={() => setPaso(paso - 1)}>
                 ← Anterior
               </button>
             )}
             {paso < 3 ? (
-              <button className="btn-siguiente" onClick={siguiente} disabled={paso === 1 && !form.tipo}>
+              <button className="btn-siguiente" onClick={() => setPaso(paso + 1)} disabled={paso === 1 && !form.nombre}>
                 Siguiente →
               </button>
             ) : (

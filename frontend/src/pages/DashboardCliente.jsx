@@ -1,93 +1,74 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { obtenerPerfil } from "../services/authService";
-import BarraLateral from "../components/BarraLateral";
-import "../styles/dashboardCliente.css";
-
-
-// En el sprint 5 los datos van a ser del backend
-const METRICAS = [
-  {
-    id: "registrados",
-    etiqueta: "Tratamientos registrados",
-    valor: 0,
-    icono: "📋",
-    color: "azul",
-  },
-  {
-    id: "pendientes",
-    etiqueta: "Tratamientos pendientes",
-    valor: 0,
-    icono: "⏳",
-    color: "naranja",
-  },
-  {
-    id: "informes",
-    etiqueta: "Informes generados",
-    valor: 0,
-    icono: "📄",
-    color: "verde",
-  },
-];
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
+import { obtenerPerfil } from "../services/authService"
+import { obtenerTratamientos } from "../services/tratamientosService"
+import BarraLateral from "../components/BarraLateral"
+import "../styles/dashboardCliente.css"
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const { usuario, token } = useAuth();
+  const navigate = useNavigate()
+  const { usuario, token } = useAuth()
 
-  // estado del nombre se actualiza con backend
-  const [nombreOrg, setNombreOrg] = useState(usuario?.nombre || "");
-  const [cargando, setCargando] = useState(true);
-
+  const [nombreOrg, setNombreOrg] = useState(usuario?.nombre || "")
+  const [cargando, setCargando] = useState(true)
+  const [metricas, setMetricas] = useState({ total: 0, pendientes: 0, alto: 0 })
+  const [ultimos, setUltimos] = useState([])
 
   const fechaHoy = new Date().toLocaleDateString("es-CL", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+  })
 
-  // al cargar se verifica la sesión con GET /auth/me
-  // para confirmar que el token siga siendo válido
   useEffect(() => {
-    async function cargarPerfil() {
+    if (!token) { navigate("/login"); return }
+
+    async function cargar() {
       try {
-        const perfil = await obtenerPerfil(token);
-        setNombreOrg(perfil.nombre);
-      } catch (error) {
-        // si no, se redirige al login
-        console.error("Error al cargar perfil:", error);
-        navigate("/login");
+        const [perfil, tratamientos] = await Promise.all([
+          obtenerPerfil(token),
+          obtenerTratamientos(token),
+        ])
+        setNombreOrg(perfil.nombre)
+
+        setMetricas({
+          total:     tratamientos.length,
+          pendientes: tratamientos.filter(t => t.estado === "PENDIENTE").length,
+          alto:      tratamientos.filter(t => t.nivel_riesgo === "ALTO").length,
+        })
+
+        const ordenados = [...tratamientos].sort(
+          (a, b) => new Date(b.creado_en) - new Date(a.creado_en)
+        )
+        setUltimos(ordenados.slice(0, 3))
+      } catch {
+        navigate("/login")
       } finally {
-        setCargando(false);
+        setCargando(false)
       }
     }
 
-    if (token) {
-      cargarPerfil();
-    } else {
-      navigate("/login");
-    }
-  }, [token, navigate]);
+    cargar()
+  }, [token, navigate])
 
   if (cargando) {
     return (
       <div className="dashboard__cargando">
         <div className="dashboard__spinner" />
       </div>
-    );
+    )
   }
+
+  const TARJETAS = [
+    { id: "registrados", etiqueta: "Tratamientos registrados", valor: metricas.total,     icono: "📋", color: "azul"    },
+    { id: "pendientes",  etiqueta: "Tratamientos pendientes",  valor: metricas.pendientes, icono: "⏳", color: "naranja" },
+    { id: "alto",        etiqueta: "Riesgo alto",              valor: metricas.alto,       icono: "⚠️", color: "verde"   },
+  ]
 
   return (
     <div className="dashboard">
-
-      {/* Barra lateral reutilizable */}
       <BarraLateral />
 
-      {/* lo principal (tiene margen izquierdo el ancho de la barra lateral) */}
       <main className="dashboard__contenido">
-
-        {/* Header */}
         <header className="dashboard__header">
           <div>
             <h1 className="dashboard__saludo">
@@ -97,35 +78,42 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* Tarjetas métricas */}
         <section className="dashboard__metricas">
-          {METRICAS.map((metrica) => (
-            <div
-              key={metrica.id}
-              className={`dashboard__tarjeta dashboard__tarjeta--${metrica.color}`}
-            >
-              <div className="dashboard__tarjeta-icono">{metrica.icono}</div>
+          {TARJETAS.map(t => (
+            <div key={t.id} className={`dashboard__tarjeta dashboard__tarjeta--${t.color}`}>
+              <div className="dashboard__tarjeta-icono">{t.icono}</div>
               <div className="dashboard__tarjeta-info">
-                <span className="dashboard__tarjeta-etiqueta">
-                  {metrica.etiqueta}
-                </span>
-                <span className="dashboard__tarjeta-valor">{metrica.valor}</span>
+                <span className="dashboard__tarjeta-etiqueta">{t.etiqueta}</span>
+                <span className="dashboard__tarjeta-valor">{t.valor}</span>
               </div>
             </div>
           ))}
         </section>
 
+        {ultimos.length > 0 && (
+          <section className="dashboard__ultimos">
+            <h2 className="dashboard__ultimos-titulo">Últimos tratamientos</h2>
+            <ul className="dashboard__ultimos-lista">
+              {ultimos.map(t => (
+                <li
+                  key={t.id}
+                  className="dashboard__ultimos-item"
+                  onClick={() => navigate(`/tratamientos/${t.id}`)}
+                >
+                  <span className="dashboard__ultimos-nombre">{t.nombre}</span>
+                  <span className={`dashboard__ultimos-badge badge-${t.nivel_riesgo?.toLowerCase()}`}>
+                    {t.nivel_riesgo}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </main>
 
-      {/* Botón de nuevo tratamiento (es para el sprint 3) */}
-      <button
-        className="dashboard__fab"
-        onClick={() => navigate("/nuevo-tratamiento")}
-        title="Nuevo tratamiento"
-      >
+      <button className="dashboard__fab" onClick={() => navigate("/nuevo-tratamiento")} title="Nuevo tratamiento">
         + Nuevo tratamiento
       </button>
-
     </div>
-  );
+  )
 }

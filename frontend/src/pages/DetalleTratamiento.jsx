@@ -87,9 +87,10 @@ export default function DetalleTratamiento() {
 
   const riesgo = COLOR_RIESGO[tratamiento.nivel_riesgo] || COLOR_RIESGO.BAJO
   const estado = COLOR_ESTADO[tratamiento.estado] || COLOR_ESTADO.PENDIENTE
-  const fechaFormato = new Date(tratamiento.fecha).toLocaleDateString('es-CL', {
+  const fechaFormato = new Date(tratamiento.creado_en).toLocaleDateString('es-CL', {
     year: 'numeric', month: 'long', day: 'numeric',
   })
+  const val = v => v || <span className="detalle-campo-pendiente">Por completar</span>
 
   return (
     <div className="detalle-layout">
@@ -101,13 +102,13 @@ export default function DetalleTratamiento() {
         <nav className="detalle-breadcrumb">
           <Link to="/mis-tratamientos">Mis tratamientos</Link>
           <span>/</span>
-          <span>{tratamiento.tipo}</span>
+          <span>{tratamiento.nombre}</span>
         </nav>
 
         {/* Header con badge de riesgo */}
         <div className="detalle-header">
           <div>
-            <h1 className="detalle-titulo">{tratamiento.tipo}</h1>
+            <h1 className="detalle-titulo">{tratamiento.nombre}</h1>
             <span className={`detalle-estado-badge ${estado.clase}`}>{estado.etiqueta}</span>
           </div>
           <div className="detalle-acciones">
@@ -133,8 +134,8 @@ export default function DetalleTratamiento() {
             <h2 className="detalle-columna-titulo">Información del tratamiento</h2>
 
             <div className="detalle-campo">
-              <span className="detalle-campo-label">Tipo</span>
-              <span className="detalle-campo-valor">{tratamiento.tipo}</span>
+              <span className="detalle-campo-label">Nombre</span>
+              <span className="detalle-campo-valor">{tratamiento.nombre}</span>
             </div>
 
             <div className="detalle-campo">
@@ -144,22 +145,22 @@ export default function DetalleTratamiento() {
 
             <div className="detalle-campo">
               <span className="detalle-campo-label">Finalidad</span>
-              <span className="detalle-campo-valor detalle-campo-pendiente">Por completar</span>
+              <span className="detalle-campo-valor">{val(tratamiento.finalidad)}</span>
             </div>
 
             <div className="detalle-campo">
               <span className="detalle-campo-label">Base legal</span>
-              <span className="detalle-campo-valor detalle-campo-pendiente">Por completar</span>
+              <span className="detalle-campo-valor">{val(tratamiento.base_legal)}</span>
             </div>
 
             <div className="detalle-campo">
               <span className="detalle-campo-label">Destinatarios</span>
-              <span className="detalle-campo-valor detalle-campo-pendiente">Por completar</span>
+              <span className="detalle-campo-valor">{val(tratamiento.destinatarios)}</span>
             </div>
 
             <div className="detalle-campo">
               <span className="detalle-campo-label">Sale al extranjero</span>
-              <span className="detalle-campo-valor detalle-campo-pendiente">Por completar</span>
+              <span className="detalle-campo-valor">{tratamiento.sale_extranjero ? 'Sí' : 'No'}</span>
             </div>
           </div>
 
@@ -168,25 +169,23 @@ export default function DetalleTratamiento() {
             <h2 className="detalle-columna-titulo">Datos personales involucrados</h2>
 
             <div className="detalle-campo">
-              <span className="detalle-campo-label">Categorías de datos</span>
-              <div className="detalle-badges">
-                <span className="detalle-badge detalle-badge-gris">Por completar</span>
-              </div>
+              <span className="detalle-campo-label">Datos sensibles</span>
+              <span className="detalle-campo-valor">{tratamiento.datos_sensibles ? 'Sí' : 'No'}</span>
             </div>
 
             <div className="detalle-campo">
-              <span className="detalle-campo-label">Datos sensibles</span>
-              <span className="detalle-campo-valor detalle-campo-pendiente">Por completar</span>
+              <span className="detalle-campo-label">Decisiones automatizadas</span>
+              <span className="detalle-campo-valor">{tratamiento.decisiones_automatizadas ? 'Sí' : 'No'}</span>
             </div>
 
             <div className="detalle-campo">
               <span className="detalle-campo-label">Plazo de conservación</span>
-              <span className="detalle-campo-valor detalle-campo-pendiente">Por completar</span>
+              <span className="detalle-campo-valor">{val(tratamiento.plazo_conservacion)}</span>
             </div>
 
             <div className="detalle-campo">
               <span className="detalle-campo-label">Medidas de seguridad</span>
-              <span className="detalle-campo-valor detalle-campo-pendiente">Por completar</span>
+              <span className="detalle-campo-valor">{val(tratamiento.medidas_seguridad)}</span>
             </div>
           </div>
         </div>

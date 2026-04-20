@@ -49,7 +49,7 @@ export default function MisTratamientos() {
   }, [token, filtroRiesgo, filtroEstado])
 
   const visibles = tratamientos.filter(t =>
-    t.tipo.toLowerCase().includes(busqueda.toLowerCase())
+    t.nombre.toLowerCase().includes(busqueda.toLowerCase())
   )
 
   function formatearFecha(fechaStr) {
@@ -150,7 +150,7 @@ export default function MisTratamientos() {
                     className="mt-fila"
                     onClick={() => navigate(`/tratamientos/${t.id}`)}
                   >
-                    <td className="mt-celda-nombre">{t.tipo}</td>
+                    <td className="mt-celda-nombre">{t.nombre}</td>
                     <td>
                       <span className={`mt-badge ${BADGE_RIESGO[t.nivel_riesgo] || 'badge-riesgo-bajo'}`}>
                         {t.nivel_riesgo}
@@ -161,7 +161,7 @@ export default function MisTratamientos() {
                         {t.estado === 'COMPLETO' ? 'Completo' : 'Pendiente'}
                       </span>
                     </td>
-                    <td className="mt-celda-fecha">{formatearFecha(t.fecha)}</td>
+                    <td className="mt-celda-fecha">{formatearFecha(t.creado_en)}</td>
                     <td className="mt-celda-accion">
                       <span className="mt-ver-detalle">Ver →</span>
                     </td>

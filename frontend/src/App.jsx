@@ -15,6 +15,7 @@ import CargaArchivo from "./pages/CargaArchivo";
 import EditarTratamiento from "./pages/EditarTratamiento";
 import DetalleTratamiento from "./pages/DetalleTratamiento";
 import MisTratamientos from "./pages/MisTratamientos";
+import Riesgos from "./pages/Riesgos";
 
 function App() {
   return (
@@ -61,6 +62,10 @@ function App() {
           <RutaProtegida>
             <div>Mi perfil — próximamente</div>
           </RutaProtegida>
+        } />
+
+        <Route path="/riesgos" element={
+          <RutaProtegida><Riesgos /></RutaProtegida>
         } />
 
         <Route path="*" element={<Error404 />} />
