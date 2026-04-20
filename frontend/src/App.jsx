@@ -16,10 +16,14 @@ import EditarTratamiento from "./pages/EditarTratamiento";
 import DetalleTratamiento from "./pages/DetalleTratamiento";
 import MisTratamientos from "./pages/MisTratamientos";
 import Riesgos from "./pages/Riesgos";
+import ResultadosAnalisis from "./pages/ResultadoAnalisis";
+import { FormularioProvider } from "./context/FormularioContext";
+import Paso1 from "./pages/formulario/Paso1";
 
 function App() {
   return (
     <BrowserRouter>
+    <FormularioProvider>
       <Routes>
 
         {/* públicas */}
@@ -63,13 +67,19 @@ function App() {
             <div>Mi perfil — próximamente</div>
           </RutaProtegida>
         } />
-
         <Route path="/riesgos" element={
           <RutaProtegida><Riesgos /></RutaProtegida>
+        } />
+        <Route path="/resultados-analisis" element={
+          <RutaProtegida><ResultadosAnalisis /></RutaProtegida>
+        } />
+        <Route path="/nuevo-tratamiento" element={
+          <RutaProtegida><Paso1 /></RutaProtegida>
         } />
 
         <Route path="*" element={<Error404 />} />
       </Routes>
+      </FormularioProvider>
     </BrowserRouter>
   );
 }

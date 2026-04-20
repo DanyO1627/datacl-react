@@ -1,0 +1,342 @@
+/* ─── Variables (misma paleta del proyecto) ───────────────────── */
+:root {
+  --navy: #021024;
+  --dark: #052659;
+  --mid:  #5483B3;
+  --light: #7DA0CA;
+  --pale: #C1E8FF;
+}
+
+/* ─── Layout general ──────────────────────────────────────────── */
+.ra-layout {
+  min-height: 100vh;
+  background: linear-gradient(160deg, var(--pale) 0%, #e8f4ff 40%, #f0f8ff 100%);
+}
+
+.ra-main {
+  margin-left: 220px;
+  padding: 2.8rem 3rem;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+/* ─── Header ──────────────────────────────────────────────────── */
+.ra-header {
+  margin-bottom: 2rem;
+}
+
+.ra-titulo {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+
+.ra-subtitulo {
+  font-size: 14px;
+  color: var(--mid);
+  margin-bottom: 1rem;
+}
+
+/* ─── Resumen rápido ──────────────────────────────────────────── */
+.ra-resumen {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.ra-resumen-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 50px;
+}
+
+.ra-resumen-item--verde {
+  background: #e6f7ee;
+  color: #1a7a45;
+}
+
+.ra-resumen-item--naranja {
+  background: #fff3e6;
+  color: #b85c00;
+}
+
+.ra-resumen-sep {
+  color: #b0c8e0;
+  font-size: 16px;
+}
+
+/* ─── Contenido principal ─────────────────────────────────────── */
+.ra-contenido {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2.4rem 2.4rem 2rem;
+  max-width: 920px;
+  box-shadow: 0 4px 32px rgba(5, 38, 89, 0.08), 0 1px 4px rgba(5, 38, 89, 0.05);
+}
+
+/* ─── Columnas ────────────────────────────────────────────────── */
+.ra-columnas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.6rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 680px) {
+  .ra-columnas {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Columna individual ──────────────────────────────────────── */
+.ra-columna {
+  border-radius: 16px;
+  border: 1px solid #e4eff8;
+  overflow: hidden;
+}
+
+.ra-columna-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+}
+
+.ra-columna-header--verde {
+  background: #f0faf4;
+  border-bottom: 1px solid #d4eedd;
+}
+
+.ra-columna-header--naranja {
+  background: #fff8f0;
+  border-bottom: 1px solid #fde0bc;
+}
+
+.ra-columna-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ra-columna-dot--verde  { background: #27ae60; }
+.ra-columna-dot--naranja { background: #e67e22; }
+
+.ra-columna-titulo {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  flex: 1;
+  margin: 0;
+}
+
+.ra-columna-count {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 50px;
+  background: rgba(5, 38, 89, 0.08);
+  color: var(--dark);
+}
+
+.ra-columna-body {
+  padding: 14px 16px;
+  min-height: 120px;
+}
+
+/* ─── Lista de badges ─────────────────────────────────────────── */
+.ra-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ─── Badge base ──────────────────────────────────────────────── */
+.ra-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  transition: transform 0.12s ease;
+}
+
+.ra-badge:hover {
+  transform: translateX(2px);
+}
+
+.ra-badge--personal {
+  background: #edf8f2;
+  border: 1px solid #c8e8d4;
+}
+
+.ra-badge--sensible {
+  background: #fef3f3;
+  border: 1px solid #f5cece;
+}
+
+.ra-badge--pendiente {
+  background: #fff8ee;
+  border: 1px solid #fde4bc;
+}
+
+/* Icono del badge */
+.ra-badge-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ra-badge--personal   .ra-badge-icono { background: #27ae60; color: #fff; }
+.ra-badge--sensible   .ra-badge-icono { background: #e74c3c; color: #fff; }
+.ra-badge--pendiente  .ra-badge-icono { background: #e67e22; color: #fff; }
+
+/* Info nombre + tipo */
+.ra-badge-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ra-badge-nombre {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: 'Courier New', monospace;
+}
+
+.ra-badge-tipo {
+  font-size: 11px;
+  color: var(--mid);
+  font-family: 'Georgia', serif;
+}
+
+/* Etiqueta derecha */
+.ra-badge-etiqueta {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 50px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ra-badge--personal  .ra-badge-etiqueta { background: #d4f0e0; color: #1a7a45; }
+.ra-badge--sensible  .ra-badge-etiqueta { background: #fde0e0; color: #a91c1c; }
+.ra-badge--pendiente .ra-badge-etiqueta { background: #fde8cc; color: #b85c00; }
+
+/* ─── Aviso pendientes ────────────────────────────────────────── */
+.ra-aviso-pendientes {
+  font-size: 12px;
+  color: #b08050;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #fff8ee;
+  border-radius: 8px;
+  border-left: 3px solid #e67e22;
+}
+
+/* ─── Estado vacío ────────────────────────────────────────────── */
+.ra-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.4rem 1rem;
+  gap: 6px;
+}
+
+.ra-vacio-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e8f0f8;
+  color: var(--mid);
+  margin-bottom: 4px;
+}
+
+.ra-vacio-icono--verde {
+  background: #e6f7ee;
+  color: #27ae60;
+}
+
+.ra-vacio-titulo {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0;
+}
+
+.ra-vacio-desc {
+  font-size: 12px;
+  color: var(--mid);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 240px;
+}
+
+/* ─── Acciones / botones ──────────────────────────────────────── */
+.ra-acciones {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1.2rem;
+  border-top: 1px solid #e8f0f8;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ra-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 24px;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.12s;
+  border: none;
+}
+
+.ra-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.ra-btn--secundario {
+  background: #eef4fb;
+  color: var(--dark);
+  border: 1.5px solid #c8dcee;
+}
+
+.ra-btn--secundario:hover {
+  background: #dde9f4;
+}
+
+.ra-btn--primario {
+  background: linear-gradient(135deg, var(--dark) 0%, var(--mid) 100%);
+  color: #fff;
+}
