@@ -4,6 +4,46 @@ import { analizarArchivo } from "../services/analisisService";
 import BarraLateral from "../components/BarraLateral";
 import "../styles/CargaArchivo.css";
 
+/* ─── Íconos SVG ─────────────────────────────────────────────── */
+function IconoAlerta() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
+function IconoInfo() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
+/* ─── Componente Alert inline ────────────────────────────────── */
+function Alert({ tipo, mensaje, detalle }) {
+  // tipo: "error" | "advertencia"
+  const esError = tipo === "error";
+  return (
+    <div className={`ca-alert ca-alert--${tipo}`}>
+      <span className="ca-alert-icono">
+        {esError ? <IconoAlerta /> : <IconoInfo />}
+      </span>
+      <div className="ca-alert-texto">
+        <span className="ca-alert-mensaje">{mensaje}</span>
+        {detalle && <span className="ca-alert-detalle">{detalle}</span>}
+      </div>
+    </div>
+  );
+}
+
 export default function CargaArchivo() {
   const [archivo, setArchivo] = useState(null);
   const [arrastrando, setArrastrando] = useState(false);
@@ -13,10 +53,14 @@ export default function CargaArchivo() {
   const [archivoDiccionario, setArchivoDiccionario] = useState(null);
   const inputRef = useRef(null);
   const inputDiccionarioRef = useRef(null);
-  const [error, setError] = useState(null);
+
+  // ── Estado de error ────────────────────────────────────────
+  // { tipo: "error"|"advertencia", mensaje: string, detalle?: string }
+  const [alerta, setAlerta] = useState(null);
+
   const navigate = useNavigate();
 
-  // ── Drag & drop ───────────────────────────────────────────────
+  // ── Drag & drop ────────────────────────────────────────────
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
     setArrastrando(true);
@@ -31,13 +75,34 @@ export default function CargaArchivo() {
     e.preventDefault();
     setArrastrando(false);
     const file = e.dataTransfer.files?.[0];
-    if (file && esFormatoValido(file)) setArchivo(file);
+    if (!file) return;
+    if (!esFormatoValido(file)) {
+      setAlerta({
+        tipo: "error",
+        mensaje: "Formato no permitido.",
+        detalle: `El archivo "${file.name}" no es compatible. Usa CSV o Excel (.xlsx, .xls).`,
+      });
+      return;
+    }
+    setAlerta(null);
+    setArchivo(file);
   }, []);
 
-  // ── Input file ────────────────────────────────────────────────
+  // ── Input file ─────────────────────────────────────────────
   const handleSeleccionar = (e) => {
     const file = e.target.files?.[0];
-    if (file && esFormatoValido(file)) setArchivo(file);
+    if (!file) return;
+    if (!esFormatoValido(file)) {
+      setAlerta({
+        tipo: "error",
+        mensaje: "Formato no permitido.",
+        detalle: `El archivo "${file.name}" no es compatible. Usa CSV o Excel (.xlsx, .xls).`,
+      });
+      e.target.value = "";
+      return;
+    }
+    setAlerta(null);
+    setArchivo(file);
     e.target.value = "";
   };
 
@@ -49,7 +114,7 @@ export default function CargaArchivo() {
 
   function esFormatoValido(file) {
     const ext = file.name.split(".").pop().toLowerCase();
-    return ["csv", "xlsx", "sql"].includes(ext);
+    return ["csv", "xlsx", "xls"].includes(ext);
   }
 
   function formatearTamano(bytes) {
@@ -58,42 +123,67 @@ export default function CargaArchivo() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
-  // ── Analizar ──────────────────────────────────────────────────
-  // Cuando el backend esté listo, reemplaza la simulación por:
-  //
-  //   const formData = new FormData();
-  //   formData.append("file", archivo);
-  //   if (archivoDiccionario) formData.append("diccionario", archivoDiccionario);
-  //   const res = await fetch("http://localhost:8000/api/analizar", {
-  //     method: "POST",
-  //     body: formData,
-  //   });
-  //   const resultado = await res.json();
-  //   navigate("/resultados", { state: resultado });
-  //
+  // ── Analizar ───────────────────────────────────────────────
   async function handleAnalizar() {
     if (!archivo) return;
 
     setCargando(true);
-    setError(null); // limpia error anterior
+    setAlerta(null);
 
     try {
       const resultado = await analizarArchivo(
         archivo,
         tieneDiccionario ? archivoDiccionario : null
       );
-      // Navega a pantalla de resultados del análisis: pasando los resultados en el state
-      // dani los lee con: const { state } = useLocation()
+
+      // ── Caso especial: el backend respondió bien pero no detectó nada ──
+      // Si detectados está vacío, advertimos antes de navegar
+      if (!resultado.detectados || resultado.detectados.length === 0) {
+        setAlerta({
+          tipo: "advertencia",
+          mensaje: "No se detectaron campos reconocibles en el archivo.",
+          detalle:
+            "Los encabezados parecen ser códigos técnicos. Activa la opción de diccionario de datos a continuación para mejorar la detección.",
+        });
+        setCargando(false);
+        return; // no navegar — dejar al usuario usar el diccionario
+      }
+
+      // Todo bien → navegar a resultados
       navigate("/resultados-analisis", { state: resultado });
 
     } catch (err) {
-      // FastAPI devuelve el mensaje en err.response.data.detail
-      const mensaje =
-        err.response?.data?.detail ||
-        "Error al conectar con el servidor. Verifica que el backend esté corriendo.";
-      setError(mensaje);
+      // ── Error de red / backend no responde ──────────────────
+      if (!err.response) {
+        setAlerta({
+          tipo: "error",
+          mensaje: "Error de conexión. Intenta nuevamente.",
+          detalle: "No se pudo conectar con el servidor. Verifica que el backend esté corriendo en el puerto 8000.",
+        });
+        setCargando(false);
+        return;
+      }
+
+      // ── Error HTTP del backend (400, 413, 422, 500…) ────────
+      const status = err.response.status;
+      const detalleBk = err.response?.data?.detail;
+
+      // Mensaje por defecto según código HTTP
+      const mensajePorStatus = {
+        400: "El archivo no es válido.",
+        413: "El archivo es demasiado grande. El límite es 5 MB.",
+        422: "El archivo tiene un formato incorrecto.",
+        500: "Error interno del servidor. Intenta más tarde.",
+      };
+
+      setAlerta({
+        tipo: "error",
+        mensaje: mensajePorStatus[status] ?? `Error inesperado (código ${status}).`,
+        // Si el backend mandó un mensaje específico en español, lo mostramos como detalle
+        detalle: typeof detalleBk === "string" ? detalleBk : undefined,
+      });
+
     } finally {
-      // finally siempre se ejecuta — haya error o no
       setCargando(false);
     }
   }
@@ -124,7 +214,7 @@ export default function CargaArchivo() {
               <input
                 ref={inputRef}
                 type="file"
-                accept=".csv,.xlsx,.sql"
+                accept=".csv,.xlsx,.xls"
                 className="ca-input-hidden"
                 onChange={handleSeleccionar}
               />
@@ -161,7 +251,11 @@ export default function CargaArchivo() {
                   </div>
                   <button
                     className="ca-btn-quitar"
-                    onClick={(e) => { e.stopPropagation(); setArchivo(null); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setArchivo(null);
+                      setAlerta(null);
+                    }}
                     title="Quitar archivo"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -173,17 +267,18 @@ export default function CargaArchivo() {
               )}
             </div>
 
-            <p className="ca-formatos">Formatos aceptados: CSV, Excel (.xlsx), .sql</p>
+            <p className="ca-formatos">Formatos aceptados: CSV, Excel (.xlsx, .xls)</p>
+
+            {/* ── Alerta de error o advertencia ── */}
+            {alerta && (
+              <Alert
+                tipo={alerta.tipo}
+                mensaje={alerta.mensaje}
+                detalle={alerta.detalle}
+              />
+            )}
 
             <div className="ca-analizar-row">
-
-              {/* Mensaje de error del backend (solo aparece si hay error) */}
-              {error && (
-                <p style={{ color: "#e53e3e", fontSize: "0.875rem", marginBottom: "0.5rem" }}>
-                  {error}
-                </p>
-              )}
-
               <button
                 className={`ca-btn-analizar ${!archivo || cargando ? "ca-btn-analizar--disabled" : ""}`}
                 disabled={!archivo || cargando}
@@ -237,7 +332,6 @@ export default function CargaArchivo() {
 
             {diccionarioAbierto && (
               <div className="ca-acordeon-body">
-
                 <p className="ca-acordeon-desc">
                   Si los encabezados de tu archivo son códigos, sube un diccionario de datos
                   para ayudarnos a identificar la información.
@@ -324,7 +418,6 @@ export default function CargaArchivo() {
                     </button>
                   )}
                 </div>
-
               </div>
             )}
           </div>

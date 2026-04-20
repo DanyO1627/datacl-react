@@ -30,6 +30,25 @@ PALABRAS_PERSONALES_ES = [
     'sexo',
     'genero',
     'nacionalidad',
+    # ── Datos financieros y laborales ────────────────────────────
+    'banco',
+    'cuenta',
+    'bancaria',
+    'afp',
+    'prevision',
+    'previsional',
+    'remuneracion',
+    'sueldo',
+    'salario',
+    'liquido',
+    'contrato',
+    'laboral',
+    'ingreso',       # fecha ingreso / ingreso mensual
+    'cargo',
+    'puesto',
+    'departamento',
+    'area',
+    'postal',        # código postal
 ]
 
 # Palabras que indican que una columna contiene datos sensibles
@@ -52,8 +71,19 @@ PALABRAS_SENSIBLES_ES = [
     'huella',
     'iris',
     'ficha_medica',
+    'ficha', 
     'hospital',
     'clinica',
+    # ── Datos de salud adicionales ────────────────────────────────
+    'sangre',        # grupo sanguíneo
+    'grupo',         # grupo sanguíneo (cuando aparece junto a sangre vía normalización)
+    'medico',        # dx_medico, ficha_medico
+    'medica',        # ficha médica
+    'psicologico',
+    'psiquiatrico',
+    'genetico',
+    'genotipo',
+    'discap',        # abreviatura común de discapacidad
 ]
 
 # Palabras en inglés que indican que una columna contiene datos personales identificables
@@ -81,6 +111,18 @@ PALABRAS_PERSONALES_EN = [
     'nationality',
     'passport',
     'username',
+    # ── Financiero / laboral en inglés ────────────────────────────
+    'bank',
+    'account',
+    'salary',
+    'wage',
+    'income',
+    'pension',
+    'department',
+    'position',
+    'contract',
+    'hire',          # hire date
+    'employee',
 ]
 
 # Palabras en inglés que indican que una columna contiene datos sensibles
@@ -103,11 +145,16 @@ PALABRAS_SENSIBLES_EN = [
     'medical',
     'hospital',
     'clinic',
+    # ── Salud adicional en inglés ─────────────────────────────────
+    'blood',         # blood type / blood group
+    'genetic',
+    'psychiatric',
+    'psychological',
 ]
 
 # Listas unificadas (español + inglés) para usar en la detección
 PALABRAS_PERSONALES = list(set(PALABRAS_PERSONALES_ES + PALABRAS_PERSONALES_EN))
-PALABRAS_SENSIBLES = list(set(PALABRAS_SENSIBLES_ES + PALABRAS_SENSIBLES_EN))
+PALABRAS_SENSIBLES  = list(set(PALABRAS_SENSIBLES_ES  + PALABRAS_SENSIBLES_EN))
 
 
 import io
@@ -173,7 +220,7 @@ def clasificar_columnas(columnas: list[str]) -> dict:
         col_normalizada = col.lower().replace('_', ' ').replace('-', ' ')
 
         # any() recorre la lista y para apenas encuentra la primera coincidencia — es eficiente
-        # Sensibles PRIMERO ( tienen prioridad sobre personales)
+        # Sensibles PRIMERO (tienen prioridad sobre personales)
         if any(palabra in col_normalizada for palabra in PALABRAS_SENSIBLES):
             detectados.append({"nombre_columna": col, "tipo": "SENSIBLE"})
         elif any(palabra in col_normalizada for palabra in PALABRAS_PERSONALES):

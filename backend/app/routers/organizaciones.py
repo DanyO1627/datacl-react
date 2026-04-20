@@ -63,21 +63,26 @@ def cambiar_password(
 ):
     """
     Cambia la contraseña de la organización autenticada.
-    - Verifica que la contraseña actual sea correcta antes de cambiar
-    - Hashea la nueva contraseña con BCrypt
     """
-    # Verificar que la contraseña actual es correcta
 
+    # Verificar contraseña actual
+    if not pwd_context.verify(datos.password_actual, usuario_actual.password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña actual es incorrecta",
+        )
 
-if not pwd_context.verify(datos.password_actual, usuario_actual.password):
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail="La contraseña actual es incorrecta",
-    )
+    # Verificar que no sea igual
+    if pwd_context.verify(datos.password_nueva, usuario_actual.password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La nueva contraseña debe ser diferente a la actual",
+        )
 
-# si es igual a la actual, error
-if pwd_context.verify(datos.password_nueva, usuario_actual.password):
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail="La nueva contraseña debe ser diferente a la actual",
-    )
+    # Hashear nueva contraseña
+    nueva_password = pwd_context.hash(datos.password_nueva)
+    usuario_actual.password = nueva_password
+
+    db.commit()
+
+    return {"mensaje": "Contraseña actualizada correctamente"}

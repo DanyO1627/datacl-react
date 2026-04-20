@@ -2,8 +2,18 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import BarraLateral from '../components/BarraLateral'
+import { useLocation } from "react-router-dom";
 import '../styles/editarTratamiento.css'
 
+// dentro del componente, antes del useState:
+const { state: datosAnalisis } = useLocation();
+
+// y en el useState del form, agrega:
+const [form, setForm] = useState({
+  tipo: '',
+  nivel_riesgo: 'BAJO',
+  campos_detectados: datosAnalisis?.campos_detectados ?? [],
+});
 const API = 'http://localhost:8000'
 
 const PASOS = ['Información básica', 'Nivel de riesgo']
