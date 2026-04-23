@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useFormulario } from "../../context/FormularioContext";
 import BarraLateral from "../../components/BarraLateral";
-import "../../styles/Paso1.css";
+import "../../styles/formularioCss/paso1.css";
 
 /* ─── Opciones base legal (Ley 21.719 Chile) ─────────────────── */
 const BASES_LEGALES = [

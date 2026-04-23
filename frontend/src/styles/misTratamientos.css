@@ -4,8 +4,17 @@
   background-color: #f5f5fa;
 }
 
+.mt-acciones {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  
+}
+
 .mt-main {
+  margin-left: 220px;
   flex: 1;
+  min-height: 100vh;
   padding: 36px 40px;
   overflow-x: auto;
 }
@@ -34,7 +43,20 @@
 }
 
 .btn-nuevo {
-  background: #2b2b3b;
+  background: #212144;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.btn-2 {
+  background: #212144;
   color: #fff;
   border: none;
   border-radius: 8px;
