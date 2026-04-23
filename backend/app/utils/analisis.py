@@ -74,8 +74,8 @@ ABREV_PERSONALES_EN = [
 #       en campos como "nombre del tratamiento", "titular del tratamiento".
 SENSIBLES_ES = [
     'salud', 'diagnostico', 'enfermedad', 'medicamento',
-    'discapacidad',
-    'religion', 'creencia',
+    'discapacidad', 'discapacidades'
+    'religion', 'creencia', 'religioso', 'religiosos', 'creencias', 'fe'
     'etnia', 'raza',
     'orientacion',
     'politico', 'sindical',
