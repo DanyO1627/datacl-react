@@ -1,0 +1,183 @@
+.dadmin-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f0f0f5;
+}
+
+.dadmin-main {
+  flex: 1;
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.dadmin-titulo {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 4px 0;
+}
+
+.dadmin-subtitulo {
+  font-size: 14px;
+  color: #777;
+  margin: 0;
+}
+
+/* Tarjetas */
+.dadmin-metricas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.dadmin-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  border-left: 4px solid #7c5cbf;
+}
+
+.dadmin-card--completo {
+  border-left-color: #38a169;
+}
+
+.dadmin-card--pendiente {
+  border-left-color: #d97706;
+}
+
+.dadmin-card-numero {
+  font-size: 40px;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1;
+}
+
+.dadmin-card-label {
+  font-size: 13px;
+  color: #777;
+  font-weight: 500;
+}
+
+/* Búsqueda */
+.dadmin-busqueda-wrap {
+  position: relative;
+  max-width: 400px;
+}
+
+.dadmin-busqueda-icono {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+  pointer-events: none;
+}
+
+.dadmin-busqueda {
+  width: 100%;
+  padding: 10px 14px 10px 36px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 14px;
+  background: #fff;
+  color: #333;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.dadmin-busqueda:focus {
+  border-color: #7c5cbf;
+}
+
+/* Tabla */
+.dadmin-tabla-wrap {
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+.dadmin-tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dadmin-tabla th {
+  padding: 14px 18px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #fafafa;
+  border-bottom: 1px solid #eee;
+}
+
+.dadmin-tabla td {
+  padding: 14px 18px;
+  font-size: 14px;
+  color: #444;
+  border-bottom: 1px solid #f0f0f5;
+}
+
+.dadmin-tabla tr:last-child td {
+  border-bottom: none;
+}
+
+.dadmin-tabla tr:hover td {
+  background: #f9f9fc;
+}
+
+.dadmin-td-nombre {
+  font-weight: 600;
+  color: #1a1a2e !important;
+}
+
+.dadmin-badge-trat {
+  display: inline-block;
+  background: #ede9f7;
+  color: #7c5cbf;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 20px;
+}
+
+.btn-ver-detalle {
+  background: none;
+  border: 1px solid #7c5cbf;
+  color: #7c5cbf;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.btn-ver-detalle:hover {
+  background: #7c5cbf;
+  color: #fff;
+}
+
+.dadmin-vacio {
+  text-align: center;
+  color: #aaa;
+  font-size: 14px;
+  padding: 40px !important;
+}
+
+.dadmin-cargando {
+  text-align: center;
+  color: #888;
+  padding: 40px;
+}
