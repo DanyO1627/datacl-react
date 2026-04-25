@@ -155,7 +155,7 @@ export default function MisTratamientos() {
                     className="mt-fila"
                     onClick={() => navigate(`/tratamientos/${t.id}`)}
                   >
-                    <td className="mt-celda-nombre">{t.nombre || 'Sin nombre'}</td>
+                    <td className="mt-celda-nombre">{t.nombre}</td>
                     <td>
                       <span className={`mt-badge ${BADGE_RIESGO[t.nivel_riesgo] || 'badge-riesgo-bajo'}`}>
                         {t.nivel_riesgo}
