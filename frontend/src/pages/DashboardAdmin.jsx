@@ -147,7 +147,7 @@ export default function DashboardAdmin() {
                       <td>
                         <button
                           className="btn-ver-detalle"
-                          onClick={() => navigate(`/admin/detalle/${org.id}`)}
+                          onClick={() => navigate(`/admin/organizaciones/${org.id}`)}
                         >
                           Ver detalle
                         </button>

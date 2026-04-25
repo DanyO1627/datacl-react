@@ -21,6 +21,7 @@ import { FormularioProvider } from "./context/FormularioContext";
 import Paso1 from "./pages/formulario/Paso1";
 import VistaPrevia from "./pages/VistaPrevia";
 import ConfirmacionDescarga from "./pages/ConfirmacionDescarga";
+import DetalleOrganizacion from "./pages/DetalleOrganizacion";
 
 function App() {
   return (
@@ -43,6 +44,9 @@ function App() {
         } />
         <Route path="/admin/detalle/:id" element={
           <RutaAdmin><Detalle /></RutaAdmin>
+        } />
+        <Route path="/admin/organizaciones/:id" element={
+          <RutaAdmin><DetalleOrganizacion /></RutaAdmin>
         } />
 
         {/* protegidas */}
