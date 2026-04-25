@@ -79,6 +79,11 @@ function TooltipBaseLegal({ opcion }) {
   );
 }
 
+// cuenta las palabras (por espacios) para mostrarlas en el contador de la finalidad
+function contarPalabras(texto) {
+  return texto.trim() === "" ? 0 : texto.trim().split(/\s+/).length;
+}
+
 /* ─── Componente principal ───────────────────────────────────── */
 export default function Paso1() {
   const navigate = useNavigate();
@@ -105,6 +110,7 @@ export default function Paso1() {
 
   function handleChange(e) {
     const { name, value } = e.target;
+    if (name === "finalidad" && contarPalabras(value) > 1000) return;
     setLocal((prev) => ({ ...prev, [name]: value }));
   }
 
@@ -199,9 +205,10 @@ export default function Paso1() {
                 value={local.finalidad}
                 onChange={handleChange}
                 rows={3}
-                maxLength={1000}
               />
-              <span className="p1-campo-contador">{local.finalidad.length}/1000</span>
+              <span className={`p1-campo-contador ${contarPalabras(local.finalidad) >= 1000 ? "p1-campo-contador--limite" : ""}`}>
+                {contarPalabras(local.finalidad)}/1000 palabras
+              </span>
             </div>
 
             {/* Base legal */}

@@ -244,6 +244,10 @@
   text-align: right;
   margin-top: -2px;
 }
+.p1-campo-contador--limite {
+  color: #e05252;
+  font-weight: 600;
+}
 
 /* ─── Select base legal ───────────────────────────────────────── */
 .p1-select {
