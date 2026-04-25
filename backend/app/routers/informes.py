@@ -8,36 +8,47 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet
 
 from app.basededatos import get_db as get_bd
+from app.utils.jwt import obtener_usuario_actual
 from app import models
 
 router = APIRouter(prefix="/informes", tags=["Informes"])
 
 
 @router.get("")
-def listar_informes(db: Session = Depends(get_bd)):
-    """Lista todos los informes generados."""
-    informes = db.query(models.Informe).order_by(models.Informe.generado_en.desc()).all()
+def listar_informes(
+    db: Session = Depends(get_bd),
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Lista los informes de la organización autenticada."""
+    informes = (
+        db.query(models.Informe)
+        .filter(models.Informe.organizacion_id == usuario.id)
+        .order_by(models.Informe.generado_en.desc())
+        .all()
+    )
     return [
         {
             "id": inf.id,
             "titulo": inf.titulo,
             "num_tratamientos": inf.num_tratamientos,
             "generado_en": inf.generado_en,
-            "organizacion": inf.organizacion.nombre if inf.organizacion else "-"
         }
         for inf in informes
     ]
 
 
 @router.post("")
-def generar_informe(org_id: int, db: Session = Depends(get_bd)):
-    """Genera un nuevo informe para una organización."""
-    org = db.query(models.Organizacion).filter(models.Organizacion.id == org_id).first()
+def generar_informe(
+    db: Session = Depends(get_bd),
+    usuario=Depends(obtener_usuario_actual),
+):
+    """Genera un nuevo informe para la organización autenticada."""
+    org = db.query(models.Organizacion).filter(models.Organizacion.id == usuario.id).first()
     if not org:
         raise HTTPException(status_code=404, detail="Organización no encontrada")
 
     num_tratamientos = db.query(models.Tratamiento).filter(
-        models.Tratamiento.organizacion_id == org_id
+        models.Tratamiento.organizacion_id == usuario.id
     ).count()
 
     informe = models.Informe(
