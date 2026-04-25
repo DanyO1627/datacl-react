@@ -4,7 +4,10 @@ import { useAuth } from "../context/AuthContext"
 import { obtenerPerfil } from "../services/authService"
 import { obtenerTratamientos } from "../services/tratamientosService"
 import BarraLateral from "../components/BarraLateral"
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import "../styles/dashboardCliente.css"
+
+const COLORES_RIESGO = { BAJO: "#38a169", MEDIO: "#d97706", ALTO: "#e53e3e" }
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -14,6 +17,7 @@ export default function Dashboard() {
   const [cargando, setCargando] = useState(true)
   const [metricas, setMetricas] = useState({ total: 0, pendientes: 0, alto: 0 })
   const [ultimos, setUltimos] = useState([])
+  const [datosGrafico, setDatosGrafico] = useState([])
 
   const fechaHoy = new Date().toLocaleDateString("es-CL", {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
@@ -40,6 +44,14 @@ export default function Dashboard() {
           (a, b) => new Date(b.creado_en) - new Date(a.creado_en)
         )
         setUltimos(ordenados.slice(0, 3))
+
+        const conteo = { BAJO: 0, MEDIO: 0, ALTO: 0 }
+        tratamientos.forEach(t => { if (t.nivel_riesgo) conteo[t.nivel_riesgo] = (conteo[t.nivel_riesgo] || 0) + 1 })
+        setDatosGrafico(
+          Object.entries(conteo)
+            .filter(([, v]) => v > 0)
+            .map(([name, value]) => ({ name, value }))
+        )
       } catch {
         navigate("/login")
       } finally {
@@ -88,6 +100,38 @@ export default function Dashboard() {
               </div>
             </div>
           ))}
+        </section>
+
+        {/* Gráfico de distribución de riesgo */}
+        <section className="dashboard__grafico">
+          <h2 className="dashboard__ultimos-titulo">Distribución de riesgo</h2>
+          {metricas.total === 0 ? (
+            <p className="dashboard__grafico-vacio">
+              Aún no tienes tratamientos registrados. Crea uno para ver la distribución.
+            </p>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={datosGrafico}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={3}
+                  dataKey="value"
+                  label={({ name, value }) => `${name}: ${value}`}
+                  labelLine={false}
+                >
+                  {datosGrafico.map(entry => (
+                    <Cell key={entry.name} fill={COLORES_RIESGO[entry.name]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value, name) => [`${value} tratamiento${value !== 1 ? 's' : ''}`, name]} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
         </section>
 
         {ultimos.length > 0 && (

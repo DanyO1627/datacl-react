@@ -215,3 +215,20 @@
 .badge-alto  { background: #ffe5e5; color: #c0392b; }
 .badge-medio { background: #fff3cd; color: #b7791f; }
 .badge-bajo  { background: #e6f4ea; color: #276749; }
+
+/* ── Gráfico de riesgo ── */
+.dashboard__grafico {
+  margin-top: 32px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px 28px;
+  max-width: 720px;
+  box-shadow: 0 2px 16px rgba(5, 38, 89, 0.07);
+}
+
+.dashboard__grafico-vacio {
+  font-size: 14px;
+  color: var(--mid);
+  text-align: center;
+  padding: 24px 0;
+}
