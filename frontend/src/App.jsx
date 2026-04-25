@@ -20,6 +20,7 @@ import ResultadosAnalisis from "./pages/ResultadoAnalisis";
 import { FormularioProvider } from "./context/FormularioContext";
 import Paso1 from "./pages/formulario/Paso1";
 import VistaPrevia from "./pages/VistaPrevia";
+import ConfirmacionDescarga from "./pages/ConfirmacionDescarga";
 
 function App() {
   return (
@@ -56,6 +57,9 @@ function App() {
         } />
         <Route path="/informes/nuevo" element={
           <RutaProtegida><VistaPrevia /></RutaProtegida>
+        } />
+        <Route path="/informes/confirmacion" element={
+          <RutaProtegida><ConfirmacionDescarga /></RutaProtegida>
         } />
         <Route path="/mis-tratamientos" element={
           <RutaProtegida><MisTratamientos /></RutaProtegida>
