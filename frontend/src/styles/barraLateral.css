@@ -1,3 +1,9 @@
+/* Cualquier elemento que siga directamente a la barra lateral en el DOM
+   recibe el margen que compensa los 220px del aside fixed. */
+.barra-lateral + * {
+  margin-left: 220px;
+}
+
 /* PRINCIPAL
    La barra ocupa todo el alto de la pantalla y tiene ancho fijo.
    position: fixed la deja pegada aunque el contenido haga scroll. */
