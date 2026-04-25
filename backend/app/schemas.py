@@ -181,6 +181,10 @@ class TratamientoRespuesta(BaseModel):
     creado_en: datetime
     actualizado_en: Optional[datetime] = None
     model_config = {"from_attributes": True}
+    
+    probabilidad: Optional[str] = None      
+    impacto: Optional[str] = None           
+    fecha_evaluacion: Optional[datetime] = None  
 
 class TratamientoListado(BaseModel):
     id: int
