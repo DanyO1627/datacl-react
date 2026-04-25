@@ -66,7 +66,7 @@ export default function Informes() {
             </p>
             <button
               className="btn-generar"
-              onClick={() => navigate('/generar-informe')}
+              onClick={() => navigate('/informes/nuevo')}
             >
               Generar mi primer informe
             </button>
