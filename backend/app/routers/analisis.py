@@ -1,4 +1,5 @@
 import io
+import json
 from typing import Annotated
 import pandas as pd
 from pandas.errors import EmptyDataError, ParserError
@@ -10,6 +11,7 @@ router = APIRouter(prefix="/analizar", tags=["analisis"])
 
 EXTENSIONES_CSV   = ('.csv',)
 EXTENSIONES_EXCEL = ('.xlsx', '.xls')
+EXTENSIONES_JSON  = ('.json',)
 TAMANO_MAXIMO     = 5 * 1024 * 1024  # 5 MB — aporte de Eve
 
 
@@ -19,14 +21,32 @@ def _detectar_tipo_archivo(nombre: str) -> str:
         return 'csv'
     elif nombre.endswith(EXTENSIONES_EXCEL):
         return 'excel'
+    elif nombre.endswith(EXTENSIONES_JSON):
+        return 'json'
     else:
         raise HTTPException(
             status_code=400,
-            detail="Formato no soportado. Usa CSV o Excel (.xlsx, .xls)"
+            detail="Formato no soportado. Usa CSV, Excel (.xlsx, .xls) o JSON."
         )
 
 
+def _parsear_json(contenido: bytes) -> pd.DataFrame:
+    try:
+        data = json.loads(contenido.decode('utf-8'))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        raise HTTPException(status_code=400, detail="El archivo JSON no es válido.")
+    if isinstance(data, dict):
+        # Formato clave-valor: {"nombre_col": "descripcion", ...}
+        return pd.DataFrame(list(data.items()), columns=['nombre_tecnico', 'descripcion'])
+    if isinstance(data, list):
+        # Formato lista de objetos: [{"nombre_tecnico": "x", "descripcion": "y"}, ...]
+        return pd.DataFrame(data)
+    raise HTTPException(status_code=400, detail="El JSON debe ser un objeto {clave: descripcion} o una lista de objetos.")
+
+
 def _leer_dataframe(contenido: bytes, tipo: str) -> pd.DataFrame:
+    if tipo == 'json':
+        return _parsear_json(contenido)
     try:
         if tipo == 'csv':
             return pd.read_csv(io.BytesIO(contenido))
@@ -86,6 +106,27 @@ async def analizar_archivo(archivo: Annotated[UploadFile, File(...)]):
     }
 
 
+def _resolver_pendientes(pendientes: list, mapa_dic: dict) -> tuple[list, list]:
+    detectados_extra, pendientes_final = [], []
+    for col in pendientes:
+        descripcion = mapa_dic.get(col.lower())
+        if not descripcion:
+            pendientes_final.append({"nombre_columna": col})
+            continue
+        resultado_desc = clasificar_columnas([descripcion])
+        if resultado_desc["detectados"]:
+            tipo_col = resultado_desc["detectados"][0]["tipo"]
+            detectados_extra.append({
+                "nombre_columna": col,
+                "tipo":           tipo_col,
+                "origen":         "diccionario",
+                "descripcion":    descripcion,
+            })
+        else:
+            pendientes_final.append({"nombre_columna": col})
+    return detectados_extra, pendientes_final
+
+
 @router.post("/diccionario")
 async def analizar_con_diccionario(
     archivo:     Annotated[UploadFile, File(...)],
@@ -117,9 +158,7 @@ async def analizar_con_diccionario(
     df_dic = _leer_dataframe(contenido_dic, tipo_dic)
 
     if len(df_dic.columns) < 2:
-        raise HTTPException(status_code=400, detail="El diccionario debe tener exactamente 2 columnas: nombre_tecnico y descripcion.")
-    if len(df_dic.columns) > 2:
-        raise HTTPException(status_code=400, detail=f"El diccionario tiene {len(df_dic.columns)} columnas. Solo se permiten 2.")
+        raise HTTPException(status_code=400, detail="El diccionario debe tener al menos 2 columnas: nombre_tecnico y descripcion.")
     if len(df_dic) == 0:
         raise HTTPException(status_code=400, detail="El diccionario no tiene filas de datos.")
 
@@ -136,23 +175,8 @@ async def analizar_con_diccionario(
     except Exception:
         raise HTTPException(status_code=400, detail="No se pudo leer el contenido del diccionario.")
 
-    pendientes_final = []
-    for col in pendientes_n1:
-        descripcion = mapa_dic.get(col.lower())
-        if descripcion:
-            resultado_desc = clasificar_columnas([descripcion])
-            if resultado_desc["detectados"]:
-                tipo_col = resultado_desc["detectados"][0]["tipo"]
-                detectados.append({
-                    "nombre_columna": col,
-                    "tipo":           tipo_col,
-                    "origen":         "diccionario",
-                    "descripcion":    descripcion,
-                })
-            else:
-                pendientes_final.append({"nombre_columna": col})
-        else:
-            pendientes_final.append({"nombre_columna": col})
+    detectados_extra, pendientes_final = _resolver_pendientes(pendientes_n1, mapa_dic)
+    detectados.extend(detectados_extra)
 
     return {
         "detectados":     detectados,
