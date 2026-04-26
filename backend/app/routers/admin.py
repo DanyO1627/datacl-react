@@ -5,12 +5,13 @@ from typing import Optional
 
 from app.basededatos import get_db as get_bd
 from app import models
+from app.utils.jwt import requiere_admin
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
 @router.get("/stats")
-def obtener_stats(db: Session = Depends(get_bd)):
+def obtener_stats(db: Session = Depends(get_bd), _=Depends(requiere_admin)):
     """Devuelve total de organizaciones, tratamientos completos y pendientes."""
     total = db.query(models.Organizacion).count()
     completos = db.query(models.Tratamiento).filter(
@@ -30,7 +31,8 @@ def obtener_stats(db: Session = Depends(get_bd)):
 @router.get("/organizaciones")
 def listar_organizaciones(
     buscar: Optional[str] = Query(None, description="Buscar por nombre, RUT o correo"),
-    db: Session = Depends(get_bd)
+    db: Session = Depends(get_bd),
+    _=Depends(requiere_admin),
 ):
     """Lista todas las organizaciones con sus tratamientos."""
     query = db.query(models.Organizacion).filter(
@@ -80,7 +82,7 @@ def listar_organizaciones(
 
 
 @router.get("/organizaciones/{org_id}")
-def obtener_organizacion(org_id: int, db: Session = Depends(get_bd)):
+def obtener_organizacion(org_id: int, db: Session = Depends(get_bd), _=Depends(requiere_admin)):
     """Devuelve el detalle de una organización específica."""
     org = db.query(models.Organizacion).filter(
         models.Organizacion.id == org_id

@@ -65,3 +65,12 @@ def obtener_usuario_actual(
         raise HTTPException(status_code=401, detail="La organización no existe")
 
     return organizacion
+
+
+def requiere_admin(
+    usuario: models.Organizacion = Depends(obtener_usuario_actual),
+) -> models.Organizacion:
+    """Dependencia para endpoints exclusivos de administrador."""
+    if usuario.rol != "ADMIN":
+        raise HTTPException(status_code=403, detail="Acceso restringido a administradores")
+    return usuario
