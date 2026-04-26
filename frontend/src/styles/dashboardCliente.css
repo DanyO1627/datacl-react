@@ -215,3 +215,33 @@
 .badge-alto  { background: #ffe5e5; color: #c0392b; }
 .badge-medio { background: #fff3cd; color: #b7791f; }
 .badge-bajo  { background: #e6f4ea; color: #276749; }
+
+/* Fila inferior: gráfico + últimos (lado a lado en pantallas grandes) */
+.dashboard__fila-inferior {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+ 
+@media (max-width: 900px) {
+  .dashboard__fila-inferior {
+    grid-template-columns: 1fr;
+  }
+}
+ 
+/* Card del gráfico */
+.dashboard__grafico-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.4rem 1.6rem 1.2rem;
+  box-shadow: 0 2px 16px rgba(5, 38, 89, 0.07);
+}
+ 
+.dashboard__seccion-titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: #021024;
+  margin: 0 0 1rem;
+  font-family: 'Georgia', serif;
+}

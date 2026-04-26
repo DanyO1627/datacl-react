@@ -98,6 +98,27 @@ export async function eliminarTratamiento(id) {
 }
 
 
+// ── Recalcular riesgo de un tratamiento ───────────────────────
+// POST /tratamientos/:id/evaluar
+// Devuelve el tratamiento con probabilidad, impacto y nivel_riesgo actualizados.
+// NO modifica nada en el formulario — el componente decide qué hacer con el resultado.
+
+export async function recalcularRiesgo(id) {
+  try {
+    const res = await api.post(`/tratamientos/${id}/evaluar`);
+    return res.data; // { nivel_riesgo, probabilidad, impacto, fecha_evaluacion, ... }
+  } catch (err) {
+    if (err.response?.status === 401) {
+      const e = new Error("Sesión expirada. Por favor inicia sesión nuevamente.");
+      e.codigo = 401;
+      throw e;
+    }
+    const detail = err.response?.data?.detail;
+    throw new Error(typeof detail === "string" ? detail : "Error al recalcular el riesgo.");
+  }
+}
+
+
 // ── Helper interno ─────────────────────────────────────────────
 // Convierte el array de errores de validación de FastAPI (422)
 // en un mensaje legible para mostrar al usuario.

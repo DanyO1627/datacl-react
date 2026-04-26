@@ -1,3 +1,4 @@
+// frontend/src/pages/EditarTratamiento.jsx
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -17,6 +18,33 @@ const BASES_LEGALES = [
   'Misión de interés público',
 ]
 
+// ── Colores y etiquetas por nivel de riesgo ────────────────────
+const RIESGO_CONFIG = {
+  BAJO: { color: '#16a34a', bg: '#f0fdf4', borde: '#86efac', etiqueta: 'Bajo' },
+  MEDIO: { color: '#d97706', bg: '#fffbeb', borde: '#fde68a', etiqueta: 'Medio' },
+  ALTO: { color: '#dc2626', bg: '#fff5f5', borde: '#fecaca', etiqueta: 'Alto' },
+}
+
+// ── Badge de nivel de riesgo ───────────────────────────────────
+function BadgeRiesgo({ nivel }) {
+  if (!nivel) return null
+  const cfg = RIESGO_CONFIG[nivel] || RIESGO_CONFIG.BAJO
+  return (
+    <span style={{
+      display: 'inline-block',
+      padding: '3px 12px',
+      borderRadius: '20px',
+      fontSize: '13px',
+      fontWeight: 700,
+      color: cfg.color,
+      background: cfg.bg,
+      border: `1px solid ${cfg.borde}`,
+    }}>
+      {cfg.etiqueta}
+    </span>
+  )
+}
+
 export default function EditarTratamiento() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -25,7 +53,12 @@ export default function EditarTratamiento() {
   const [paso, setPaso] = useState(1)
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
+  const [recalculando, setRecalculando] = useState(false)
   const [error, setError] = useState('')
+
+  // ── Resultado visual del recálculo (solo visual, no guardado aún) ──
+  const [resultadoRiesgo, setResultadoRiesgo] = useState(null)
+  // { nivel_riesgo, probabilidad, impacto, fecha_evaluacion }
 
   const [form, setForm] = useState({
     nombre: '',
@@ -41,6 +74,7 @@ export default function EditarTratamiento() {
     nivel_riesgo: 'BAJO',
   })
 
+  // ── Cargar tratamiento existente ───────────────────────────────
   useEffect(() => {
     async function cargar() {
       try {
@@ -62,6 +96,15 @@ export default function EditarTratamiento() {
           estado: data.estado || 'PENDIENTE',
           nivel_riesgo: data.nivel_riesgo || 'BAJO',
         })
+        // Mostrar el riesgo actual como resultado inicial
+        if (data.nivel_riesgo) {
+          setResultadoRiesgo({
+            nivel_riesgo: data.nivel_riesgo,
+            probabilidad: data.probabilidad || null,
+            impacto: data.impacto || null,
+            fecha_evaluacion: data.fecha_evaluacion || null,
+          })
+        }
       } catch {
         setError('No se pudo cargar el tratamiento.')
       } finally {
@@ -74,9 +117,17 @@ export default function EditarTratamiento() {
   function handleChange(e) {
     const { name, value, type, checked } = e.target
     setForm({ ...form, [name]: type === 'checkbox' ? checked : value })
+    // Si cambian datos que afectan el riesgo, limpiar resultado previo
+    if (['datos_sensibles', 'sale_extranjero', 'decisiones_automatizadas',
+      'medidas_seguridad', 'plazo_conservacion'].includes(name)) {
+      setResultadoRiesgo(null)
+    }
   }
 
+  // ── Recalcular riesgo (solo visual, no guarda) ─────────────────
   async function recalcular() {
+    setRecalculando(true)
+    setError('')
     try {
       const res = await fetch(`${API}/tratamientos/${id}/evaluar`, {
         method: 'POST',
@@ -84,15 +135,26 @@ export default function EditarTratamiento() {
       })
       if (!res.ok) throw new Error()
       const data = await res.json()
-      setForm(f => ({
-        ...f,
+
+      // Guardar resultado para mostrarlo — NO actualiza el form aún
+      setResultadoRiesgo({
         nivel_riesgo: data.nivel_riesgo,
-      }))
+        probabilidad: data.probabilidad,
+        impacto: data.impacto,
+        fecha_evaluacion: data.fecha_evaluacion,
+      })
+
+      // Sí actualizamos nivel_riesgo en el form para que se guarde correctamente
+      setForm(f => ({ ...f, nivel_riesgo: data.nivel_riesgo }))
+
     } catch {
-      setError('No se pudo recalcular el riesgo.')
+      setError('No se pudo recalcular el riesgo. Intenta nuevamente.')
+    } finally {
+      setRecalculando(false)
     }
   }
 
+  // ── Guardar ────────────────────────────────────────────────────
   async function guardar() {
     setGuardando(true)
     setError('')
@@ -136,16 +198,20 @@ export default function EditarTratamiento() {
         <div className="editar-card">
           <h1 className="editar-titulo">Editar tratamiento</h1>
 
+          {/* Barra de progreso */}
           <div className="editar-progreso">
             {PASOS.map((nombre, i) => (
-              <div key={i} className={`editar-paso ${paso === i + 1 ? 'activo' : ''} ${paso > i + 1 ? 'completado' : ''}`}>
+              <div
+                key={i}
+                className={`editar-paso ${paso === i + 1 ? 'activo' : ''} ${paso > i + 1 ? 'completado' : ''}`}
+              >
                 <div className="editar-paso-numero">{paso > i + 1 ? '✓' : i + 1}</div>
                 <span className="editar-paso-nombre">{nombre}</span>
               </div>
             ))}
           </div>
 
-          {/* Paso 1 — Información básica */}
+          {/* ── Paso 1 — Información básica ─────────────────────── */}
           {paso === 1 && (
             <div className="editar-seccion">
               <h2 className="editar-subtitulo">Información básica</h2>
@@ -176,7 +242,7 @@ export default function EditarTratamiento() {
             </div>
           )}
 
-          {/* Paso 2 — Datos tratados */}
+          {/* ── Paso 2 — Datos tratados ──────────────────────────── */}
           {paso === 2 && (
             <div className="editar-seccion">
               <h2 className="editar-subtitulo">Datos tratados</h2>
@@ -223,27 +289,85 @@ export default function EditarTratamiento() {
             </div>
           )}
 
-          {/* Paso 3 — Nivel de riesgo */}
+          {/* ── Paso 3 — Nivel de riesgo ─────────────────────────── */}
           {paso === 3 && (
             <div className="editar-seccion">
               <h2 className="editar-subtitulo">Nivel de riesgo</h2>
-              <p className="editar-descripcion">Clasifica el nivel de riesgo de este tratamiento.</p>
+              <p className="editar-descripcion">
+                Usa el botón para calcular el riesgo basado en los datos ingresados.
+                El resultado es solo visual — se guarda cuando apretes "Guardar cambios".
+              </p>
+
+              {/* Selector manual (respaldo) */}
               <div className="campo">
-                <label>Nivel de riesgo</label>
+                <label>Nivel de riesgo actual</label>
                 <select name="nivel_riesgo" value={form.nivel_riesgo} onChange={handleChange}>
                   <option value="BAJO">Bajo</option>
                   <option value="MEDIO">Medio</option>
                   <option value="ALTO">Alto</option>
                 </select>
               </div>
-              <button className="btn-recalcular" type="button" onClick={recalcular}>
-                Recalcular nivel de riesgo
+
+              {/* Botón recalcular */}
+              <button
+                className="btn-recalcular"
+                type="button"
+                onClick={recalcular}
+                disabled={recalculando}
+                style={{ marginBottom: '1.2rem' }}
+              >
+                {recalculando ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span className="editar-spinner" />
+                    Calculando…
+                  </span>
+                ) : '⟳ Recalcular nivel de riesgo'}
               </button>
+
+              {/* ── Resultado del recálculo ───────────────────────── */}
+              {resultadoRiesgo && (
+                <div className="editar-resultado-riesgo">
+                  <p className="editar-resultado-titulo">Resultado del análisis</p>
+
+                  <div className="editar-resultado-fila">
+                    <span className="editar-resultado-label">Nivel de riesgo</span>
+                    <BadgeRiesgo nivel={resultadoRiesgo.nivel_riesgo} />
+                  </div>
+
+                  {resultadoRiesgo.probabilidad && (
+                    <div className="editar-resultado-fila">
+                      <span className="editar-resultado-label">Probabilidad</span>
+                      <BadgeRiesgo nivel={resultadoRiesgo.probabilidad} />
+                    </div>
+                  )}
+
+                  {resultadoRiesgo.impacto && (
+                    <div className="editar-resultado-fila">
+                      <span className="editar-resultado-label">Impacto</span>
+                      <BadgeRiesgo nivel={resultadoRiesgo.impacto} />
+                    </div>
+                  )}
+
+                  {resultadoRiesgo.fecha_evaluacion && (
+                    <div className="editar-resultado-fila">
+                      <span className="editar-resultado-label">Evaluado</span>
+                      <span className="editar-resultado-fecha">
+                        {new Date(resultadoRiesgo.fecha_evaluacion).toLocaleString('es-CL')}
+                      </span>
+                    </div>
+                  )}
+
+                  <p className="editar-resultado-nota">
+                    ℹ️ Este resultado se guardará al apretar "Guardar cambios".
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
           {error && <p className="editar-error">{error}</p>}
 
+          {/* Navegación */}
           <div className="editar-navegacion">
             {paso > 1 && (
               <button className="btn-anterior" onClick={() => setPaso(paso - 1)}>
@@ -251,7 +375,11 @@ export default function EditarTratamiento() {
               </button>
             )}
             {paso < 3 ? (
-              <button className="btn-siguiente" onClick={() => setPaso(paso + 1)} disabled={paso === 1 && !form.nombre}>
+              <button
+                className="btn-siguiente"
+                onClick={() => setPaso(paso + 1)}
+                disabled={paso === 1 && !form.nombre}
+              >
                 Siguiente →
               </button>
             ) : (
@@ -260,6 +388,7 @@ export default function EditarTratamiento() {
               </button>
             )}
           </div>
+
         </div>
       </main>
     </div>
