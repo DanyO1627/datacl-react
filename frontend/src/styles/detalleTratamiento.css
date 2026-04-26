@@ -241,43 +241,6 @@
   }
 }
 
-.detalle-eval-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.detalle-eval-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #aaa;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.detalle-eval-barra {
-  height: 8px;
-  background: #f0f0f5;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.detalle-eval-relleno {
-  height: 100%;
-  border-radius: 4px;
-  background: #6c4fcf;
-  transition: width 0.4s ease;
-}
-
-.detalle-eval-pendiente {
-  background: #ddd;
-}
-
-.detalle-eval-valor {
-  font-size: 13px;
-  color: #333;
-}
-
 .detalle-eval-nota {
   font-size: 12px;
   color: #aaa;

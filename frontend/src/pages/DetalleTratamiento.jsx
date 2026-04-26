@@ -3,18 +3,19 @@ import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import BarraLateral from '../components/BarraLateral'
 import '../styles/detalleTratamiento.css'
+import BarraRiesgo from '../components/BarraRiesgo'
 
 const API = 'http://localhost:8000'
 
 const COLOR_RIESGO = {
-  BAJO:  { clase: 'riesgo-bajo',  etiqueta: 'Riesgo bajo' },
+  BAJO: { clase: 'riesgo-bajo', etiqueta: 'Riesgo bajo' },
   MEDIO: { clase: 'riesgo-medio', etiqueta: 'Riesgo medio' },
-  ALTO:  { clase: 'riesgo-alto',  etiqueta: 'Riesgo alto' },
+  ALTO: { clase: 'riesgo-alto', etiqueta: 'Riesgo alto' },
 }
 
 const COLOR_ESTADO = {
   PENDIENTE: { clase: 'estado-pendiente', etiqueta: 'Pendiente' },
-  COMPLETO:  { clase: 'estado-completo',  etiqueta: 'Completo' },
+  COMPLETO: { clase: 'estado-completo', etiqueta: 'Completo' },
 }
 
 export default function DetalleTratamiento() {
@@ -190,27 +191,22 @@ export default function DetalleTratamiento() {
           </div>
         </div>
 
-        {/* Sección evaluación de riesgo (estático hasta Sprint 4) */}
+        {/* Sección evaluación de riesgo */}
         <div className="detalle-evaluacion">
           <h2 className="detalle-columna-titulo">Evaluación de riesgo</h2>
           <div className="detalle-evaluacion-grid">
-            <div className="detalle-eval-item">
-              <span className="detalle-eval-label">Probabilidad</span>
-              <div className="detalle-eval-barra">
-                <div className="detalle-eval-relleno detalle-eval-pendiente" style={{ width: '0%' }} />
-              </div>
-              <span className="detalle-eval-valor detalle-campo-pendiente">Pendiente evaluación</span>
-            </div>
-            <div className="detalle-eval-item">
-              <span className="detalle-eval-label">Impacto</span>
-              <div className="detalle-eval-barra">
-                <div className="detalle-eval-relleno detalle-eval-pendiente" style={{ width: '0%' }} />
-              </div>
-              <span className="detalle-eval-valor detalle-campo-pendiente">Pendiente evaluación</span>
-            </div>
+            <BarraRiesgo label="Probabilidad" valor={tratamiento.probabilidad} />
+            <BarraRiesgo label="Impacto" valor={tratamiento.impacto} />
           </div>
+
+          {/* Fecha y metodología */}
           <p className="detalle-eval-nota">
-            La evaluación automática estará disponible en la próxima versión.
+            {tratamiento.fecha_evaluacion
+              ? `Evaluado el ${new Date(tratamiento.fecha_evaluacion).toLocaleDateString('es-CL', {
+                year: 'numeric', month: 'long', day: 'numeric'
+              })} · Metodología AEPD adaptada a Ley 21.719`
+              : 'Sin evaluación registrada aún.'
+            }
           </p>
         </div>
 
@@ -224,7 +220,7 @@ export default function DetalleTratamiento() {
             <h3 className="modal-titulo">¿Eliminar tratamiento?</h3>
             <p className="modal-texto">
               Esta acción no se puede deshacer. Se eliminará el tratamiento
-              <strong> "{tratamiento.tipo}"</strong> y todos sus datos asociados.
+              <strong> "{tratamiento.nombre}"</strong> y todos sus datos asociados.
             </p>
             <div className="modal-acciones">
               <button className="btn-modal-cancelar" onClick={() => setModalEliminar(false)} disabled={eliminando}>
