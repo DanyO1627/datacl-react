@@ -21,19 +21,20 @@ import { FormularioProvider } from "./context/FormularioContext";
 import Paso1 from "./pages/formulario/Paso1";
 import Paso2 from "./pages/formulario/Paso2";
 import Paso3 from "./pages/formulario/Paso3";
- 
+import Perfil from "./pages/Perfil";
+
 function App() {
   return (
     <BrowserRouter>
       <FormularioProvider>
         <Routes>
- 
+
           {/* ── Rutas públicas ─────────────────────────────── */}
-          <Route path="/"                   element={<Home />} />
-          <Route path="/login"              element={<Login />} />
-          <Route path="/registro"           element={<Registro />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/registro" element={<Registro />} />
           <Route path="/recuperar-password" element={<RecuperarPassword />} />
- 
+
           {/* ── Rutas admin ────────────────────────────────── */}
           <Route path="/dashboardAdmin" element={
             <RutaAdmin><DashboardAdmin /></RutaAdmin>
@@ -44,7 +45,7 @@ function App() {
           <Route path="/admin/detalle/:id" element={
             <RutaAdmin><Detalle /></RutaAdmin>
           } />
- 
+
           {/* ── Rutas protegidas ───────────────────────────── */}
           <Route path="/dashboard" element={
             <RutaProtegida><DashboardCliente /></RutaProtegida>
@@ -65,9 +66,7 @@ function App() {
             <RutaProtegida><EditarTratamiento /></RutaProtegida>
           } />
           <Route path="/perfil" element={
-            <RutaProtegida>
-              <div>Mi perfil — próximamente</div>
-            </RutaProtegida>
+            <RutaProtegida><Perfil /></RutaProtegida>
           } />
           <Route path="/riesgos" element={
             <RutaProtegida><Riesgos /></RutaProtegida>
@@ -75,7 +74,7 @@ function App() {
           <Route path="/resultados-analisis" element={
             <RutaProtegida><ResultadosAnalisis /></RutaProtegida>
           } />
- 
+
           {/* ── Formulario RAT — 3 pasos ───────────────────── */}
           <Route path="/nuevo-tratamiento" element={
             <RutaProtegida><Paso1 /></RutaProtegida>
@@ -86,14 +85,14 @@ function App() {
           <Route path="/nuevo-tratamiento/paso3" element={
             <RutaProtegida><Paso3 /></RutaProtegida>
           } />
- 
+
           {/* ── 404 ────────────────────────────────────────── */}
           <Route path="*" element={<Error404 />} />
- 
+
         </Routes>
       </FormularioProvider>
     </BrowserRouter>
   );
 }
- 
+
 export default App;

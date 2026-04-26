@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useFormulario } from "../../context/FormularioContext";
+import { crearTratamiento } from "../../services/tratamientosService";
 import BarraLateral from "../../components/BarraLateral";
 import "../../styles/formularioCss/paso3.css";
 
@@ -48,61 +49,61 @@ function formatearErrorApi(detail) {
  * "otro" es especial — muestra un campo libre al seleccionarlo.
  */
 const PLAZOS = [
-  { valor: "1_anio",    etiqueta: "1 año" },
-  { valor: "2_anios",   etiqueta: "2 años" },
-  { valor: "5_anios",   etiqueta: "5 años" },
-  { valor: "10_anios",  etiqueta: "10 años" },
+  { valor: "1_anio", etiqueta: "1 año" },
+  { valor: "2_anios", etiqueta: "2 años" },
+  { valor: "5_anios", etiqueta: "5 años" },
+  { valor: "10_anios", etiqueta: "10 años" },
   { valor: "indefinido", etiqueta: "Indefinido" },
-  { valor: "otro",      etiqueta: "Otro" },
+  { valor: "otro", etiqueta: "Otro" },
 ];
 
 /* ─── Medidas de seguridad ───────────────────────────────────────
  * "otras" es especial — muestra campo libre al marcarlo.
  */
 const MEDIDAS = [
-  { id: "cifrado",       etiqueta: "Cifrado de datos" },
-  { id: "acceso_rol",    etiqueta: "Control de acceso por rol" },
-  { id: "backups",       etiqueta: "Backups periódicos" },
-  { id: "contraseñas",   etiqueta: "Política de contraseñas" },
-  { id: "auditoria",     etiqueta: "Auditoría de accesos" },
-  { id: "otras",         etiqueta: "Otras" },
+  { id: "cifrado", etiqueta: "Cifrado de datos" },
+  { id: "acceso_rol", etiqueta: "Control de acceso por rol" },
+  { id: "backups", etiqueta: "Backups periódicos" },
+  { id: "contraseñas", etiqueta: "Política de contraseñas" },
+  { id: "auditoria", etiqueta: "Auditoría de accesos" },
+  { id: "otras", etiqueta: "Otras" },
 ];
 
 /* ─── Etiquetas legibles para el acordeón ───────────────────────
  * Necesitamos mostrar texto amigable en vez de los valores internos.
  */
 const ETIQ_BASE_LEGAL = {
-  consentimiento:   "Consentimiento",
-  contrato:         "Contrato",
+  consentimiento: "Consentimiento",
+  contrato: "Contrato",
   obligacion_legal: "Obligación legal",
   interes_legitimo: "Interés legítimo",
 };
 
 const ETIQ_PLAZO = {
-  "1_anio":    "1 año",
-  "2_anios":   "2 años",
-  "5_anios":   "5 años",
-  "10_anios":  "10 años",
-  indefinido:  "Indefinido",
-  otro:        "Otro",
+  "1_anio": "1 año",
+  "2_anios": "2 años",
+  "5_anios": "5 años",
+  "10_anios": "10 años",
+  indefinido: "Indefinido",
+  otro: "Otro",
 };
 
 const ETIQ_MEDIDAS = {
-  cifrado:     "Cifrado de datos",
-  acceso_rol:  "Control de acceso por rol",
-  backups:     "Backups periódicos",
+  cifrado: "Cifrado de datos",
+  acceso_rol: "Control de acceso por rol",
+  backups: "Backups periódicos",
   contraseñas: "Política de contraseñas",
-  auditoria:   "Auditoría de accesos",
-  otras:       "Otras",
+  auditoria: "Auditoría de accesos",
+  otras: "Otras",
 };
 
 const ETIQ_CATEGORIAS = {
-  nombre_apellido:    "Nombre y apellido",
-  rut_dni:            "RUT / DNI",
+  nombre_apellido: "Nombre y apellido",
+  rut_dni: "RUT / DNI",
   correo_electronico: "Correo electrónico",
-  telefono:           "Teléfono",
-  direccion:          "Dirección",
-  fecha_nacimiento:   "Fecha de nacimiento",
+  telefono: "Teléfono",
+  direccion: "Dirección",
+  fecha_nacimiento: "Fecha de nacimiento",
 };
 
 /* ─── Barra de progreso ──────────────────────────────────────── */
@@ -112,7 +113,7 @@ function BarraProgreso({ pasoActual }) {
     <div className="p3-progreso">
       {pasos.map((nombre, i) => {
         const num = i + 1;
-        const activo     = num === pasoActual;
+        const activo = num === pasoActual;
         const completado = num < pasoActual;
         return (
           <div key={i} className="p3-progreso-item">
@@ -139,10 +140,10 @@ export default function Paso3() {
 
   /* Estado local — mismo patrón de Paso1 y Paso2 */
   const [local, setLocal] = useState({
-    plazo_conservacion:       form.plazo_conservacion || "",
-    plazo_otro:               form.plazo_otro || "",
-    medidas_seguridad:        form.medidas_seguridad || [],
-    otras_medidas:            form.otras_medidas || "",
+    plazo_conservacion: form.plazo_conservacion || "",
+    plazo_otro: form.plazo_otro || "",
+    medidas_seguridad: form.medidas_seguridad || [],
+    otras_medidas: form.otras_medidas || "",
     decisiones_automatizadas: form.decisiones_automatizadas ?? false,
   });
 
@@ -150,7 +151,7 @@ export default function Paso3() {
   const [acordeonAbierto, setAcordeonAbierto] = useState(false);
 
   const [guardando, setGuardando] = useState(false);
-  const [error, setError]         = useState("");
+  const [error, setError] = useState("");
 
   /* ── Medidas de seguridad (checkboxes) ──────────────────────── */
   function toggleMedida(id) {
@@ -168,50 +169,40 @@ export default function Paso3() {
     setGuardando(true);
     setError("");
 
-    // Primero actualizamos el contexto con los datos del paso 3
     actualizarForm(local);
     const formularioCompleto = { ...form, ...local };
 
     const payload = {
-      nombre:                   formularioCompleto.nombre,
-      finalidad:                formularioCompleto.finalidad || null,
-      base_legal:               formularioCompleto.base_legal || null,
-      categorias_datos:         formularioCompleto.categorias_datos || [],
-      datos_sensibles:          formularioCompleto.datos_sensibles ?? false,
-      categorias_sensibles:     formularioCompleto.categorias_sensibles || [],
-      destinatarios:            formularioCompleto.destinatarios || null,
-      sale_extranjero:          formularioCompleto.sale_extranjero ?? false,
-      pais_destino:             formularioCompleto.pais_destino || null,
-      plazo_conservacion:       formularioCompleto.plazo_conservacion || null,
-      plazo_otro:               formularioCompleto.plazo_otro || null,
-      medidas_seguridad:        serializarMedidasSeguridad(
+      nombre: formularioCompleto.nombre,
+      finalidad: formularioCompleto.finalidad || null,
+      base_legal: formularioCompleto.base_legal || null,
+      categorias_datos: formularioCompleto.categorias_datos || [],
+      datos_sensibles: formularioCompleto.datos_sensibles ?? false,
+      categorias_sensibles: formularioCompleto.categorias_sensibles || [],
+      destinatarios: formularioCompleto.destinatarios || null,
+      sale_extranjero: formularioCompleto.sale_extranjero ?? false,
+      pais_destino: formularioCompleto.pais_destino || null,
+      plazo_conservacion: formularioCompleto.plazo_conservacion || null,
+      plazo_otro: formularioCompleto.plazo_otro || null,
+      medidas_seguridad: serializarMedidasSeguridad(
         formularioCompleto.medidas_seguridad,
         formularioCompleto.otras_medidas
       ),
-      otras_medidas:            formularioCompleto.otras_medidas || null,
+      otras_medidas: formularioCompleto.otras_medidas || null,
       decisiones_automatizadas: formularioCompleto.decisiones_automatizadas ?? false,
-      campos_detectados:        formularioCompleto.campos_detectados || [],
+      campos_detectados: formularioCompleto.campos_detectados || [],
     };
 
     try {
-      const res = await fetch(`${API}/tratamientos`, {
-        method:  "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization:  `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(formatearErrorApi(data.detail));
-      }
-
+      await crearTratamiento(payload);
       resetForm();
       navigate("/mis-tratamientos");
-
     } catch (e) {
+      // Si es 401, redirigir al login
+      if (e.codigo === 401) {
+        navigate("/login");
+        return;
+      }
       setError(e.message);
     } finally {
       setGuardando(false);
@@ -367,8 +358,8 @@ export default function Paso3() {
 
                 <div className="p3-revision-seccion">
                   <h4 className="p3-revision-titulo">Paso 1 — Información general</h4>
-                  <FilaRevision label="Nombre"     valor={form.nombre} />
-                  <FilaRevision label="Finalidad"  valor={form.finalidad} />
+                  <FilaRevision label="Nombre" valor={form.nombre} />
+                  <FilaRevision label="Finalidad" valor={form.finalidad} />
                   <FilaRevision label="Base legal" valor={ETIQ_BASE_LEGAL[form.base_legal] || form.base_legal} />
                 </div>
 
@@ -388,7 +379,7 @@ export default function Paso3() {
                       valor={categoriasSensibles.join(", ")}
                     />
                   )}
-                  <FilaRevision label="Destinatarios"    valor={form.destinatarios} />
+                  <FilaRevision label="Destinatarios" valor={form.destinatarios} />
                   <FilaRevision label="Sale al extranjero" valor={form.sale_extranjero ? `Sí — ${form.pais_destino || "país no especificado"}` : "No"} />
                 </div>
 

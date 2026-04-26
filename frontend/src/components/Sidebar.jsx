@@ -7,6 +7,7 @@ const links = [
   { to: '/tratamientos', label: 'Tratamientos', icon: '📄' },
   { to: '/archivo', label: 'Archivo', icon: '🗂️' },
   { to: '/informes', label: 'Informes', icon: '📊' },
+  { to: '/perfil',       label: 'Mi perfil',    icon: '👤' },
   { to: '/admin', label: 'Admin', icon: '👤' },
 ]
 

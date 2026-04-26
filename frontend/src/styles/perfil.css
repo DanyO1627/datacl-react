@@ -1,0 +1,296 @@
+/* frontend/src/styles/perfil.css
+   Paleta y convenciones del proyecto (--navy, --dark, --mid, --light, --pale)
+   Prefijo: pf- (perfil)
+*/
+
+/* ─── Variables (misma paleta) ────────────────────────────────── */
+:root {
+  --navy: #021024;
+  --dark: #052659;
+  --mid:  #5483B3;
+  --light: #7DA0CA;
+  --pale: #C1E8FF;
+}
+
+/* ─── Layout ──────────────────────────────────────────────────── */
+.pf-layout {
+  min-height: 100vh;
+  background: linear-gradient(160deg, var(--pale) 0%, #e8f4ff 40%, #f0f8ff 100%);
+}
+
+.pf-main {
+  margin-left: 220px;
+  padding: 2.8rem 3rem;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  min-height: 100vh;
+}
+
+/* ─── Header ──────────────────────────────────────────────────── */
+.pf-header {
+  margin-bottom: 2rem;
+}
+
+.pf-titulo {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 4px;
+}
+
+.pf-subtitulo {
+  font-size: 14px;
+  color: var(--mid);
+  margin: 0;
+}
+
+/* ─── Card contenido ──────────────────────────────────────────── */
+.pf-contenido {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2.4rem 2.4rem 2rem;
+  max-width: 720px;
+  box-shadow: 0 4px 32px rgba(5, 38, 89, 0.08), 0 1px 4px rgba(5, 38, 89, 0.05);
+}
+
+/* ─── Sección ─────────────────────────────────────────────────── */
+.pf-seccion {
+  width: 100%;
+}
+
+.pf-seccion-titulo {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 1.4rem;
+}
+
+/* ─── Divisor ─────────────────────────────────────────────────── */
+.pf-divisor {
+  border: none;
+  border-top: 1px solid #e8f0f8;
+  margin: 2rem 0;
+}
+
+/* ─── Formulario ──────────────────────────────────────────────── */
+.pf-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+/* ─── Campo ───────────────────────────────────────────────────── */
+.pf-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pf-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+/* ─── Input wrapper (input + botón icono) ─────────────────────── */
+.pf-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pf-input {
+  width: 100%;
+  padding: 11px 44px 11px 14px;
+  border: 1.5px solid #c8dcee;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: 'Georgia', serif;
+  color: var(--navy);
+  background: #fff;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  box-sizing: border-box;
+}
+
+.pf-input:focus {
+  border-color: var(--mid);
+  box-shadow: 0 0 0 3px rgba(84, 131, 179, 0.12);
+}
+
+/* Campo solo lectura (pre-rellenado, no activo) */
+.pf-input--readonly {
+  background: #f4f9ff;
+  color: #4a6a8a;
+  cursor: default;
+  border-color: #dce9f4;
+}
+
+.pf-input--readonly:focus {
+  border-color: #dce9f4;
+  box-shadow: none;
+}
+
+/* RUT — nunca editable */
+.pf-input--rut {
+  color: #8aabcc;
+}
+
+/* Badge "No editable" junto al RUT */
+.pf-rut-badge {
+  position: absolute;
+  right: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ab5cc;
+  background: #eef4fb;
+  border-radius: 20px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ─── Botón editar (icono lápiz) ──────────────────────────────── */
+.pf-btn-editar {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--mid);
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.pf-btn-editar:hover {
+  color: var(--dark);
+  background: #eef4fb;
+}
+
+/* ─── Botón ojo (mostrar/ocultar contraseña) ──────────────────── */
+.pf-btn-ojo {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ab5cc;
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  border-radius: 6px;
+  transition: color 0.15s;
+}
+
+.pf-btn-ojo:hover {
+  color: var(--mid);
+}
+
+/* ─── Footer del formulario (botones) ─────────────────────────── */
+.pf-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  margin-top: 0.4rem;
+}
+
+/* ─── Botones ─────────────────────────────────────────────────── */
+.pf-btn {
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  transition: opacity 0.18s, transform 0.12s;
+  letter-spacing: 0.01em;
+  border: none;
+}
+
+.pf-btn--guardar {
+  background: linear-gradient(135deg, var(--dark) 0%, var(--mid) 100%);
+  color: #fff;
+}
+
+.pf-btn--guardar:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.pf-btn--guardar:disabled,
+.pf-btn--cargando {
+  background: #c8dcee;
+  color: #a0b8cc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.pf-btn--cancelar {
+  background: transparent;
+  border: 1.5px solid #c8dcee;
+  color: var(--dark);
+}
+
+.pf-btn--cancelar:hover:not(:disabled) {
+  background: #f4f9ff;
+}
+
+/* ─── Spinner ─────────────────────────────────────────────────── */
+.pf-spinner-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pf-spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: pf-giro 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes pf-giro {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Alertas de éxito / error ────────────────────────────────── */
+.pf-alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 11px 15px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  font-family: 'Georgia', serif;
+  animation: pf-aparecer 0.2s ease;
+}
+
+@keyframes pf-aparecer {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pf-alerta--exito {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+}
+
+.pf-alerta--error {
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.pf-alerta-icono {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  margin-top: 1px;
+}
