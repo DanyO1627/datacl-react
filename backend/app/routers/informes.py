@@ -7,6 +7,7 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 import os
+from datetime import datetime
 
 from app.basededatos import get_db as get_bd
 from app.utils.jwt import obtener_usuario_actual
@@ -27,13 +28,14 @@ def listar_informes(
         .order_by(models.Informe.generado_en.desc())
         .all()
     )
+    num = db.query(models.Tratamiento).filter(
+        models.Tratamiento.organizacion_id == usuario.id
+    ).count()
     return [
         {
             "id": inf.id,
-            "num_tratamientos": db.query(models.Tratamiento).filter(
-                models.Tratamiento.organizacion_id == usuario.id
-            ).count(),
-            "generado_en": inf.generado_en,
+            "num_tratamientos": num,
+            "generado_en": inf.generado_en.isoformat() if inf.generado_en else None,
         }
         for inf in informes
     ]
@@ -82,9 +84,11 @@ def generar_informe(
     except Exception:
         pass
 
+    ahora = datetime.now()
     informe = models.Informe(
         organizacion_id=usuario.id,
         contenido_ia=contenido_ia,
+        generado_en=ahora,
     )
     db.add(informe)
     db.commit()
@@ -93,7 +97,7 @@ def generar_informe(
     return {
         "id": informe.id,
         "num_tratamientos": len(tratamientos),
-        "generado_en": informe.generado_en,
+        "generado_en": ahora.isoformat(),
         "contenido_ia": contenido_ia,
     }
 
@@ -133,10 +137,8 @@ def descargar_informe(
     elementos.append(Paragraph(f"Organización: {org.nombre}", styles["Normal"]))
     elementos.append(Paragraph(f"RUT: {org.rut}", styles["Normal"]))
     elementos.append(Paragraph(f"Correo: {org.correo}", styles["Normal"]))
-    elementos.append(Paragraph(
-        f"Fecha de generación: {informe.generado_en.strftime('%d/%m/%Y')}",
-        styles["Normal"],
-    ))
+    fecha_str = informe.generado_en.strftime('%d/%m/%Y') if informe.generado_en else "-"
+    elementos.append(Paragraph(f"Fecha de generación: {fecha_str}", styles["Normal"]))
     elementos.append(Spacer(1, 20))
 
     if informe.contenido_ia:
@@ -178,7 +180,7 @@ def descargar_informe(
 
     nombre_archivo = (
         f"informe_{org.nombre.replace(' ', '_')}"
-        f"_{informe.generado_en.strftime('%Y%m%d')}.pdf"
+        f"_{fecha_str.replace('/', '')}.pdf"
     )
     return StreamingResponse(
         buffer,
