@@ -63,7 +63,7 @@ Incluye:
 Metodología: AEPD adaptada a Ley 21.719. Sé concreto y práctico."""
 
         respuesta = cliente.chat.completions.create(
-            model="llama3-8b-8192",
+            model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=1000,
         )
@@ -287,6 +287,51 @@ def generar_informe(
         "tiene_ia":     contenido_ia is not None,
         "ruta_pdf":     str(ruta_pdf),
     }
+    
+    
+# PEDIR ANALISIS CON IA
+    
+def _pedir_analisis_ia(tratamientos: list) -> str | None:
+    try:
+        from groq import Groq
+        api_key = os.getenv("GROQ_API_KEY")
+        cliente = Groq(api_key=api_key)
+
+        resumen = []
+        for t in tratamientos:
+            resumen.append(
+                f"- {t.nombre}: nivel_riesgo={t.nivel_riesgo}, "
+                f"probabilidad={t.probabilidad}, impacto={t.impacto}, "
+                f"datos_sensibles={t.datos_sensibles}, "
+                f"sale_extranjero={t.sale_extranjero}, "
+                f"decisiones_automatizadas={t.decisiones_automatizadas}"
+            )
+
+        prompt = f"""Eres un experto en protección de datos personales bajo la Ley 21.719 de Chile.
+Analiza estos tratamientos de datos y entrega recomendaciones específicas:
+
+{chr(10).join(resumen)}
+
+Incluye:
+1. Riesgos identificados por tratamiento
+2. Recomendaciones específicas para reducir el riesgo
+3. Conclusión general sobre el nivel de cumplimiento
+
+Metodología: AEPD adaptada a Ley 21.719. Sé concreto y práctico."""
+
+        respuesta = cliente.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1000,
+        )
+        return respuesta.choices[0].message.content
+
+    except Exception as e:
+        print(f"DEBUG ERROR GROQ: {e}")
+        return None
+
+
+
 
 
 @router.get("/{informe_id}/descargar")
