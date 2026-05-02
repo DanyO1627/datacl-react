@@ -154,6 +154,15 @@ SENSIBLES_ES = [
     "discapacidad",
     "discapacidades",
     "religion",
+    "voto",
+    "psicologico",
+    "psiquiatrico",
+    "politico",
+    "genetico",
+    "genotipo",
+    "biometrico",
+    "huella",
+    "iris",
     "creencia",
     "religioso",
     "religiosos",
@@ -200,6 +209,10 @@ SENSIBLES_EN = [
     "race",
     "orientation",
     "political",
+    "ideologia",       # Registro_Ideologia_Encubierta
+    "psicotropico",    # Patron_Consumo_Psicotropicos  
+    "ideologica",
+    "ideologico",
     "biometric",
     "fingerprint",
     "syndical",
@@ -290,18 +303,31 @@ def _tokenizar(nombre_columna: str) -> set[str]:
     return set(normalizado.split())
 
 
-def _coincide(tokens: set[str], palabras: list[str], abreviaciones: list[str]) -> bool:
+def _raiz(palabra: str, largo: int = 7) -> str:
     """
-    Retorna True si algún token coincide exactamente con alguna palabra
-    de la lista larga O con alguna abreviación.
+    Devuelve los primeros `largo` caracteres de la palabra.
+    Ej: "psicologico" → "psicolo"
+        "psicologicas" → "psicolo"
+        "genetico" → "genetic"
+        "geneticas" → "genetic"
+    """
+    return palabra[:largo]
 
-    Por qué separamos palabras y abreviaciones en dos listas si hacemos
-    lo mismo con ambas? Porque en el futuro puede ser útil distinguirlas
-    (ej: logging, confianza diferente). Por ahora el comportamiento es igual.
-    """
-    return any(p in tokens for p in palabras) or any(
-        abr in tokens for abr in abreviaciones
-    )
+def _coincide(tokens: set[str], palabras: list[str], abreviaciones: list[str]) -> bool:
+    # Para palabras largas (8+ chars): comparar por raíz truncada de 7 chars
+    palabras_largas = [p for p in palabras if len(p) >= 8]
+    raices_dict = {_raiz(p) for p in palabras_largas}
+    
+    for token in tokens:
+        if len(token) >= 8:
+            if _raiz(token) in raices_dict:
+                return True
+        # Exacto para tokens cortos
+        if token in palabras:
+            return True
+    
+    # Abreviaciones siempre exactas (son cortas, no tienen inflexión)
+    return any(abr in tokens for abr in abreviaciones)
 
 
 def clasificar_columnas(columnas: list[str]) -> dict:
