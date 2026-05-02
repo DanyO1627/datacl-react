@@ -107,12 +107,16 @@ export default function Paso2() {
     CATEGORIAS_DATOS.forEach((cat) => {
       if (cat.keywords.some((kw) => col.includes(kw))) detectadas.add(cat.id);
     });
-    if (campo.es_sensible) {
+    if (campo.tipo === "SENSIBLE") {
       CATEGORIAS_SENSIBLES.forEach((cat) => {
         if (cat.keywords.some((kw) => col.includes(kw))) detectadas.add(cat.id);
       });
     }
   });
+
+  const haySensiblesDetectados = [...detectadas].some((id) =>
+    CATEGORIAS_SENSIBLES.some((c) => c.id === id)
+  );
 
   // Set de IDs que el usuario desmarcó manualmente (eran verdes)
   const [desmarcadas, setDesmarcadas] = useState(new Set());
@@ -121,14 +125,16 @@ export default function Paso2() {
    * Estado local — pre-carga desde el contexto si ya había datos.
    * Si no había datos (primera vez), pre-marcamos los detectados.
    */
+  const primeraVezEnPaso2 = form.categorias_datos.length === 0 && form.categorias_sensibles.length === 0;
+
   const [local, setLocal] = useState({
-    categorias_datos: form.categorias_datos.length > 0
-      ? form.categorias_datos
-      : [...detectadas].filter((id) => CATEGORIAS_DATOS.some((c) => c.id === id)),
-    datos_sensibles:      form.datos_sensibles ?? false,
-    categorias_sensibles: form.categorias_sensibles.length > 0
-      ? form.categorias_sensibles
-      : [...detectadas].filter((id) => CATEGORIAS_SENSIBLES.some((c) => c.id === id)),
+    categorias_datos: primeraVezEnPaso2
+      ? [...detectadas].filter((id) => CATEGORIAS_DATOS.some((c) => c.id === id))
+      : form.categorias_datos,
+    datos_sensibles: primeraVezEnPaso2 ? haySensiblesDetectados : form.datos_sensibles,
+    categorias_sensibles: primeraVezEnPaso2
+      ? [...detectadas].filter((id) => CATEGORIAS_SENSIBLES.some((c) => c.id === id))
+      : form.categorias_sensibles,
     destinatarios:   form.destinatarios || "",
     sale_extranjero: form.sale_extranjero ?? false,
     pais_destino:    form.pais_destino || "",

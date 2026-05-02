@@ -81,6 +81,10 @@
   box-shadow: 0 4px 24px rgba(5, 38, 89, 0.12);
 }
  
+.dashboard__tarjeta--clickable {
+  cursor: pointer;
+}
+
 /* Colores de acento por tarjeta */
 .dashboard__tarjeta--azul   { border-left-color: var(--mid); }
 .dashboard__tarjeta--naranja { border-left-color: #e8973a; }

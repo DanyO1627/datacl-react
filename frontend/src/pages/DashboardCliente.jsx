@@ -63,7 +63,7 @@ export default function Dashboard() {
   }
 
   const TARJETAS = [
-    { id: "registrados", etiqueta: "Tratamientos registrados", valor: metricas.total,      icono: "📋", color: "azul"    },
+    { id: "registrados", etiqueta: "Tratamientos registrados", valor: metricas.total,      icono: "📋", color: "azul",    ruta: "/mis-tratamientos" },
     { id: "pendientes",  etiqueta: "Tratamientos pendientes",  valor: metricas.pendientes, icono: "⏳", color: "naranja" },
     { id: "alto",        etiqueta: "Riesgo alto",              valor: metricas.alto,        icono: "⚠️", color: "verde"   },
   ]
@@ -85,7 +85,14 @@ export default function Dashboard() {
         {/* Métricas */}
         <section className="dashboard__metricas">
           {TARJETAS.map(t => (
-            <div key={t.id} className={`dashboard__tarjeta dashboard__tarjeta--${t.color}`}>
+            <div
+              key={t.id}
+              className={`dashboard__tarjeta dashboard__tarjeta--${t.color}${t.ruta ? " dashboard__tarjeta--clickable" : ""}`}
+              onClick={t.ruta ? () => navigate(t.ruta) : undefined}
+              onKeyDown={t.ruta ? (e) => (e.key === "Enter" || e.key === " ") && navigate(t.ruta) : undefined}
+              role={t.ruta ? "button" : undefined}
+              tabIndex={t.ruta ? 0 : undefined}
+            >
               <div className="dashboard__tarjeta-icono">{t.icono}</div>
               <div className="dashboard__tarjeta-info">
                 <span className="dashboard__tarjeta-etiqueta">{t.etiqueta}</span>
