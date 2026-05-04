@@ -289,7 +289,6 @@ def generar_informe(
     }
     
     
-    
 
 @router.get("")
 def listar_informes(

@@ -227,13 +227,13 @@
   gap: 1.5rem;
   margin-top: 1.5rem;
 }
- 
+
 @media (max-width: 900px) {
   .dashboard__fila-inferior {
     grid-template-columns: 1fr;
   }
 }
- 
+
 /* Card del gráfico */
 .dashboard__grafico-card {
   background: #fff;
@@ -241,7 +241,7 @@
   padding: 1.4rem 1.6rem 1.2rem;
   box-shadow: 0 2px 16px rgba(5, 38, 89, 0.07);
 }
- 
+
 .dashboard__seccion-titulo {
   font-size: 15px;
   font-weight: 700;

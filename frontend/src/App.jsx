@@ -22,6 +22,9 @@ import Paso1 from "./pages/formulario/Paso1";
 import Paso2 from "./pages/formulario/Paso2";
 import Paso3 from "./pages/formulario/Paso3";
 import Perfil from "./pages/Perfil";
+import VistaPrevia from "./pages/VistaPrevia";
+import ConfirmacionDescarga from "./pages/ConfirmacionDescarga";
+import DetalleOrganizacion from "./pages/DetalleOrganizacion";
 
 function App() {
   return (
@@ -45,6 +48,9 @@ function App() {
           <Route path="/admin/detalle/:id" element={
             <RutaAdmin><Detalle /></RutaAdmin>
           } />
+          <Route path="/admin/organizaciones/:id" element={
+            <RutaAdmin><DetalleOrganizacion /></RutaAdmin>
+          } />
 
           {/* ── Rutas protegidas ───────────────────────────── */}
           <Route path="/dashboard" element={
@@ -55,6 +61,12 @@ function App() {
           } />
           <Route path="/informes" element={
             <RutaProtegida><Informes /></RutaProtegida>
+          } />
+          <Route path="/informes/nuevo" element={
+            <RutaProtegida><VistaPrevia /></RutaProtegida>
+          } />
+          <Route path="/informes/confirmacion" element={
+            <RutaProtegida><ConfirmacionDescarga /></RutaProtegida>
           } />
           <Route path="/mis-tratamientos" element={
             <RutaProtegida><MisTratamientos /></RutaProtegida>

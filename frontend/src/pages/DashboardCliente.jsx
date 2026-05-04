@@ -1,4 +1,3 @@
-// frontend/src/pages/DashboardCliente.jsx
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
@@ -7,6 +6,8 @@ import { obtenerTratamientos } from "../services/tratamientosService"
 import BarraLateral from "../components/BarraLateral"
 import GraficoRiesgo from "../components/GraficoRiesgo"
 import "../styles/dashboardCliente.css"
+
+const COLORES_RIESGO = { BAJO: "#38a169", MEDIO: "#d97706", ALTO: "#e53e3e" }
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -105,13 +106,11 @@ export default function Dashboard() {
         {/* Fila inferior: gráfico + últimos tratamientos */}
         <div className="dashboard__fila-inferior">
 
-          {/* Gráfico de distribución de riesgo */}
           <section className="dashboard__grafico-card">
             <h2 className="dashboard__seccion-titulo">Distribución de riesgo</h2>
             <GraficoRiesgo tratamientos={todosLosTratamientos} />
           </section>
 
-          {/* Últimos tratamientos */}
           {ultimos.length > 0 && (
             <section className="dashboard__ultimos">
               <h2 className="dashboard__ultimos-titulo">Últimos tratamientos</h2>
