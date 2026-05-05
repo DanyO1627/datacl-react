@@ -43,6 +43,12 @@ export default function Informes() {
       <main className="informes-main">
         <div className="informes-header">
           <h1 className="informes-titulo">Informes</h1>
+          <button
+            className="btn-generar"
+            onClick={() => navigate('/informes/nuevo')}
+          >
+            Generar nuevo informe
+          </button>
         </div>
 
         {cargando ? (
