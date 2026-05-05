@@ -37,7 +37,7 @@ def _pedir_analisis_ia(tratamientos: list) -> str | None:
     """
     try:
         from groq import Groq
-        cliente = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        cliente = Groq(api_key=os.getenv("GROQ_API_KEY")) # esto es la conexción con la API de groq
 
         # Construir resumen de tratamientos para el prompt
         resumen = []
@@ -62,12 +62,12 @@ Incluye:
 
 Metodología: AEPD adaptada a Ley 21.719. Sé concreto y práctico."""
 
-        respuesta = cliente.chat.completions.create(
+        respuesta = cliente.chat.completions.create( # esto hace la llamada real a groq
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=1000,
+            max_tokens=1000, # limita el largo de la respuesta
         )
-        return respuesta.choices[0].message.content
+        return respuesta.choices[0].message.content # extrae el texto de la respueta
 
     except Exception:
         return None  # Si Groq falla, el PDF se genera igual sin IA
@@ -274,7 +274,7 @@ def generar_informe(
     # Guardar registro en BD
     nuevo_informe = models.Informe(
         organizacion_id = usuario.id,
-        contenido_ia    = contenido_ia,
+        contenido_ia    = contenido_ia, # este analisis de la ia se guarda en texto en la tabla de infomres
         ruta_pdf        = str(ruta_pdf),
     )
     db.add(nuevo_informe)
