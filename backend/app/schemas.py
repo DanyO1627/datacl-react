@@ -205,3 +205,19 @@ class CampoRatRespuesta(BaseModel):
     creado_en: datetime
 
     model_config = {"from_attributes": True}
+
+
+class InformeRespuesta(BaseModel):
+    """
+    Schema de respuesta para GET /informes.
+    - generado_en es Optional porque registros viejos pueden tener NULL en BD
+    - num_tratamientos no está en la tabla informes, se calcula en el endpoint
+    - tiene_ia indica si Groq respondió al generar
+    """
+    id:                 int
+    generado_en:        Optional[datetime] = None
+    tiene_ia:           bool = False
+    ruta_pdf:           Optional[str] = None
+    num_tratamientos:   int = 0          # cuántos tratamientos tenía la org al generar
+
+    model_config = {"from_attributes": True}

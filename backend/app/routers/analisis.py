@@ -1,18 +1,36 @@
 import io
-import json
 from typing import Annotated
 import pandas as pd
 from pandas.errors import EmptyDataError, ParserError
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 
 from app.utils.analisis import leer_columnas_csv, leer_columnas_excel, clasificar_columnas
+from app.utils.jwt import obtener_usuario_actual
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DECISIÓN: ¿Requiere autenticación /analizar?
+#
+# SÍ requiere JWT — razones:
+#
+# 1. ABUSO DE RECURSOS: sin autenticación cualquier persona o bot puede subir
+#    archivos de forma masiva y consumir CPU/RAM del servidor indefinidamente.
+#
+# 2. COHERENCIA DE FLUJO: el análisis es el paso previo a crear un tratamiento,
+#    que sí requiere JWT. No tiene sentido que el paso previo sea público.
+#
+# 3. TRAZABILIDAD: si en el futuro queremos registrar qué organización analizó
+#    qué archivos, ya tenemos el usuario disponible en el contexto.
+#
+# IMPLEMENTACIÓN: se agrega Depends(obtener_usuario_actual) a ambos endpoints.
+# El frontend (analisisService.js) ya envía el JWT automáticamente via interceptor,
+# por lo que no requiere ningún cambio en el frontend.
+# ─────────────────────────────────────────────────────────────────────────────
 
 router = APIRouter(prefix="/analizar", tags=["analisis"])
 
 EXTENSIONES_CSV   = ('.csv',)
 EXTENSIONES_EXCEL = ('.xlsx', '.xls')
-EXTENSIONES_JSON  = ('.json',)
-TAMANO_MAXIMO     = 5 * 1024 * 1024  # 5 MB — aporte de Eve
+TAMANO_MAXIMO     = 5 * 1024 * 1024  # 5 MB
 
 
 def _detectar_tipo_archivo(nombre: str) -> str:
@@ -21,32 +39,14 @@ def _detectar_tipo_archivo(nombre: str) -> str:
         return 'csv'
     elif nombre.endswith(EXTENSIONES_EXCEL):
         return 'excel'
-    elif nombre.endswith(EXTENSIONES_JSON):
-        return 'json'
     else:
         raise HTTPException(
             status_code=400,
-            detail="Formato no soportado. Usa CSV, Excel (.xlsx, .xls) o JSON."
+            detail="Formato no soportado. Usa CSV o Excel (.xlsx, .xls)"
         )
 
 
-def _parsear_json(contenido: bytes) -> pd.DataFrame:
-    try:
-        data = json.loads(contenido.decode('utf-8'))
-    except (json.JSONDecodeError, UnicodeDecodeError):
-        raise HTTPException(status_code=400, detail="El archivo JSON no es válido.")
-    if isinstance(data, dict):
-        # Formato clave-valor: {"nombre_col": "descripcion", ...}
-        return pd.DataFrame(list(data.items()), columns=['nombre_tecnico', 'descripcion'])
-    if isinstance(data, list):
-        # Formato lista de objetos: [{"nombre_tecnico": "x", "descripcion": "y"}, ...]
-        return pd.DataFrame(data)
-    raise HTTPException(status_code=400, detail="El JSON debe ser un objeto {clave: descripcion} o una lista de objetos.")
-
-
 def _leer_dataframe(contenido: bytes, tipo: str) -> pd.DataFrame:
-    if tipo == 'json':
-        return _parsear_json(contenido)
     try:
         if tipo == 'csv':
             return pd.read_csv(io.BytesIO(contenido))
@@ -73,11 +73,14 @@ def _leer_dataframe(contenido: bytes, tipo: str) -> pd.DataFrame:
 
 
 @router.post("/archivo")
-async def analizar_archivo(archivo: Annotated[UploadFile, File(...)]):
+async def analizar_archivo(
+    archivo: Annotated[UploadFile, File(...)],
+    _usuario=Depends(obtener_usuario_actual),
+):
     """
-    Nivel 1 — recibe un archivo CSV o Excel y clasifica sus columnas
-    comparando los nombres contra el diccionario de palabras clave.
+    Nivel 1 — recibe un archivo CSV o Excel y clasifica sus columnas.
     Los datos se analizan SOLO en memoria; nunca se persisten en la BD.
+    Requiere autenticación JWT.
     """
     tipo = _detectar_tipo_archivo(archivo.filename)
     contenido: bytes = await archivo.read()
@@ -106,35 +109,15 @@ async def analizar_archivo(archivo: Annotated[UploadFile, File(...)]):
     }
 
 
-def _resolver_pendientes(pendientes: list, mapa_dic: dict) -> tuple[list, list]:
-    detectados_extra, pendientes_final = [], []
-    for col in pendientes:
-        descripcion = mapa_dic.get(col.lower())
-        if not descripcion:
-            pendientes_final.append({"nombre_columna": col})
-            continue
-        resultado_desc = clasificar_columnas([descripcion])
-        if resultado_desc["detectados"]:
-            tipo_col = resultado_desc["detectados"][0]["tipo"]
-            detectados_extra.append({
-                "nombre_columna": col,
-                "tipo":           tipo_col,
-                "origen":         "diccionario",
-                "descripcion":    descripcion,
-            })
-        else:
-            pendientes_final.append({"nombre_columna": col})
-    return detectados_extra, pendientes_final
-
-
 @router.post("/diccionario")
 async def analizar_con_diccionario(
     archivo:     Annotated[UploadFile, File(...)],
     diccionario: Annotated[UploadFile, File(...)],
+    _usuario=Depends(obtener_usuario_actual),
 ):
     """
-    Nivel 2 — recibe el archivo de datos y un diccionario técnico
-    (2 columnas: nombre_tecnico | descripcion).
+    Nivel 2 — recibe el archivo de datos y un diccionario técnico.
+    Requiere autenticación JWT.
     """
     tipo_datos = _detectar_tipo_archivo(archivo.filename)
     contenido_datos: bytes = await archivo.read()
@@ -158,7 +141,9 @@ async def analizar_con_diccionario(
     df_dic = _leer_dataframe(contenido_dic, tipo_dic)
 
     if len(df_dic.columns) < 2:
-        raise HTTPException(status_code=400, detail="El diccionario debe tener al menos 2 columnas: nombre_tecnico y descripcion.")
+        raise HTTPException(status_code=400, detail="El diccionario debe tener exactamente 2 columnas: nombre_tecnico y descripcion.")
+    if len(df_dic.columns) > 2:
+        raise HTTPException(status_code=400, detail=f"El diccionario tiene {len(df_dic.columns)} columnas. Solo se permiten 2.")
     if len(df_dic) == 0:
         raise HTTPException(status_code=400, detail="El diccionario no tiene filas de datos.")
 
@@ -175,8 +160,23 @@ async def analizar_con_diccionario(
     except Exception:
         raise HTTPException(status_code=400, detail="No se pudo leer el contenido del diccionario.")
 
-    detectados_extra, pendientes_final = _resolver_pendientes(pendientes_n1, mapa_dic)
-    detectados.extend(detectados_extra)
+    pendientes_final = []
+    for col in pendientes_n1:
+        descripcion = mapa_dic.get(col.lower())
+        if descripcion:
+            resultado_desc = clasificar_columnas([descripcion])
+            if resultado_desc["detectados"]:
+                tipo_col = resultado_desc["detectados"][0]["tipo"]
+                detectados.append({
+                    "nombre_columna": col,
+                    "tipo":           tipo_col,
+                    "origen":         "diccionario",
+                    "descripcion":    descripcion,
+                })
+            else:
+                pendientes_final.append({"nombre_columna": col})
+        else:
+            pendientes_final.append({"nombre_columna": col})
 
     return {
         "detectados":     detectados,

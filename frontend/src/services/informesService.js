@@ -28,3 +28,7 @@ export async function descargarInforme(id) {
   link.remove()
   window.URL.revokeObjectURL(url)
 }
+
+export async function eliminarInforme(id) {
+  await api.delete(`/informes/${id}`)
+}
