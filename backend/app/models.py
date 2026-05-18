@@ -43,6 +43,7 @@ class Tratamiento(Base):
 
     organizacion = relationship("Organizacion", back_populates="tratamientos")
     campos       = relationship("CampoRat", back_populates="tratamiento", cascade="all, delete-orphan")
+    detalle      = relationship("DetalleRat", back_populates="tratamiento", uselist=False, cascade="all, delete-orphan")
 
 
 class CampoRat(Base):
@@ -57,6 +58,23 @@ class CampoRat(Base):
     creado_en      = Column(DateTime, server_default=func.now(), nullable=False)
 
     tratamiento = relationship("Tratamiento", back_populates="campos")
+
+
+class DetalleRat(Base):
+    __tablename__ = "detalle_rat"
+
+    id                     = Column(Integer, primary_key=True, index=True)
+    tratamiento_id         = Column(Integer, ForeignKey("tratamientos.id", ondelete="CASCADE"), nullable=False, unique=True)
+    responsable_tratamiento = Column(String(200), nullable=True)
+    es_responsable         = Column(Boolean, default=True, nullable=False)
+    departamento           = Column(String(200), nullable=True)
+    categorias_titulares   = Column(Text, nullable=True)
+    volumen_titulares      = Column(String(50), nullable=True)
+    origen_datos           = Column(String(100), nullable=True)
+    creado_en              = Column(DateTime, server_default=func.now(), nullable=False)
+    actualizado_en         = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+
+    tratamiento = relationship("Tratamiento", back_populates="detalle")
 
 
 class Informe(Base):

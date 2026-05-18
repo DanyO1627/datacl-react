@@ -101,6 +101,23 @@ class OrganizacionCambiarPassword(BaseModel):
             raise ValueError("Las contraseñas no coinciden")
         return v
 
+# ── Schemas de detalle RAT ────────────────────────────────────────────────
+
+class DetalleRatBase(BaseModel):
+    responsable_tratamiento: Optional[str] = None
+    es_responsable:          bool = True
+    departamento:            Optional[str] = None
+    categorias_titulares:    Optional[str] = None
+    volumen_titulares:       Optional[str] = None
+    origen_datos:            Optional[str] = None
+
+
+class DetalleRatRespuesta(DetalleRatBase):
+    id:             int
+    tratamiento_id: int
+    model_config = {"from_attributes": True}
+
+
 # ── Schemas de tratamientos ────────────────────────────────────────────────
 
 # Schema para cada campo que llega desde el análisis de Python
@@ -121,7 +138,8 @@ class TratamientoCrear(BaseModel):
     medidas_seguridad: Optional[str] = None
     sale_extranjero: bool = False
     decisiones_automatizadas: bool = False
-    campos_detectados: list[CampoRatEntrada] = [] 
+    campos_detectados: list[CampoRatEntrada] = []
+    detalle: Optional[DetalleRatBase] = None
 
     @field_validator("nombre")
     @classmethod
@@ -142,6 +160,7 @@ class TratamientoEditar(BaseModel):
     decisiones_automatizadas: Optional[bool] = None
     nivel_riesgo: Optional[str] = None
     estado: Optional[str] = None
+    detalle: Optional[DetalleRatBase] = None
 
     @field_validator("nombre")
     @classmethod
@@ -180,11 +199,11 @@ class TratamientoRespuesta(BaseModel):
     estado: str
     creado_en: datetime
     actualizado_en: Optional[datetime] = None
+    probabilidad: Optional[str] = None
+    impacto: Optional[str] = None
+    fecha_evaluacion: Optional[datetime] = None
+    detalle: Optional[DetalleRatRespuesta] = None
     model_config = {"from_attributes": True}
-    
-    probabilidad: Optional[str] = None      
-    impacto: Optional[str] = None           
-    fecha_evaluacion: Optional[datetime] = None  
 
 class TratamientoListado(BaseModel):
     id: int
