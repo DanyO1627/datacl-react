@@ -52,6 +52,7 @@ class OrganizacionLogin(BaseModel):
 class OrganizacionRespuesta(BaseModel):
     id: int
     nombre: str
+    rut: str
     correo: str
     rol: str
     model_config = {"from_attributes": True}
