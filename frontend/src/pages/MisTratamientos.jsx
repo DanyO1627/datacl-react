@@ -53,8 +53,9 @@ export default function MisTratamientos() {
   )
 
   function formatearFecha(fechaStr) {
-    return new Date(fechaStr).toLocaleDateString('es-CL', {
+    return new Date(fechaStr).toLocaleString('es-CL', {
       year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit',
     })
   }
 

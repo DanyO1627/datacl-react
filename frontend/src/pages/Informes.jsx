@@ -120,7 +120,7 @@ export default function Informes() {
                         onClick={() => handleDescargar(inf.id)}
                         disabled={descargando === inf.id}
                       >
-                        {descargando === inf.id ? 'Descargando...' : '↓ Descargar'}
+                        {descargando === inf.id ? 'Descargando...' : 'Descargar'}
                       </button>
                       <button
                         className="btn-eliminar"
