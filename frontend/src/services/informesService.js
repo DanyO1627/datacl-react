@@ -29,6 +29,11 @@ export async function descargarInforme(id) {
   window.URL.revokeObjectURL(url)
 }
 
+export async function agregarAnalisisIA(id) {
+  const res = await api.post(`/informes/${id}/analizar`)
+  return res.data
+}
+
 export async function eliminarInforme(id) {
   await api.delete(`/informes/${id}`)
 }

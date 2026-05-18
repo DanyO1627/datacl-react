@@ -8,39 +8,42 @@
   flex: 1;
   margin-left: 220px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 40px;
+  padding: 40px 24px 60px;
+  gap: 24px;
 }
+
+/* ── Tarjeta de éxito ── */
 
 .confirmacion-card {
   background: #fff;
   border-radius: 16px;
-  padding: 56px 48px;
+  padding: 40px 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  max-width: 480px;
   width: 100%;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  max-width: 600px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   text-align: center;
 }
 
 .confirmacion-check {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+.confirmacion-encabezado {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .confirmacion-titulo {
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 700;
   color: #1a1a2e;
-  margin: 0;
-}
-
-.confirmacion-subtitulo {
-  font-size: 15px;
-  color: #666;
   margin: 0;
 }
 
@@ -50,13 +53,45 @@
   margin: 0;
 }
 
-.confirmacion-acciones {
+/* ── Métricas de resumen ── */
+
+.confirmacion-resumen {
   display: flex;
-  flex-direction: column;
   gap: 12px;
   width: 100%;
-  margin-top: 12px;
+  justify-content: center;
 }
+
+.resumen-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: #f7f7fb;
+  border-radius: 10px;
+  padding: 12px 20px;
+  min-width: 72px;
+}
+
+.resumen-numero {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.resumen-label {
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.resumen-total .resumen-numero  { color: #1a1a2e; }
+.resumen-alto  .resumen-numero  { color: #e53e3e; }
+.resumen-medio .resumen-numero  { color: #d97706; }
+.resumen-bajo  .resumen-numero  { color: #38a169; }
+
+/* ── Botón descarga ── */
 
 .btn-descargar-pdf {
   display: flex;
@@ -67,10 +102,11 @@
   color: #fff;
   border: none;
   border-radius: 10px;
-  padding: 13px 24px;
+  padding: 13px 28px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+  width: 100%;
   transition: background 0.2s;
 }
 
@@ -78,13 +114,119 @@
   background-color: #6a4da8;
 }
 
+/* ── Sección IA ── */
+
+.confirmacion-ia-seccion {
+  background: #fff;
+  border-radius: 16px;
+  padding: 36px 48px;
+  width: 100%;
+  max-width: 600px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ia-pregunta-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ia-pregunta-titulo {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.ia-pregunta-desc {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.btn-agregar-ia {
+  align-self: flex-start;
+  background-color: #fff;
+  color: #7c5cbf;
+  border: 1.5px solid #7c5cbf;
+  border-radius: 10px;
+  padding: 11px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-agregar-ia:hover {
+  background-color: #f5f0ff;
+}
+
+/* ── Estado de carga IA ── */
+
+.ia-cargando {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #666;
+  font-size: 14px;
+}
+
+.spinner-ia {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #ddd;
+  border-top-color: #7c5cbf;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Resultado IA ── */
+
+.ia-resultado-titulo {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 8px;
+}
+
+.ia-resultado-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ia-resultado-texto p {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.ia-error {
+  font-size: 13px;
+  color: #e53e3e;
+  margin: 0;
+}
+
+/* ── Botón volver ── */
+
 .btn-volver {
   background: none;
   border: 1px solid #ccc;
   color: #555;
   border-radius: 10px;
-  padding: 13px 24px;
-  font-size: 15px;
+  padding: 11px 28px;
+  font-size: 14px;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
 }

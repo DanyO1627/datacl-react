@@ -58,7 +58,7 @@ export default function VistaPrevia() {
         throw new Error(data.detail || 'Error al generar')
       }
       const informe = await res.json()
-      navigate('/informes/confirmacion', { state: { informe } })
+      navigate('/informes/confirmacion', { state: { informe, resumen: { total, alto, medio, bajo } } })
     } catch (e) {
       setErrorGeneracion(e.message || 'No se pudo generar el informe')
     } finally {
@@ -145,11 +145,11 @@ export default function VistaPrevia() {
                 </svg>
               </div>
               <div>
-                <p className="info-ia-titulo">Análisis con inteligencia artificial</p>
+                <p className="info-ia-titulo">Análisis con inteligencia artificial (opcional)</p>
                 <p className="info-ia-texto">
-                  El informe incluirá un análisis automático generado por IA que resume el
-                  estado de cumplimiento de tu organización según la Ley 21.719 de Chile.
-                  Este proceso puede tomar entre 5 y 10 segundos.
+                  El PDF base se genera solo con los tratamientos registrados. En el paso
+                  siguiente podrás agregar opcionalmente un análisis generado por IA sobre
+                  el estado de cumplimiento de tu organización según la Ley 21.719 de Chile.
                 </p>
               </div>
             </div>

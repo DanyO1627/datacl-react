@@ -208,11 +208,6 @@ def _construir_pdf(org, tratamientos: list, contenido_ia: str | None, ruta: Path
             if linea.strip():
                 elementos.append(Paragraph(linea.strip(), pequeño))
                 elementos.append(Spacer(1, 0.15*cm))
-    else:
-        elementos.append(Paragraph(
-            "El análisis de IA no está disponible para este informe.",
-            pequeño
-        ))
 
     elementos.append(Spacer(1, 1*cm))
 
@@ -250,18 +245,16 @@ def generar_informe(
             detail="No hay tratamientos registrados. Crea al menos uno antes de generar el informe.",
         )
 
-    contenido_ia = _pedir_analisis_ia(tratamientos)
-
     nombre_seguro = usuario.nombre.replace(" ", "_").replace("/", "-")
     fecha_str     = datetime.now().strftime("%Y%m%d_%H%M%S")
     nombre_pdf    = f"informe_{nombre_seguro}_{fecha_str}.pdf"
     ruta_pdf      = CARPETA_INFORMES / nombre_pdf
 
-    _construir_pdf(usuario, tratamientos, contenido_ia, ruta_pdf)
+    _construir_pdf(usuario, tratamientos, None, ruta_pdf)
 
     nuevo_informe = models.Informe(
         organizacion_id=usuario.id,
-        contenido_ia=contenido_ia,
+        contenido_ia=None,
         ruta_pdf=str(ruta_pdf),
     )
     db.add(nuevo_informe)
@@ -271,10 +264,52 @@ def generar_informe(
     return {
         "id":          nuevo_informe.id,
         "generado_en": nuevo_informe.generado_en,
-        "tiene_ia":    contenido_ia is not None,
+        "tiene_ia":    False,
         "ruta_pdf":    str(ruta_pdf),
     }
 
+
+@router.post("/{informe_id}/analizar")
+def analizar_informe_ia(
+    informe_id: int,
+    db: Session = Depends(get_db),
+    usuario: models.Organizacion = Depends(obtener_usuario_actual),
+):
+    """
+    Agrega análisis IA a un informe ya generado.
+    Llama a Groq y guarda el análisis en BD. El PDF queda sin cambios.
+    Devuelve 502 si Groq no responde, para que el frontend informe al usuario.
+    """
+    informe = db.query(models.Informe).filter(
+        models.Informe.id == informe_id,
+        models.Informe.organizacion_id == usuario.id,
+    ).first()
+
+    if not informe:
+        raise HTTPException(status_code=404, detail="Informe no encontrado.")
+
+    tratamientos = db.query(models.Tratamiento).filter(
+        models.Tratamiento.organizacion_id == usuario.id
+    ).order_by(models.Tratamiento.creado_en.desc()).all()
+
+    contenido_ia = _pedir_analisis_ia(tratamientos)
+
+    if contenido_ia is None:
+        raise HTTPException(
+            status_code=502,
+            detail="No se pudo obtener el análisis de IA. Verifica tu conexión e intenta nuevamente.",
+        )
+
+    informe.contenido_ia = contenido_ia
+    db.commit()
+    db.refresh(informe)
+
+    return {
+        "id":          informe.id,
+        "generado_en": informe.generado_en,
+        "tiene_ia":    True,
+        "contenido_ia": contenido_ia,
+    }
 
 
 @router.get("", response_model=list[InformeRespuesta])
