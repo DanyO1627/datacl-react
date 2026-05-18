@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
 import BarraLateral from '../components/BarraLateral'
-import { obtenerInformes, descargarInforme, eliminarInforme } from '../services/informesService'
+import { obtenerInformes, descargarInforme, eliminarInforme, obtenerAnalisisIA } from '../services/informesService'
 import '../styles/informes.css'
 
 export default function Informes() {
@@ -11,8 +12,17 @@ export default function Informes() {
   const [error, setError] = useState('')
   const [eliminando, setEliminando] = useState(null)
   const [descargando, setDescargando] = useState(null)
+  const [modalIA, setModalIA] = useState(null)
+  const [cargandoIA, setCargandoIA] = useState(null)
 
   useEffect(() => { cargar() }, [])
+
+  useEffect(() => {
+    if (!modalIA) return
+    const onKey = (e) => { if (e.key === 'Escape') setModalIA(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [modalIA])
 
   async function cargar() {
     try {
@@ -46,6 +56,18 @@ export default function Informes() {
     }
   }
 
+  async function handleVerAnalisis(id) {
+    setCargandoIA(id)
+    try {
+      const data = await obtenerAnalisisIA(id)
+      setModalIA({ id, texto: data.contenido_ia })
+    } catch {
+      alert('No se pudo cargar el análisis. Intenta nuevamente.')
+    } finally {
+      setCargandoIA(null)
+    }
+  }
+
   async function handleEliminar(id) {
     if (!window.confirm('¿Eliminar este informe? Esta acción no se puede deshacer.')) return
     setEliminando(id)
@@ -60,6 +82,7 @@ export default function Informes() {
   }
 
   return (
+    <>
     <div className="informes-layout">
       <BarraLateral />
       <main className="informes-main">
@@ -110,9 +133,17 @@ export default function Informes() {
                     <td>{formatearFecha(inf.generado_en)}</td>
                     <td>{inf.num_tratamientos ?? '—'}</td>
                     <td>
-                      <span className={`badge-ia ${inf.tiene_ia ? 'badge-ia--si' : 'badge-ia--no'}`}>
-                        {inf.tiene_ia ? '✓ Con IA' : 'Sin IA'}
-                      </span>
+                      {inf.tiene_ia ? (
+                        <button
+                          className="btn-ver-analisis"
+                          onClick={() => handleVerAnalisis(inf.id)}
+                          disabled={cargandoIA === inf.id}
+                        >
+                          {cargandoIA === inf.id ? 'Cargando...' : 'Ver análisis IA'}
+                        </button>
+                      ) : (
+                        <span className="badge-ia badge-ia--no">Sin IA</span>
+                      )}
                     </td>
                     <td className="td-acciones">
                       <button
@@ -138,5 +169,20 @@ export default function Informes() {
         )}
       </main>
     </div>
+
+      {modalIA && (
+        <div className="modal-ia-overlay" onClick={() => setModalIA(null)}>
+          <div className="modal-ia-contenido" onClick={e => e.stopPropagation()}>
+            <div className="modal-ia-header">
+              <h2 className="modal-ia-titulo">Análisis de inteligencia artificial</h2>
+              <button className="modal-ia-cerrar" onClick={() => setModalIA(null)}>✕</button>
+            </div>
+            <div className="modal-ia-texto">
+              <ReactMarkdown>{modalIA.texto}</ReactMarkdown>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

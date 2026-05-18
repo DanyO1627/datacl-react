@@ -191,3 +191,88 @@
   margin: 0;
 }
 
+/* Botón ver análisis IA */
+.btn-ver-analisis {
+  background: none;
+  border: none;
+  color: #7c5cbf;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.btn-ver-analisis:hover { color: #6a4da8; }
+.btn-ver-analisis:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Modal análisis IA */
+.modal-ia-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+
+.modal-ia-contenido {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+.modal-ia-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+
+.modal-ia-titulo {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.modal-ia-cerrar {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #999;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.modal-ia-cerrar:hover { background: #f0f0f0; color: #333; }
+
+.modal-ia-texto {
+  padding: 20px 24px;
+  overflow-y: auto;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.65;
+}
+
+.modal-ia-texto p { margin: 0 0 8px; }
+.modal-ia-texto h1,
+.modal-ia-texto h2,
+.modal-ia-texto h3 { font-size: 15px; font-weight: 700; color: #1a1a2e; margin: 12px 0 4px; }
+.modal-ia-texto ul,
+.modal-ia-texto ol { margin: 4px 0 8px; padding-left: 20px; }
+.modal-ia-texto li { margin-bottom: 4px; }
+.modal-ia-texto strong { font-weight: 600; color: #1a1a2e; }
+

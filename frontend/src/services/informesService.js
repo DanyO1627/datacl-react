@@ -34,6 +34,11 @@ export async function agregarAnalisisIA(id) {
   return res.data
 }
 
+export async function obtenerAnalisisIA(id) {
+  const res = await api.get(`/informes/${id}/analisis`)
+  return res.data
+}
+
 export async function eliminarInforme(id) {
   await api.delete(`/informes/${id}`)
 }

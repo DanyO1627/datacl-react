@@ -352,6 +352,27 @@ def listar_informes(
     ]
 
 
+@router.get("/{informe_id}/analisis")
+def obtener_analisis_ia(
+    informe_id: int,
+    db: Session = Depends(get_db),
+    usuario: models.Organizacion = Depends(obtener_usuario_actual),
+):
+    """Devuelve el contenido_ia de un informe. 404 si no existe o no tiene análisis."""
+    informe = db.query(models.Informe).filter(
+        models.Informe.id == informe_id,
+        models.Informe.organizacion_id == usuario.id,
+    ).first()
+
+    if not informe:
+        raise HTTPException(status_code=404, detail="Informe no encontrado.")
+
+    if not informe.contenido_ia:
+        raise HTTPException(status_code=404, detail="Este informe no tiene análisis de IA.")
+
+    return {"contenido_ia": informe.contenido_ia}
+
+
 @router.get("/{informe_id}/descargar")
 def descargar_informe(
     informe_id: int,
