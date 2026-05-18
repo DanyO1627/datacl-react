@@ -17,6 +17,7 @@ export default function VistaPrevia() {
   const navigate = useNavigate()
 
   const [tratamientos, setTratamientos] = useState([])
+  const [seleccionados, setSeleccionados] = useState(new Set())
   const [cargando, setCargando] = useState(true)
   const [generando, setGenerando] = useState(false)
   const [error, setError] = useState('')
@@ -32,7 +33,9 @@ export default function VistaPrevia() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error()
-      setTratamientos(await res.json())
+      const data = await res.json()
+      setTratamientos(data)
+      setSeleccionados(new Set(data.map(t => t.id)))
     } catch {
       setError('No se pudieron cargar los tratamientos')
     } finally {
@@ -40,10 +43,27 @@ export default function VistaPrevia() {
     }
   }
 
-  const total = tratamientos.length
-  const alto = tratamientos.filter(t => t.nivel_riesgo === 'ALTO').length
-  const medio = tratamientos.filter(t => t.nivel_riesgo === 'MEDIO').length
-  const bajo = tratamientos.filter(t => t.nivel_riesgo === 'BAJO').length
+  function toggleSeleccionado(id) {
+    setSeleccionados(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleTodos() {
+    if (seleccionados.size === tratamientos.length) {
+      setSeleccionados(new Set())
+    } else {
+      setSeleccionados(new Set(tratamientos.map(t => t.id)))
+    }
+  }
+
+  const seleccionadosList = tratamientos.filter(t => seleccionados.has(t.id))
+  const total = seleccionadosList.length
+  const alto  = seleccionadosList.filter(t => t.nivel_riesgo === 'ALTO').length
+  const medio = seleccionadosList.filter(t => t.nivel_riesgo === 'MEDIO').length
+  const bajo  = seleccionadosList.filter(t => t.nivel_riesgo === 'BAJO').length
 
   async function generarPDF() {
     setGenerando(true)
@@ -51,7 +71,11 @@ export default function VistaPrevia() {
     try {
       const res = await fetch(`${API}/informes/generar`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ids_tratamientos: [...seleccionados] }),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -66,6 +90,9 @@ export default function VistaPrevia() {
     }
   }
 
+  const todosSeleccionados = tratamientos.length > 0 && seleccionados.size === tratamientos.length
+  const ningunoSeleccionado = seleccionados.size === 0
+
   return (
     <div className="vistaprevia-layout">
       <BarraLateral />
@@ -75,7 +102,7 @@ export default function VistaPrevia() {
           <div>
             <h1 className="vistaprevia-titulo">Vista previa del informe</h1>
             <p className="vistaprevia-subtitulo">
-              Revisa el contenido que se incluirá en tu informe PDF antes de generarlo.
+              Selecciona los tratamientos que quieres incluir en el informe PDF.
             </p>
           </div>
           <button className="btn-cancelar" onClick={() => navigate('/informes')}>
@@ -89,11 +116,11 @@ export default function VistaPrevia() {
           <p className="vistaprevia-error">{error}</p>
         ) : (
           <>
-            {/* Tarjetas métricas */}
+            {/* Tarjetas métricas — reflejan solo los seleccionados */}
             <div className="vistaprevia-metricas">
               <div className="metrica-card metrica-total">
                 <span className="metrica-numero">{total}</span>
-                <span className="metrica-label">Total tratamientos</span>
+                <span className="metrica-label">Seleccionados</span>
               </div>
               <div className="metrica-card metrica-alto">
                 <span className="metrica-numero">{alto}</span>
@@ -109,28 +136,56 @@ export default function VistaPrevia() {
               </div>
             </div>
 
-            {/* Lista de tratamientos */}
+            {/* Lista de tratamientos con checkboxes */}
             <div className="vistaprevia-seccion">
-              <h2 className="vistaprevia-seccion-titulo">Tratamientos incluidos</h2>
+              <div className="vistaprevia-seccion-header">
+                <h2 className="vistaprevia-seccion-titulo">Tratamientos</h2>
+                {tratamientos.length > 0 && (
+                  <button
+                    type="button"
+                    className="btn-seleccionar-todos"
+                    onClick={toggleTodos}
+                  >
+                    {todosSeleccionados ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                  </button>
+                )}
+              </div>
+
               {tratamientos.length === 0 ? (
                 <p className="vistaprevia-vacio">
                   No tienes tratamientos registrados. Agrega al menos uno antes de generar un informe.
                 </p>
               ) : (
                 <ul className="vistaprevia-lista">
-                  {tratamientos.map(t => (
-                    <li key={t.id} className="vistaprevia-item">
-                      <span className="vistaprevia-nombre">{t.nombre}</span>
-                      {t.nivel_riesgo && (
-                        <span
-                          className="vistaprevia-badge"
-                          style={{ backgroundColor: BADGE_COLORES[t.nivel_riesgo] }}
-                        >
-                          {t.nivel_riesgo}
-                        </span>
-                      )}
-                    </li>
-                  ))}
+                  {tratamientos.map(t => {
+                    const activo = seleccionados.has(t.id)
+                    return (
+                      <li
+                        key={t.id}
+                        className={`vistaprevia-item ${!activo ? 'vistaprevia-item--desactivado' : ''}`}
+                        onClick={() => toggleSeleccionado(t.id)}
+                      >
+                        <div className="vistaprevia-item-izq">
+                          <input
+                            type="checkbox"
+                            className="vistaprevia-checkbox"
+                            checked={activo}
+                            onChange={() => toggleSeleccionado(t.id)}
+                            onClick={e => e.stopPropagation()}
+                          />
+                          <span className="vistaprevia-nombre">{t.nombre}</span>
+                        </div>
+                        {t.nivel_riesgo && (
+                          <span
+                            className="vistaprevia-badge"
+                            style={{ backgroundColor: activo ? BADGE_COLORES[t.nivel_riesgo] : '#bbb' }}
+                          >
+                            {t.nivel_riesgo}
+                          </span>
+                        )}
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
             </div>
@@ -147,7 +202,7 @@ export default function VistaPrevia() {
               <div>
                 <p className="info-ia-titulo">Análisis con inteligencia artificial (opcional)</p>
                 <p className="info-ia-texto">
-                  El PDF base se genera solo con los tratamientos registrados. En el paso
+                  El PDF base se genera solo con los tratamientos seleccionados. En el paso
                   siguiente podrás agregar opcionalmente un análisis generado por IA sobre
                   el estado de cumplimiento de tu organización según la Ley 21.719 de Chile.
                 </p>
@@ -166,10 +221,15 @@ export default function VistaPrevia() {
 
             {/* Botón generar */}
             <div className="vistaprevia-acciones">
+              {ningunoSeleccionado && (
+                <p className="vistaprevia-aviso-seleccion">
+                  Selecciona al menos un tratamiento para continuar.
+                </p>
+              )}
               <button
                 className="btn-generar-pdf"
                 onClick={generarPDF}
-                disabled={generando || tratamientos.length === 0}
+                disabled={generando || ningunoSeleccionado}
               >
                 {generando ? (
                   <>

@@ -91,11 +91,34 @@
   box-shadow: 0 1px 4px rgba(0,0,0,0.07);
 }
 
+.vistaprevia-seccion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
 .vistaprevia-seccion-titulo {
   font-size: 16px;
   font-weight: 600;
   color: #222;
-  margin: 0 0 14px 0;
+  margin: 0;
+}
+
+.btn-seleccionar-todos {
+  background: none;
+  border: none;
+  color: #7c5cbf;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.btn-seleccionar-todos:hover {
+  color: #6a4da8;
 }
 
 .vistaprevia-lista {
@@ -115,6 +138,30 @@
   background: #f7f7fb;
   border-radius: 8px;
   font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.vistaprevia-item:hover {
+  background: #efeffa;
+}
+
+.vistaprevia-item--desactivado {
+  opacity: 0.45;
+}
+
+.vistaprevia-item-izq {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vistaprevia-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #7c5cbf;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .vistaprevia-nombre {
@@ -201,10 +248,19 @@
   background: #fff5f5;
 }
 
+/* Aviso selección vacía */
+.vistaprevia-aviso-seleccion {
+  font-size: 13px;
+  color: #d97706;
+  margin: 0;
+}
+
 /* Acciones */
 .vistaprevia-acciones {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 16px;
 }
 
 .btn-generar-pdf {

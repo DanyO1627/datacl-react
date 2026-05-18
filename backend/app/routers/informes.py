@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from app.basededatos import get_db
 from app import models
 from app.utils.jwt import obtener_usuario_actual
-from app.schemas import InformeRespuesta
+from app.schemas import InformeRespuesta, GenerarInformeRequest
 
 load_dotenv()
 
@@ -228,21 +228,29 @@ def _construir_pdf(org, tratamientos: list, contenido_ia: str | None, ruta: Path
 
 @router.post("/generar")
 def generar_informe(
+    datos: GenerarInformeRequest,
     db: Session = Depends(get_db),
     usuario: models.Organizacion = Depends(obtener_usuario_actual),
 ):
     """
-    Genera el informe PDF completo para la organización autenticada.
-    Llama a Groq para análisis IA (si falla, el PDF se genera igual).
+    Genera el informe PDF con los tratamientos seleccionados por el usuario.
+    Valida que los IDs recibidos pertenezcan a la organización del token.
     """
+    if not datos.ids_tratamientos:
+        raise HTTPException(
+            status_code=400,
+            detail="Selecciona al menos un tratamiento para generar el informe.",
+        )
+
     tratamientos = db.query(models.Tratamiento).filter(
-        models.Tratamiento.organizacion_id == usuario.id
+        models.Tratamiento.id.in_(datos.ids_tratamientos),
+        models.Tratamiento.organizacion_id == usuario.id,
     ).order_by(models.Tratamiento.creado_en.desc()).all()
 
     if not tratamientos:
         raise HTTPException(
             status_code=400,
-            detail="No hay tratamientos registrados. Crea al menos uno antes de generar el informe.",
+            detail="No se encontraron tratamientos válidos para generar el informe.",
         )
 
     nombre_seguro = usuario.nombre.replace(" ", "_").replace("/", "-")

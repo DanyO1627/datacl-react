@@ -227,6 +227,10 @@ class CampoRatRespuesta(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class GenerarInformeRequest(BaseModel):
+    ids_tratamientos: list[int]
+
+
 class InformeRespuesta(BaseModel):
     """
     Schema de respuesta para GET /informes.
