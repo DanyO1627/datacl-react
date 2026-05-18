@@ -200,16 +200,37 @@
 }
 
 .ia-resultado-texto {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ia-resultado-texto p {
   font-size: 14px;
   color: #333;
   line-height: 1.65;
-  margin: 0;
+}
+
+.ia-resultado-texto p {
+  margin: 0 0 8px;
+}
+
+.ia-resultado-texto h1,
+.ia-resultado-texto h2,
+.ia-resultado-texto h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 12px 0 4px;
+}
+
+.ia-resultado-texto ul,
+.ia-resultado-texto ol {
+  margin: 4px 0 8px;
+  padding-left: 20px;
+}
+
+.ia-resultado-texto li {
+  margin-bottom: 4px;
+}
+
+.ia-resultado-texto strong {
+  font-weight: 600;
+  color: #1a1a2e;
 }
 
 .ia-error {

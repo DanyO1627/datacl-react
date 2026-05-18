@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate, Navigate } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
 import BarraLateral from '../components/BarraLateral'
 import { descargarInforme, agregarAnalisisIA } from '../services/informesService'
 import '../styles/confirmacionDescarga.css'
@@ -135,9 +136,7 @@ export default function ConfirmacionDescarga() {
             <div className="ia-resultado">
               <h2 className="ia-resultado-titulo">Análisis de inteligencia artificial</h2>
               <div className="ia-resultado-texto">
-                {textoIA.split('\n').filter(l => l.trim()).map((linea) => (
-                  <p key={linea}>{linea}</p>
-                ))}
+                <ReactMarkdown>{textoIA}</ReactMarkdown>
               </div>
             </div>
           )}
