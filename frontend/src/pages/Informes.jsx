@@ -127,7 +127,7 @@ export default function Informes() {
                         onClick={() => handleEliminar(inf.id)}
                         disabled={eliminando === inf.id}
                       >
-                        {eliminando === inf.id ? '...' : '✕ Eliminar'}
+                        {eliminando === inf.id ? '...' : 'Eliminar'}
                       </button>
                     </td>
                   </tr>

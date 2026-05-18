@@ -98,20 +98,54 @@
   border-bottom: none;
 }
 
+.td-acciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .btn-descargar {
   background-color: #052659;
   color: #fff;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 6px;
   padding: 7px 18px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.btn-descargar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-descargar:hover {
   background-color: #021024;
+}
+
+.btn-eliminar {
+  background-color: #fff;
+  color: #c53030;
+  border: 1px solid #c53030;
+  border-radius: 6px;
+  padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.btn-eliminar:hover {
+  background-color: #fff5f5;
+}
+
+.btn-eliminar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .tabla-vacia {
