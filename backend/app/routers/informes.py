@@ -120,6 +120,7 @@ def generar_informe(
         organizacion_id=usuario.id,
         contenido_ia=None,
         ruta_pdf=str(ruta_pdf),
+        num_tratamientos=len(tratamientos),
     )
     db.add(nuevo_informe)
     db.commit()
@@ -197,19 +198,13 @@ def listar_informes(
         models.Informe.organizacion_id == usuario.id
     ).order_by(models.Informe.generado_en.desc()).all()
 
-    # Contar tratamientos actuales de la organización
-    # (se usa el mismo número para todos los informes — es una aproximación útil)
-    num_tratamientos = db.query(models.Tratamiento).filter(
-        models.Tratamiento.organizacion_id == usuario.id
-    ).count()
-
     return [
         {
             "id":               inf.id,
-            "generado_en":      inf.generado_en,   # puede ser None en registros viejos
+            "generado_en":      inf.generado_en,
             "tiene_ia":         inf.contenido_ia is not None,
             "ruta_pdf":         inf.ruta_pdf,
-            "num_tratamientos": num_tratamientos,
+            "num_tratamientos": inf.num_tratamientos,
         }
         for inf in informes
     ]
