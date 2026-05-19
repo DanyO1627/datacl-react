@@ -23,12 +23,13 @@ _BASE_LEGAL = {
 }
 
 _PLAZO = {
-    "1_anio":    "1 año",
-    "2_anios":   "2 años",
-    "5_anios":   "5 años",
-    "10_anios":  "10 años",
-    "indefinido": "Indefinido",
-    "otro":      "Otro",
+    "1_anio":           "1 año",
+    "2_anios":          "2 años",
+    "5_anios":          "5 años",
+    "10_anios":         "10 años",
+    "indefinido":       "Indefinido",
+    "duracion_relacion": "Mientras dure la relación",
+    "otro":             "Otro",
 }
 
 _VOLUMEN = {

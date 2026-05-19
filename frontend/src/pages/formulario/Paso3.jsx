@@ -54,6 +54,7 @@ const PLAZOS = [
   { valor: "5_anios", etiqueta: "5 años" },
   { valor: "10_anios", etiqueta: "10 años" },
   { valor: "indefinido", etiqueta: "Indefinido" },
+  { valor: "duracion_relacion", etiqueta: "Mientras dure la relación" },
   { valor: "otro", etiqueta: "Otro" },
 ];
 
@@ -110,6 +111,7 @@ const ETIQ_PLAZO = {
   "5_anios": "5 años",
   "10_anios": "10 años",
   indefinido: "Indefinido",
+  duracion_relacion: "Mientras dure la relación",
   otro: "Otro",
 };
 
