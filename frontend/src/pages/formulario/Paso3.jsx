@@ -198,34 +198,32 @@ export default function Paso3() {
     const formularioCompleto = { ...form, ...local };
 
     const payload = {
-      // Paso 1 — identificación
-      nombre:       formularioCompleto.nombre,
-      responsable:  formularioCompleto.responsable  || null,
-      departamento: formularioCompleto.departamento || null,
-      finalidad:    formularioCompleto.finalidad    || null,
-      base_legal:   formularioCompleto.base_legal   || null,
-
-      // Paso 2 — datos y titulares
-      categorias_titulares: formularioCompleto.categorias_titulares || [],
-      volumen:              formularioCompleto.volumen      || null,
-      origen_datos:         formularioCompleto.origen_datos || null,
-      categorias_datos:     formularioCompleto.categorias_datos     || [],
-      datos_sensibles:      formularioCompleto.datos_sensibles      ?? false,
-      categorias_sensibles: formularioCompleto.categorias_sensibles || [],
-      destinatarios:        formularioCompleto.destinatarios        || null,
-      sale_extranjero:      formularioCompleto.sale_extranjero      ?? false,
-      pais_destino:         formularioCompleto.pais_destino         || null,
-
-      // Paso 3 — seguridad y conservación
-      plazo_conservacion: formularioCompleto.plazo_conservacion || null,
-      plazo_otro:         formularioCompleto.plazo_otro         || null,
+      // Campos del tratamiento principal
+      nombre:                   formularioCompleto.nombre,
+      finalidad:                formularioCompleto.finalidad    || null,
+      base_legal:               formularioCompleto.base_legal   || null,
+      datos_sensibles:          formularioCompleto.datos_sensibles      ?? false,
+      destinatarios:            formularioCompleto.destinatarios        || null,
+      sale_extranjero:          formularioCompleto.sale_extranjero      ?? false,
+      plazo_conservacion:       formularioCompleto.plazo_conservacion   || null,
+      plazo_otro:               formularioCompleto.plazo_otro           || null,
       medidas_seguridad: serializarMedidasSeguridad(
         formularioCompleto.medidas_seguridad,
         formularioCompleto.otras_medidas
       ),
-      otras_medidas:           formularioCompleto.otras_medidas           || null,
+      otras_medidas:            formularioCompleto.otras_medidas        || null,
       decisiones_automatizadas: formularioCompleto.decisiones_automatizadas ?? false,
-      campos_detectados:        formularioCompleto.campos_detectados        || [],
+      campos_detectados:        formularioCompleto.campos_detectados    || [],
+
+      // Objeto detalle — va a la tabla detalle_rat con los nombres del schema
+      detalle: {
+        responsable_tratamiento: formularioCompleto.responsable  || null,
+        departamento:            formularioCompleto.departamento || null,
+        // el backend espera string; el frontend lo tiene como array
+        categorias_titulares: (formularioCompleto.categorias_titulares || []).join(",") || null,
+        volumen_titulares:    formularioCompleto.volumen      || null,
+        origen_datos:         formularioCompleto.origen_datos || null,
+      },
     };
 
     try {
