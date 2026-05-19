@@ -7,16 +7,114 @@ import BarraRiesgo from '../components/BarraRiesgo'
 
 const API = 'http://localhost:8000'
 
+// ── Mapas de valores internos a texto legible ──────────────────────────────
+
+const BASE_LEGAL = {
+  consentimiento:   "Consentimiento (Art. 12 letra a)",
+  contrato:         "Ejecución de contrato (Art. 12 letra b)",
+  obligacion_legal: "Obligación legal (Art. 12 letra c)",
+  interes_vital:    "Interés vital (Art. 12 letra d)",
+  interes_publico:  "Interés público (Art. 12 letra e)",
+  interes_legitimo: "Interés legítimo (Art. 12 letra f)",
+}
+
+const PLAZO = {
+  "1_anio":    "1 año",
+  "2_anios":   "2 años",
+  "5_anios":   "5 años",
+  "10_anios":  "10 años",
+  indefinido:  "Indefinido",
+  otro:        "Otro",
+}
+
+const VOLUMEN = {
+  "1_100":      "1 – 100",
+  "100_1000":   "100 – 1.000",
+  "1000_10000": "1.000 – 10.000",
+  mas_10000:    "+10.000",
+}
+
+const ORIGEN = {
+  titular:          "Del propio titular",
+  terceros:         "De terceros",
+  fuentes_publicas: "De fuentes públicas",
+}
+
+const TITULARES = {
+  empleados:   "Empleados y funcionarios",
+  clientes:    "Clientes y consumidores",
+  proveedores: "Proveedores y contratistas",
+  usuarios:    "Usuarios de plataformas digitales",
+  ciudadanos:  "Ciudadanos",
+  estudiantes: "Estudiantes",
+  pacientes:   "Pacientes",
+}
+
+const MEDIDAS = {
+  cifrado:     "Cifrado de datos",
+  acceso_rol:  "Control de acceso por rol",
+  backups:     "Backups periódicos",
+  contraseñas: "Política de contraseñas",
+  auditoria:   "Auditoría de accesos",
+}
+
 const COLOR_RIESGO = {
-  BAJO: { clase: 'riesgo-bajo', etiqueta: 'Riesgo bajo' },
+  BAJO:  { clase: 'riesgo-bajo',  etiqueta: 'Riesgo bajo' },
   MEDIO: { clase: 'riesgo-medio', etiqueta: 'Riesgo medio' },
-  ALTO: { clase: 'riesgo-alto', etiqueta: 'Riesgo alto' },
+  ALTO:  { clase: 'riesgo-alto',  etiqueta: 'Riesgo alto' },
 }
 
 const COLOR_ESTADO = {
   PENDIENTE: { clase: 'estado-pendiente', etiqueta: 'Pendiente' },
-  COMPLETO: { clase: 'estado-completo', etiqueta: 'Completo' },
+  COMPLETO:  { clase: 'estado-completo',  etiqueta: 'Completo' },
 }
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function parsearMedidas(str) {
+  if (!str) return []
+  return str.split(",").map(m => {
+    if (m.startsWith("otras:")) return `Otras: ${m.slice(6)}`
+    if (m === "otras") return "Otras"
+    return MEDIDAS[m] || m
+  })
+}
+
+function parsearTitulares(str) {
+  if (!str) return []
+  return str.split(",").filter(Boolean).map(id => TITULARES[id] || id)
+}
+
+// ── Sub-componentes ────────────────────────────────────────────────────────
+
+function Campo({ label, children }) {
+  return (
+    <div className="detalle-campo">
+      <span className="detalle-campo-label">{label}</span>
+      {children}
+    </div>
+  )
+}
+
+function Valor({ v, mapa }) {
+  const texto = mapa ? (mapa[v] || v) : v
+  if (!texto) return <span className="detalle-campo-pendiente">Por completar</span>
+  return <span className="detalle-campo-valor">{texto}</span>
+}
+
+function Badges({ items }) {
+  if (!items || items.length === 0)
+    return <span className="detalle-campo-pendiente">Por completar</span>
+  return (
+    <div className="detalle-badges">
+      {items.map((item, i) => (
+        <span key={i} className="detalle-badge detalle-badge-azul">{item}</span>
+      ))}
+    </div>
+  )
+}
+
+// ── Componente principal ───────────────────────────────────────────────────
 
 export default function DetalleTratamiento() {
   const { id } = useParams()
@@ -87,11 +185,11 @@ export default function DetalleTratamiento() {
   }
 
   const riesgo = COLOR_RIESGO[tratamiento.nivel_riesgo] || COLOR_RIESGO.BAJO
-  const estado = COLOR_ESTADO[tratamiento.estado] || COLOR_ESTADO.PENDIENTE
+  const estado = COLOR_ESTADO[tratamiento.estado]   || COLOR_ESTADO.PENDIENTE
+  const d      = tratamiento.detalle  // puede ser null en tratamientos anteriores
   const fechaFormato = new Date(tratamiento.creado_en).toLocaleDateString('es-CL', {
     year: 'numeric', month: 'long', day: 'numeric',
   })
-  const val = v => v || <span className="detalle-campo-pendiente">Por completar</span>
 
   return (
     <div className="detalle-layout">
@@ -106,7 +204,7 @@ export default function DetalleTratamiento() {
           <span>{tratamiento.nombre}</span>
         </nav>
 
-        {/* Header con badge de riesgo */}
+        {/* Header con acciones */}
         <div className="detalle-header">
           <div>
             <h1 className="detalle-titulo">{tratamiento.nombre}</h1>
@@ -122,89 +220,100 @@ export default function DetalleTratamiento() {
           </div>
         </div>
 
-        {/* Badge de riesgo grande */}
+        {/* Badge de riesgo */}
         <div className={`detalle-riesgo-badge ${riesgo.clase}`}>
           {riesgo.etiqueta}
         </div>
 
-        {/* Dos columnas de información */}
+        {/* ── Sección 1: Información general ── */}
         <div className="detalle-columnas">
-
-          {/* Columna izquierda */}
           <div className="detalle-columna">
-            <h2 className="detalle-columna-titulo">Información del tratamiento</h2>
+            <h2 className="detalle-columna-titulo">Información general</h2>
 
-            <div className="detalle-campo">
-              <span className="detalle-campo-label">Nombre</span>
+            <Campo label="Nombre">
               <span className="detalle-campo-valor">{tratamiento.nombre}</span>
-            </div>
-
-            <div className="detalle-campo">
-              <span className="detalle-campo-label">Fecha de registro</span>
+            </Campo>
+            <Campo label="Fecha de registro">
               <span className="detalle-campo-valor">{fechaFormato}</span>
-            </div>
-
-            <div className="detalle-campo">
-              <span className="detalle-campo-label">Finalidad</span>
-              <span className="detalle-campo-valor">{val(tratamiento.finalidad)}</span>
-            </div>
-
-            <div className="detalle-campo">
-              <span className="detalle-campo-label">Base legal</span>
-              <span className="detalle-campo-valor">{val(tratamiento.base_legal)}</span>
-            </div>
-
-            <div className="detalle-campo">
-              <span className="detalle-campo-label">Destinatarios</span>
-              <span className="detalle-campo-valor">{val(tratamiento.destinatarios)}</span>
-            </div>
-
-            <div className="detalle-campo">
-              <span className="detalle-campo-label">Sale al extranjero</span>
-              <span className="detalle-campo-valor">{tratamiento.sale_extranjero ? 'Sí' : 'No'}</span>
-            </div>
+            </Campo>
+            <Campo label="Finalidad">
+              <Valor v={tratamiento.finalidad} />
+            </Campo>
+            <Campo label="Base legal">
+              <Valor v={tratamiento.base_legal} mapa={BASE_LEGAL} />
+            </Campo>
           </div>
 
-          {/* Columna derecha */}
           <div className="detalle-columna">
-            <h2 className="detalle-columna-titulo">Datos personales involucrados</h2>
+            <h2 className="detalle-columna-titulo">Datos y conservación</h2>
 
-            <div className="detalle-campo">
-              <span className="detalle-campo-label">Datos sensibles</span>
+            <Campo label="Datos sensibles">
               <span className="detalle-campo-valor">{tratamiento.datos_sensibles ? 'Sí' : 'No'}</span>
-            </div>
-
-            <div className="detalle-campo">
-              <span className="detalle-campo-label">Decisiones automatizadas</span>
+            </Campo>
+            <Campo label="Decisiones automatizadas">
               <span className="detalle-campo-valor">{tratamiento.decisiones_automatizadas ? 'Sí' : 'No'}</span>
-            </div>
-
-            <div className="detalle-campo">
-              <span className="detalle-campo-label">Plazo de conservación</span>
-              <span className="detalle-campo-valor">{val(tratamiento.plazo_conservacion)}</span>
-            </div>
-
-            <div className="detalle-campo">
-              <span className="detalle-campo-label">Medidas de seguridad</span>
-              <span className="detalle-campo-valor">{val(tratamiento.medidas_seguridad)}</span>
-            </div>
+            </Campo>
+            <Campo label="Plazo de conservación">
+              <Valor v={tratamiento.plazo_conservacion} mapa={PLAZO} />
+            </Campo>
+            <Campo label="Destinatarios">
+              <Valor v={tratamiento.destinatarios} />
+            </Campo>
+            <Campo label="Sale al extranjero">
+              <span className="detalle-campo-valor">{tratamiento.sale_extranjero ? 'Sí' : 'No'}</span>
+            </Campo>
+            <Campo label="Medidas de seguridad">
+              <Badges items={parsearMedidas(tratamiento.medidas_seguridad)} />
+            </Campo>
           </div>
         </div>
 
-        {/* Sección evaluación de riesgo */}
+        {/* ── Sección 2: Responsable del tratamiento ── */}
+        <div className="detalle-seccion">
+          <h2 className="detalle-columna-titulo">Responsable del tratamiento</h2>
+          <div className="detalle-seccion-campos">
+            <Campo label="Responsable">
+              <Valor v={d?.responsable_tratamiento} />
+            </Campo>
+            <Campo label="Departamento o área">
+              <Valor v={d?.departamento} />
+            </Campo>
+            <Campo label="Rol">
+              <span className="detalle-campo-valor">
+                {d ? (d.es_responsable ? 'Responsable' : 'Encargado') : '—'}
+              </span>
+            </Campo>
+          </div>
+        </div>
+
+        {/* ── Sección 3: Sobre los titulares ── */}
+        <div className="detalle-seccion">
+          <h2 className="detalle-columna-titulo">Sobre los titulares</h2>
+          <div className="detalle-seccion-campos">
+            <Campo label="Categorías de titulares">
+              <Badges items={parsearTitulares(d?.categorias_titulares)} />
+            </Campo>
+            <Campo label="Volumen aproximado">
+              <Valor v={d?.volumen_titulares} mapa={VOLUMEN} />
+            </Campo>
+            <Campo label="Origen de los datos">
+              <Valor v={d?.origen_datos} mapa={ORIGEN} />
+            </Campo>
+          </div>
+        </div>
+
+        {/* ── Sección 4: Evaluación de riesgo ── */}
         <div className="detalle-evaluacion">
           <h2 className="detalle-columna-titulo">Evaluación de riesgo</h2>
           <div className="detalle-evaluacion-grid">
             <BarraRiesgo label="Probabilidad" valor={tratamiento.probabilidad} />
-            <BarraRiesgo label="Impacto" valor={tratamiento.impacto} />
+            <BarraRiesgo label="Impacto"      valor={tratamiento.impacto} />
           </div>
-
-          {/* Fecha y metodología */}
           <p className="detalle-eval-nota">
             {tratamiento.fecha_evaluacion
               ? `Evaluado el ${new Date(tratamiento.fecha_evaluacion).toLocaleDateString('es-CL', {
-                year: 'numeric', month: 'long', day: 'numeric'
-              })} · Metodología AEPD adaptada a Ley 21.719`
+                  year: 'numeric', month: 'long', day: 'numeric',
+                })} · Metodología AEPD adaptada a Ley 21.719`
               : 'Sin evaluación registrada aún.'
             }
           </p>
