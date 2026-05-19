@@ -45,6 +45,16 @@ _ORIGEN = {
     "fuentes_publicas": "Fuentes\npúblicas",
 }
 
+_TITULARES = {
+    "empleados":   "Empleados y funcionarios",
+    "clientes":    "Clientes y consumidores",
+    "proveedores": "Proveedores y contratistas",
+    "usuarios":    "Usuarios de plataformas digitales",
+    "ciudadanos":  "Ciudadanos",
+    "estudiantes": "Estudiantes",
+    "pacientes":   "Pacientes",
+}
+
 
 # ── Helpers internos ───────────────────────────────────────────────────────
 
@@ -66,14 +76,30 @@ def _cat_datos(t) -> str | None:
 def _fila_rat(t, s_celda) -> list:
     """Construye la fila de la tabla RAT para un tratamiento."""
     d = t.detalle  # DetalleRat — puede ser None en tratamientos anteriores
-    plazo = _PLAZO.get(t.plazo_conservacion or "", t.plazo_conservacion)
-    volumen = _VOLUMEN.get(d.volumen_titulares or "", d.volumen_titulares) if d else None
-    origen  = _ORIGEN.get(d.origen_datos or "", d.origen_datos) if d else None
+    plazo  = _PLAZO.get(t.plazo_conservacion or "", t.plazo_conservacion)
+    origen = _ORIGEN.get(d.origen_datos or "", d.origen_datos) if d else None
+
+    # "Nombre\n(Responsable)" o "Nombre\n(Encargado)"
+    if d and d.responsable_tratamiento:
+        rol        = "Responsable" if d.es_responsable else "Encargado"
+        resp_texto = f"{d.responsable_tratamiento}\n({rol})"
+    else:
+        resp_texto = None
+
+    # Categorías legibles + rango de volumen
+    cats_raw = d.categorias_titulares if d and d.categorias_titulares else ""
+    cats     = ", ".join(
+        _TITULARES.get(c.strip(), c.strip())
+        for c in cats_raw.split(",") if c.strip()
+    )
+    vol      = _VOLUMEN.get(d.volumen_titulares or "", d.volumen_titulares) if d else None
+    universo = "\n".join(filter(None, [cats, vol])) or None
+
     return [
         _p(t.nombre,                                           s_celda),
-        _p(d.responsable_tratamiento if d else None,           s_celda),
+        _p(resp_texto,                                         s_celda),
         _p(_cat_datos(t),                                      s_celda),
-        _p(volumen,                                            s_celda),
+        _p(universo,                                           s_celda),
         _p(t.finalidad,                                        s_celda),
         _p(_BASE_LEGAL.get(t.base_legal or "", t.base_legal), s_celda),
         _p(t.destinatarios,                                    s_celda),

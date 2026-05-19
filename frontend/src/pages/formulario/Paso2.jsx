@@ -129,13 +129,14 @@ export default function Paso2() {
    */
   const detectadas = new Set();
   form.campos_detectados.forEach((campo) => {
-    const col = campo.nombre_columna.toLowerCase();
+    const col  = campo.nombre_columna.toLowerCase();
+    const desc = (campo.descripcion ?? "").toLowerCase();
     CATEGORIAS_DATOS.forEach((cat) => {
-      if (cat.keywords.some((kw) => col.includes(kw))) detectadas.add(cat.id);
+      if (cat.keywords.some((kw) => col.includes(kw) || desc.includes(kw))) detectadas.add(cat.id);
     });
     if (campo.tipo === "SENSIBLE") {
       CATEGORIAS_SENSIBLES.forEach((cat) => {
-        if (cat.keywords.some((kw) => col.includes(kw))) detectadas.add(cat.id);
+        if (cat.keywords.some((kw) => col.includes(kw) || desc.includes(kw))) detectadas.add(cat.id);
       });
     }
   });

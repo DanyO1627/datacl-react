@@ -45,22 +45,44 @@ def _pedir_analisis_ia(tratamientos: list) -> str | None:
                 f"decisiones_automatizadas={t.decisiones_automatizadas}"
             )
 
-        prompt = f"""Eres un experto en protección de datos personales bajo la Ley 21.719 de Chile.
-Analiza estos tratamientos de datos y entrega recomendaciones específicas:
+        prompt = f"""Eres un especialista en protección de datos personales bajo la Ley 21.719 de Chile (vigente desde 2024), equivalente funcional del RGPD europeo pero con particularidades del sistema jurídico chileno.
+
+Analiza los siguientes tratamientos de datos registrados en el RAT (Registro de Actividades de Tratamiento) de la organización:
 
 {chr(10).join(resumen)}
 
-Incluye:
-1. Riesgos identificados por tratamiento
-2. Recomendaciones específicas para reducir el riesgo
-3. Conclusión general sobre el nivel de cumplimiento
+Para cada tratamiento evalúa:
 
-Metodología: AEPD adaptada a Ley 21.719. Sé concreto y práctico."""
+1. BASE DE LICITUD (Art. 12 Ley 21.719)
+   - ¿Qué base de licitud justifica este tratamiento? (consentimiento, contrato, obligación legal, interés legítimo, etc.)
+   - Si no es evidente, indicar qué base debería documentarse.
+
+2. NIVEL DE RIESGO Y MEDIDAS
+   - Justifica el nivel_riesgo indicado.
+   - Si nivel_riesgo es ALTO: señala si corresponde realizar una Evaluación de Impacto (EIPD).
+   - Recomendaciones técnicas y organizativas concretas para reducir el riesgo.
+
+3. DATOS SENSIBLES Y CATEGORÍAS ESPECIALES
+   - Si datos_sensibles=true: identificar qué categoría especial aplica (salud, biometría, origen étnico, etc.) y las medidas adicionales requeridas por la ley.
+
+4. TRANSFERENCIAS INTERNACIONALES
+   - Si sale_extranjero=true: evaluar si el país destino tiene nivel adecuado de protección o si se requieren garantías adicionales.
+
+5. DECISIONES AUTOMATIZADAS
+   - Si decisiones_automatizadas=true: evaluar si el titular puede impugnar la decisión y si hay perfilamiento que requiera base legal reforzada.
+
+6. DERECHOS ARSOP
+   - Indica si el tratamiento permite al titular ejercer sus derechos de Acceso, Rectificación, Supresión, Oposición y Portabilidad.
+
+Al final incluye:
+CONCLUSIÓN GENERAL: nivel de cumplimiento global (ALTO / MEDIO / BAJO), los 3 riesgos más urgentes a resolver y una recomendación prioritaria.
+
+Formato: texto estructurado con encabezados. Sin listas excesivas. Máximo 150 palabras por tratamiento."""
 
         respuesta = cliente.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=1000,
+            max_tokens=2500,
         )
         return respuesta.choices[0].message.content
 

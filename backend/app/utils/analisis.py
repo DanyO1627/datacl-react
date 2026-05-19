@@ -1,4 +1,5 @@
 import io
+import unicodedata
 import pandas as pd
 
 # =============================================================================
@@ -186,7 +187,13 @@ SENSIBLES_ES = [
     "toxicologica",  # Indice_Exposicion_Toxicologica
     "exposicion",  # misma columna
     "afiliacion",  # Sindicato_Base_Afiliacion
-    "comunitaria",  # Nivel_Tension_Comunitaria — debatible si es sensible
+    "comunitaria",  # Nivel_Tension_Comunitaria debatible si es sensible
+    "vih",
+    "sanguineo",
+    "sustancia",
+    "tuberculosis",
+    "narcotraficante",  # por si acaso
+    "droga",
 ]
 
 # ── Datos SENSIBLES — abreviaciones (español) ────────────────────────────────
@@ -209,8 +216,8 @@ SENSIBLES_EN = [
     "race",
     "orientation",
     "political",
-    "ideologia",       # Registro_Ideologia_Encubierta
-    "psicotropico",    # Patron_Consumo_Psicotropicos  
+    "ideologia",  # Registro_Ideologia_Encubierta
+    "psicotropico",  # Patron_Consumo_Psicotropicos
     "ideologica",
     "ideologico",
     "biometric",
@@ -296,11 +303,18 @@ def _tokenizar(nombre_columna: str) -> set[str]:
     Ejemplos:
         "fecha_nacimiento" → {"fecha", "nacimiento"}
         "FIRST-NAME"       → {"first", "name"}
-        "emailCliente"     → {"emailcliente"}   ← camelCase no se separa, ok para la mayoría
+        "emailCliente"     → {"emailcliente"}  y además elimina los tildes para más coincidencias
         "fec_nac"          → {"fec", "nac"}
     """
+
     normalizado = nombre_columna.lower().replace("_", " ").replace("-", " ")
-    return set(normalizado.split())
+    # Eliminar tildes y diacríticos
+    sin_tildes = "".join(
+        c
+        for c in unicodedata.normalize("NFD", normalizado)
+        if unicodedata.category(c) != "Mn"
+    )
+    return set(sin_tildes.split())
 
 
 def _raiz(palabra: str, largo: int = 7) -> str:
@@ -313,11 +327,12 @@ def _raiz(palabra: str, largo: int = 7) -> str:
     """
     return palabra[:largo]
 
+
 def _coincide(tokens: set[str], palabras: list[str], abreviaciones: list[str]) -> bool:
     # Para palabras largas (8+ chars): comparar por raíz truncada de 7 chars
     palabras_largas = [p for p in palabras if len(p) >= 8]
     raices_dict = {_raiz(p) for p in palabras_largas}
-    
+
     for token in tokens:
         if len(token) >= 8:
             if _raiz(token) in raices_dict:
@@ -325,7 +340,7 @@ def _coincide(tokens: set[str], palabras: list[str], abreviaciones: list[str]) -
         # Exacto para tokens cortos
         if token in palabras:
             return True
-    
+
     # Abreviaciones siempre exactas (son cortas, no tienen inflexión)
     return any(abr in tokens for abr in abreviaciones)
 

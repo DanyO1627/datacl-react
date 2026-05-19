@@ -131,10 +131,7 @@ export default function CargaArchivo() {
     setAlerta(null);
 
     try {
-      const resultado = await analizarArchivo(
-        archivo,
-        tieneDiccionario ? archivoDiccionario : null
-      );
+      const resultado = await analizarArchivo(archivo, archivoDiccionario);
 
       // ── Caso especial: el backend respondió bien pero no detectó nada ──
       // Si detectados está vacío, advertimos antes de navegar
