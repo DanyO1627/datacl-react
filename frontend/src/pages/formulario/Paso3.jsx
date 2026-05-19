@@ -219,8 +219,9 @@ export default function Paso3() {
 
       // Objeto detalle — va a la tabla detalle_rat con los nombres del schema
       detalle: {
-        responsable_tratamiento: formularioCompleto.responsable  || null,
-        departamento:            formularioCompleto.departamento || null,
+        responsable_tratamiento: formularioCompleto.responsable    || null,
+        es_responsable:          formularioCompleto.es_responsable ?? true,
+        departamento:            formularioCompleto.departamento   || null,
         // el backend espera string; el frontend lo tiene como array
         categorias_titulares: (formularioCompleto.categorias_titulares || []).join(",") || null,
         volumen_titulares:    formularioCompleto.volumen      || null,

@@ -17,6 +17,7 @@ export function FormularioProvider({ children }) {
     // ── Paso 1: Identificación ───────────────────────────────
     nombre: "",
     responsable: "",
+    es_responsable: true,
     departamento: "",
     finalidad: "",
     base_legal: "",
@@ -54,7 +55,7 @@ export function FormularioProvider({ children }) {
   // Reinicia el formulario completo al cancelar o terminar
   function resetForm() {
     setForm({
-      nombre: "", responsable: "", departamento: "",
+      nombre: "", responsable: "", es_responsable: true, departamento: "",
       finalidad: "", base_legal: "",
       categorias_titulares: [], volumen: "", origen_datos: "",
       categorias_datos: [], datos_sensibles: false,

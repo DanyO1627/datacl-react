@@ -37,47 +37,40 @@ def _pedir_analisis_ia(tratamientos: list) -> str | None:
 
         resumen = []
         for t in tratamientos:
-            resumen.append(
-                f"- {t.nombre}: nivel_riesgo={t.nivel_riesgo}, "
-                f"probabilidad={t.probabilidad}, impacto={t.impacto}, "
-                f"datos_sensibles={t.datos_sensibles}, "
-                f"sale_extranjero={t.sale_extranjero}, "
-                f"decisiones_automatizadas={t.decisiones_automatizadas}"
+            linea = (
+                f"- {t.nombre} | base_legal={t.base_legal or 'no especificada'}"
+                f" | nivel_riesgo={t.nivel_riesgo}"
+                f" | datos_sensibles={t.datos_sensibles}"
+                f" | categorias_sensibles={t.categorias_sensibles or 'ninguna'}"
+                f" | sale_extranjero={t.sale_extranjero}"
+                f" | pais_destino={t.pais_destino or 'n/a'}"
+                f" | decisiones_automatizadas={t.decisiones_automatizadas}"
+                f" | finalidad={t.finalidad or 'no especificada'}"
             )
+            resumen.append(linea)
 
-        prompt = f"""Eres un especialista en protección de datos personales bajo la Ley 21.719 de Chile (vigente desde 2024), equivalente funcional del RGPD europeo pero con particularidades del sistema jurídico chileno.
+        prompt = f"""Eres un especialista en protección de datos personales bajo la Ley 21.719 de Chile.
 
-Analiza los siguientes tratamientos de datos registrados en el RAT (Registro de Actividades de Tratamiento) de la organización:
+Analiza el RAT de la siguiente organización y entrega un informe ejecutivo útil para su encargado de datos.
 
+TRATAMIENTOS REGISTRADOS:
 {chr(10).join(resumen)}
 
-Para cada tratamiento evalúa:
+INSTRUCCIONES:
+Por cada tratamiento indica en máximo 60 palabras:
+- Si la base legal registrada es correcta o debería ajustarse (cita el Art. 12 Ley 21.719)
+- El riesgo principal concreto de este tratamiento específico
+- Una medida prioritaria, mencionando el tipo de organización si es relevante
 
-1. BASE DE LICITUD (Art. 12 Ley 21.719)
-   - ¿Qué base de licitud justifica este tratamiento? (consentimiento, contrato, obligación legal, interés legítimo, etc.)
-   - Si no es evidente, indicar qué base debería documentarse.
+Si nivel_riesgo es ALTO: indica explícitamente si corresponde EIPD según Art. 22 Ley 21.719.
+Si datos_sensibles=true: menciona la categoría especial (salud, biometría, etc.) y el Art. 16.
+Si sale_extranjero=true: señala si requiere garantías adicionales.
 
-2. NIVEL DE RIESGO Y MEDIDAS
-   - Justifica el nivel_riesgo indicado.
-   - Si nivel_riesgo es ALTO: señala si corresponde realizar una Evaluación de Impacto (EIPD).
-   - Recomendaciones técnicas y organizativas concretas para reducir el riesgo.
+Al final, en máximo 80 palabras:
+CONCLUSIÓN: cumplimiento global (ALTO/MEDIO/BAJO), los 2 riesgos más urgentes y acción prioritaria.
 
-3. DATOS SENSIBLES Y CATEGORÍAS ESPECIALES
-   - Si datos_sensibles=true: identificar qué categoría especial aplica (salud, biometría, origen étnico, etc.) y las medidas adicionales requeridas por la ley.
-
-4. TRANSFERENCIAS INTERNACIONALES
-   - Si sale_extranjero=true: evaluar si el país destino tiene nivel adecuado de protección o si se requieren garantías adicionales.
-
-5. DECISIONES AUTOMATIZADAS
-   - Si decisiones_automatizadas=true: evaluar si el titular puede impugnar la decisión y si hay perfilamiento que requiera base legal reforzada.
-
-6. DERECHOS ARSOP
-   - Indica si el tratamiento permite al titular ejercer sus derechos de Acceso, Rectificación, Supresión, Oposición y Portabilidad.
-
-Al final incluye:
-CONCLUSIÓN GENERAL: nivel de cumplimiento global (ALTO / MEDIO / BAJO), los 3 riesgos más urgentes a resolver y una recomendación prioritaria.
-
-Formato: texto estructurado con encabezados. Sin listas excesivas. Máximo 150 palabras por tratamiento."""
+Sé específico. Evita recomendaciones genéricas que apliquen a cualquier organización.
+Formato: encabezado por tratamiento, texto corrido, sin listas."""
 
         respuesta = cliente.chat.completions.create(
             model="llama-3.3-70b-versatile",

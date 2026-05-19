@@ -403,3 +403,26 @@
   transform: none !important;
   opacity: 1 !important;
 }
+
+/* ─── Radio Responsable / Encargado ──────────────────────────── */
+.p1-rol-row {
+  display: flex;
+  gap: 1.2rem;
+  margin-top: 0.5rem;
+}
+
+.p1-rol-opcion {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--dark);
+  cursor: pointer;
+}
+
+.p1-rol-opcion input[type="radio"] {
+  accent-color: var(--mid);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}

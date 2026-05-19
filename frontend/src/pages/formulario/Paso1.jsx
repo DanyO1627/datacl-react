@@ -117,11 +117,12 @@ export default function Paso1() {
   }, []);
 
   const [local, setLocal] = useState({
-    nombre:       form.nombre       || "",
-    responsable:  form.responsable  || "",
-    departamento: form.departamento || "",
-    finalidad:    form.finalidad    || "",
-    base_legal:   form.base_legal   || "",
+    nombre:         form.nombre         || "",
+    responsable:    form.responsable    || "",
+    es_responsable: form.es_responsable ?? true,
+    departamento:   form.departamento   || "",
+    finalidad:      form.finalidad      || "",
+    base_legal:     form.base_legal     || "",
   });
 
   const [tooltipBaseLegal, setTooltipBaseLegal] = useState(false);
@@ -226,6 +227,26 @@ export default function Paso1() {
                   onChange={handleChange}
                   maxLength={150}
                 />
+                <div className="p1-rol-row">
+                  <label className="p1-rol-opcion">
+                    <input
+                      type="radio"
+                      name="es_responsable"
+                      checked={local.es_responsable === true}
+                      onChange={() => setLocal((prev) => ({ ...prev, es_responsable: true }))}
+                    />
+                    <span>Responsable</span>
+                  </label>
+                  <label className="p1-rol-opcion">
+                    <input
+                      type="radio"
+                      name="es_responsable"
+                      checked={local.es_responsable === false}
+                      onChange={() => setLocal((prev) => ({ ...prev, es_responsable: false }))}
+                    />
+                    <span>Encargado</span>
+                  </label>
+                </div>
               </div>
               <div className="p1-campo">
                 <label className="p1-label" htmlFor="departamento">
