@@ -211,6 +211,7 @@ class TratamientoListado(BaseModel):
     nombre: str
     nivel_riesgo: Optional[str] = None
     estado: str
+    datos_sensibles: bool = False
     creado_en: datetime
     model_config = {"from_attributes": True}
     
