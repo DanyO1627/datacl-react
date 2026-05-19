@@ -275,6 +275,12 @@
   background-color: #fff;
 }
 
+.p1-fila-dos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
 .p1-base-desc {
   font-size: 12px;
   color: var(--mid);
@@ -284,6 +290,11 @@
   border-left: 3px solid var(--mid);
   margin: 0;
   line-height: 1.5;
+}
+
+.p1-base-articulo {
+  font-weight: 700;
+  color: var(--dark);
 }
 
 /* ─── Hint de campo requerido ─────────────────────────────────── */

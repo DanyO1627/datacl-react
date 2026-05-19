@@ -73,10 +73,35 @@ const MEDIDAS = [
  * Necesitamos mostrar texto amigable en vez de los valores internos.
  */
 const ETIQ_BASE_LEGAL = {
-  consentimiento: "Consentimiento",
-  contrato: "Contrato",
-  obligacion_legal: "Obligación legal",
-  interes_legitimo: "Interés legítimo",
+  consentimiento:   "Consentimiento (Art. 12 letra a)",
+  contrato:         "Ejecución de contrato (Art. 12 letra b)",
+  obligacion_legal: "Obligación legal (Art. 12 letra c)",
+  interes_vital:    "Interés vital (Art. 12 letra d)",
+  interes_publico:  "Interés público (Art. 12 letra e)",
+  interes_legitimo: "Interés legítimo (Art. 12 letra f)",
+};
+
+const ETIQ_VOLUMEN = {
+  "1_100":      "1 – 100",
+  "100_1000":   "100 – 1.000",
+  "1000_10000": "1.000 – 10.000",
+  "mas_10000":  "Más de 10.000",
+};
+
+const ETIQ_ORIGEN = {
+  titular:          "Del propio titular",
+  terceros:         "De terceros",
+  fuentes_publicas: "De fuentes públicas",
+};
+
+const ETIQ_TITULARES = {
+  empleados:   "Empleados y funcionarios",
+  clientes:    "Clientes y consumidores",
+  proveedores: "Proveedores y contratistas",
+  usuarios:    "Usuarios de plataformas digitales",
+  ciudadanos:  "Ciudadanos",
+  estudiantes: "Estudiantes",
+  pacientes:   "Pacientes",
 };
 
 const ETIQ_PLAZO = {
@@ -108,7 +133,7 @@ const ETIQ_CATEGORIAS = {
 
 /* ─── Barra de progreso ──────────────────────────────────────── */
 function BarraProgreso({ pasoActual }) {
-  const pasos = ["Información general", "Datos y seguridad", "Revisión"];
+  const pasos = ["Identificación", "Datos y titulares", "Seguridad y conservación"];
   return (
     <div className="p3-progreso">
       {pasos.map((nombre, i) => {
@@ -173,24 +198,34 @@ export default function Paso3() {
     const formularioCompleto = { ...form, ...local };
 
     const payload = {
-      nombre: formularioCompleto.nombre,
-      finalidad: formularioCompleto.finalidad || null,
-      base_legal: formularioCompleto.base_legal || null,
-      categorias_datos: formularioCompleto.categorias_datos || [],
-      datos_sensibles: formularioCompleto.datos_sensibles ?? false,
+      // Paso 1 — identificación
+      nombre:       formularioCompleto.nombre,
+      responsable:  formularioCompleto.responsable  || null,
+      departamento: formularioCompleto.departamento || null,
+      finalidad:    formularioCompleto.finalidad    || null,
+      base_legal:   formularioCompleto.base_legal   || null,
+
+      // Paso 2 — datos y titulares
+      categorias_titulares: formularioCompleto.categorias_titulares || [],
+      volumen:              formularioCompleto.volumen      || null,
+      origen_datos:         formularioCompleto.origen_datos || null,
+      categorias_datos:     formularioCompleto.categorias_datos     || [],
+      datos_sensibles:      formularioCompleto.datos_sensibles      ?? false,
       categorias_sensibles: formularioCompleto.categorias_sensibles || [],
-      destinatarios: formularioCompleto.destinatarios || null,
-      sale_extranjero: formularioCompleto.sale_extranjero ?? false,
-      pais_destino: formularioCompleto.pais_destino || null,
+      destinatarios:        formularioCompleto.destinatarios        || null,
+      sale_extranjero:      formularioCompleto.sale_extranjero      ?? false,
+      pais_destino:         formularioCompleto.pais_destino         || null,
+
+      // Paso 3 — seguridad y conservación
       plazo_conservacion: formularioCompleto.plazo_conservacion || null,
-      plazo_otro: formularioCompleto.plazo_otro || null,
+      plazo_otro:         formularioCompleto.plazo_otro         || null,
       medidas_seguridad: serializarMedidasSeguridad(
         formularioCompleto.medidas_seguridad,
         formularioCompleto.otras_medidas
       ),
-      otras_medidas: formularioCompleto.otras_medidas || null,
+      otras_medidas:           formularioCompleto.otras_medidas           || null,
       decisiones_automatizadas: formularioCompleto.decisiones_automatizadas ?? false,
-      campos_detectados: formularioCompleto.campos_detectados || [],
+      campos_detectados:        formularioCompleto.campos_detectados        || [],
     };
 
     try {
@@ -357,14 +392,22 @@ export default function Paso3() {
               <div className="p3-acordeon-body">
 
                 <div className="p3-revision-seccion">
-                  <h4 className="p3-revision-titulo">Paso 1 — Información general</h4>
+                  <h4 className="p3-revision-titulo">Paso 1 — Identificación</h4>
                   <FilaRevision label="Nombre" valor={form.nombre} />
+                  <FilaRevision label="Responsable" valor={form.responsable} />
+                  <FilaRevision label="Departamento" valor={form.departamento} />
                   <FilaRevision label="Finalidad" valor={form.finalidad} />
                   <FilaRevision label="Base legal" valor={ETIQ_BASE_LEGAL[form.base_legal] || form.base_legal} />
                 </div>
 
                 <div className="p3-revision-seccion">
-                  <h4 className="p3-revision-titulo">Paso 2 — Datos y seguridad</h4>
+                  <h4 className="p3-revision-titulo">Paso 2 — Datos y titulares</h4>
+                  <FilaRevision
+                    label="Categorías de titulares"
+                    valor={(form.categorias_titulares || []).map((id) => ETIQ_TITULARES[id] || id).join(", ")}
+                  />
+                  <FilaRevision label="Volumen de titulares" valor={ETIQ_VOLUMEN[form.volumen] || form.volumen} />
+                  <FilaRevision label="Origen de los datos" valor={ETIQ_ORIGEN[form.origen_datos] || form.origen_datos} />
                   <FilaRevision
                     label="Categorías de datos"
                     valor={categoriasDatos.map((id) => ETIQ_CATEGORIAS[id] || id).join(", ")}
@@ -384,7 +427,7 @@ export default function Paso3() {
                 </div>
 
                 <div className="p3-revision-seccion">
-                  <h4 className="p3-revision-titulo">Paso 3 — Conservación y riesgo</h4>
+                  <h4 className="p3-revision-titulo">Paso 3 — Seguridad y conservación</h4>
                   <FilaRevision
                     label="Plazo"
                     valor={local.plazo_conservacion === "otro"

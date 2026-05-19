@@ -14,37 +14,36 @@ const FormularioContext = createContext(null);
 
 export function FormularioProvider({ children }) {
   const [form, setForm] = useState({
-    // ── Paso 1 ──────────────────────────────────────────────
+    // ── Paso 1: Identificación ───────────────────────────────
     nombre: "",
+    responsable: "",
+    departamento: "",
     finalidad: "",
     base_legal: "",
 
-    // Paso 2 — necesarios para los checkboxes y el campo de país
+    // ── Paso 2: Datos y titulares ────────────────────────────
+    categorias_titulares: [],  // tipos de personas cuyos datos se tratan
+    volumen: "",               // rango de titulares afectados
+    origen_datos: "",          // de dónde provienen los datos
 
-    categorias_datos: [],      // checkboxes de la columna izquierda
+    categorias_datos: [],
     datos_sensibles: false,
-    categorias_sensibles: [],  // checkboxes que aparecen al activar "datos sensibles"
+    categorias_sensibles: [],
     destinatarios: "",
     sale_extranjero: false,
-    pais_destino: "",          // campo que aparece cuando sale_extranjero = true
+    pais_destino: "",
     otros_datos: "",
 
-    // Paso 3 — necesarios para el plazo libre y las medidas otras
-
+    // ── Paso 3: Seguridad y conservación ────────────────────
     plazo_conservacion: "",
-    plazo_otro: "",            // campo libre cuando el usuario elige "Otro" en el plazo
-    otras_medidas: "",         // campo libre cuando marca "Otras" en medidas de seguridad
-
-    // Array de strings — IDs de medidas marcadas
-    // Ej: ["cifrado", "acceso_por_rol", "backups"]
-    // IMPORTANTE: en la versión anterior era un string,
-    // ahora es array para coincidir con los checkboxes del mockup
+    plazo_otro: "",
+    otras_medidas: "",
     medidas_seguridad: [],
     decisiones_automatizadas: false,
 
     // ── Campos del análisis (vienen de ResultadosAnalisis) ──
-    campos_detectados: [],   // [{ nombre_columna, tipo, es_sensible }]
-    campos_pendientes: [],   // [{ nombre_columna }]
+    campos_detectados: [],
+    campos_pendientes: [],
   });
 
   // Actualiza solo los campos que se pasan — el resto no se toca
@@ -55,7 +54,9 @@ export function FormularioProvider({ children }) {
   // Reinicia el formulario completo al cancelar o terminar
   function resetForm() {
     setForm({
-      nombre: "", finalidad: "", base_legal: "",
+      nombre: "", responsable: "", departamento: "",
+      finalidad: "", base_legal: "",
+      categorias_titulares: [], volumen: "", origen_datos: "",
       categorias_datos: [], datos_sensibles: false,
       categorias_sensibles: [], destinatarios: "",
       sale_extranjero: false, pais_destino: "",

@@ -4,33 +4,49 @@ import { useFormulario } from "../../context/FormularioContext";
 import BarraLateral from "../../components/BarraLateral";
 import "../../styles/formularioCss/paso1.css";
 
-/* ─── Opciones base legal (Ley 21.719 Chile) ─────────────────── */
+/* ─── Opciones base legal con artículos Ley 21.719 ──────────── */
 const BASES_LEGALES = [
   {
     valor: "consentimiento",
     etiqueta: "Consentimiento",
-    descripcion: "El titular autorizó expresamente el tratamiento de sus datos.",
+    articulo: "Art. 12 letra a)",
+    descripcion: "El titular otorgó su consentimiento libre, informado, específico e inequívoco para el tratamiento de sus datos (Ley 21.719, Art. 12 letra a).",
   },
   {
     valor: "contrato",
-    etiqueta: "Contrato",
-    descripcion: "El tratamiento es necesario para ejecutar un contrato con el titular.",
+    etiqueta: "Ejecución de contrato",
+    articulo: "Art. 12 letra b)",
+    descripcion: "El tratamiento es necesario para la ejecución de un contrato en que el titular es parte, o para aplicar medidas precontractuales (Ley 21.719, Art. 12 letra b).",
   },
   {
     valor: "obligacion_legal",
     etiqueta: "Obligación legal",
-    descripcion: "Una ley o norma obliga a tratar estos datos (ej: SII, AFP, Dirección del Trabajo).",
+    articulo: "Art. 12 letra c)",
+    descripcion: "El tratamiento es necesario para cumplir una obligación legal o reglamentaria del responsable, ej: SII, AFP, Dirección del Trabajo (Ley 21.719, Art. 12 letra c).",
+  },
+  {
+    valor: "interes_vital",
+    etiqueta: "Interés vital",
+    articulo: "Art. 12 letra d)",
+    descripcion: "El tratamiento es necesario para proteger intereses vitales del titular u otra persona cuando el titular no puede prestar consentimiento (Ley 21.719, Art. 12 letra d).",
+  },
+  {
+    valor: "interes_publico",
+    etiqueta: "Interés público",
+    articulo: "Art. 12 letra e)",
+    descripcion: "El tratamiento es necesario para cumplir una misión de interés público o en el ejercicio de potestades públicas conferidas al responsable (Ley 21.719, Art. 12 letra e).",
   },
   {
     valor: "interes_legitimo",
     etiqueta: "Interés legítimo",
-    descripcion: "Existe un interés legítimo del responsable que no vulnera los derechos del titular.",
+    articulo: "Art. 12 letra f)",
+    descripcion: "Existe un interés legítimo del responsable o de un tercero que no vulnera los derechos y libertades fundamentales del titular (Ley 21.719, Art. 12 letra f).",
   },
 ];
 
 /* ─── Barra de progreso ──────────────────────────────────────── */
 function BarraProgreso({ pasoActual }) {
-  const pasos = ["Información general", "Datos y seguridad", "Revisión"];
+  const pasos = ["Identificación", "Datos y titulares", "Seguridad y conservación"];
   return (
     <div className="p1-progreso">
       {pasos.map((nombre, i) => {
@@ -101,9 +117,11 @@ export default function Paso1() {
   }, []);
 
   const [local, setLocal] = useState({
-    nombre:     form.nombre     || "",
-    finalidad:  form.finalidad  || "",
-    base_legal: form.base_legal || "",
+    nombre:       form.nombre       || "",
+    responsable:  form.responsable  || "",
+    departamento: form.departamento || "",
+    finalidad:    form.finalidad    || "",
+    base_legal:   form.base_legal   || "",
   });
 
   const [tooltipBaseLegal, setTooltipBaseLegal] = useState(false);
@@ -166,9 +184,9 @@ export default function Paso1() {
 
           {/* ── Sección formulario ── */}
           <div className="p1-seccion">
-            <h2 className="p1-seccion-titulo">Información general</h2>
+            <h2 className="p1-seccion-titulo">Identificación del tratamiento</h2>
             <p className="p1-seccion-desc">
-              Describe el propósito y la base legal que justifica este tratamiento de datos.
+              Identifica el tratamiento, su responsable y la base legal que lo justifica según la Ley 21.719.
             </p>
 
             {/* Nombre del tratamiento */}
@@ -190,6 +208,40 @@ export default function Paso1() {
               {!local.nombre.trim() && (
                 <span className="p1-campo-hint">Este campo es obligatorio para continuar.</span>
               )}
+            </div>
+
+            {/* Responsable y departamento — fila de dos columnas */}
+            <div className="p1-fila-dos">
+              <div className="p1-campo">
+                <label className="p1-label" htmlFor="responsable">
+                  Responsable del tratamiento
+                </label>
+                <input
+                  id="responsable"
+                  name="responsable"
+                  type="text"
+                  className="p1-input"
+                  placeholder="Ej: Juan Pérez / Encargado de RRHH"
+                  value={local.responsable}
+                  onChange={handleChange}
+                  maxLength={150}
+                />
+              </div>
+              <div className="p1-campo">
+                <label className="p1-label" htmlFor="departamento">
+                  Departamento o área
+                </label>
+                <input
+                  id="departamento"
+                  name="departamento"
+                  type="text"
+                  className="p1-input"
+                  placeholder="Ej: Recursos Humanos"
+                  value={local.departamento}
+                  onChange={handleChange}
+                  maxLength={150}
+                />
+              </div>
             </div>
 
             {/* Finalidad */}
@@ -240,11 +292,14 @@ export default function Paso1() {
               </select>
 
               {/* Descripción de la opción seleccionada */}
-              {local.base_legal && (
-                <p className="p1-base-desc">
-                  {BASES_LEGALES.find((b) => b.valor === local.base_legal)?.descripcion}
-                </p>
-              )}
+              {local.base_legal && (() => {
+                const base = BASES_LEGALES.find((b) => b.valor === local.base_legal);
+                return (
+                  <p className="p1-base-desc">
+                    <span className="p1-base-articulo">{base?.articulo} —</span> {base?.descripcion}
+                  </p>
+                );
+              })()}
             </div>
           </div>
 

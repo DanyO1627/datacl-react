@@ -4,6 +4,32 @@ import { useFormulario } from "../../context/FormularioContext";
 import BarraLateral from "../../components/BarraLateral";
 import "../../styles/formularioCss/paso2.css";
 
+/* ─── Categorías de titulares ────────────────────────────────── */
+const CATEGORIAS_TITULARES = [
+  { id: "empleados",   etiqueta: "Empleados y funcionarios" },
+  { id: "clientes",    etiqueta: "Clientes y consumidores" },
+  { id: "proveedores", etiqueta: "Proveedores y contratistas" },
+  { id: "usuarios",    etiqueta: "Usuarios de plataformas digitales" },
+  { id: "ciudadanos",  etiqueta: "Ciudadanos" },
+  { id: "estudiantes", etiqueta: "Estudiantes" },
+  { id: "pacientes",   etiqueta: "Pacientes" },
+];
+
+/* ─── Volumen de titulares ───────────────────────────────────── */
+const VOLUMENES = [
+  { valor: "1_100",        etiqueta: "1 – 100" },
+  { valor: "100_1000",     etiqueta: "100 – 1.000" },
+  { valor: "1000_10000",   etiqueta: "1.000 – 10.000" },
+  { valor: "mas_10000",    etiqueta: "Más de 10.000" },
+];
+
+/* ─── Origen de los datos ────────────────────────────────────── */
+const ORIGENES_DATOS = [
+  { valor: "titular",         etiqueta: "Del propio titular" },
+  { valor: "terceros",        etiqueta: "De terceros" },
+  { valor: "fuentes_publicas", etiqueta: "De fuentes públicas" },
+];
+
 /* ─── Categorías de datos personales ────────────────────────────
  * keywords: palabras clave para detectar si Python ya encontró esta categoría
  * en los campos del archivo subido.
@@ -29,7 +55,7 @@ const CATEGORIAS_SENSIBLES = [
 
 /* ─── Barra de progreso ──────────────────────────────────────── */
 function BarraProgreso({ pasoActual }) {
-  const pasos = ["Información general", "Datos y seguridad", "Revisión"];
+  const pasos = ["Identificación", "Datos y titulares", "Seguridad y conservación"];
   return (
     <div className="p2-progreso">
       {pasos.map((nombre, i) => {
@@ -128,6 +154,9 @@ export default function Paso2() {
   const primeraVezEnPaso2 = form.categorias_datos.length === 0 && form.categorias_sensibles.length === 0;
 
   const [local, setLocal] = useState({
+    categorias_titulares: form.categorias_titulares || [],
+    volumen:              form.volumen || "",
+    origen_datos:         form.origen_datos || "",
     categorias_datos: primeraVezEnPaso2
       ? [...detectadas].filter((id) => CATEGORIAS_DATOS.some((c) => c.id === id))
       : form.categorias_datos,
@@ -202,7 +231,63 @@ export default function Paso2() {
           {/* ── Grid 3 columnas ───────────────────────────────── */}
           <div className="p2-grid">
 
-            {/* ── Columna 1: Categorías de datos ─────────────── */}
+            {/* ── Columna 1: Titulares + Volumen + Origen ────── */}
+            <div className="p2-columna">
+              <h3 className="p2-col-titulo">Categoría de titulares</h3>
+              <p className="p2-col-desc">¿Qué tipo de personas son los titulares de estos datos?</p>
+              <div className="p2-checkboxes">
+                {CATEGORIAS_TITULARES.map((cat) => {
+                  const marcado = local.categorias_titulares.includes(cat.id);
+                  return (
+                    <label key={cat.id} className={`p2-check-item ${marcado ? "p2-check-item--marcado" : ""}`}>
+                      <input type="checkbox" className="p2-check-input"
+                        checked={marcado}
+                        onChange={() => setLocal((prev) => {
+                          const lista = prev.categorias_titulares;
+                          return {
+                            ...prev,
+                            categorias_titulares: lista.includes(cat.id)
+                              ? lista.filter((x) => x !== cat.id)
+                              : [...lista, cat.id],
+                          };
+                        })}
+                      />
+                      <span className="p2-check-texto">{cat.etiqueta}</span>
+                    </label>
+                  );
+                })}
+              </div>
+
+              <div className="p2-campo-grupo">
+                <label className="p2-campo-label">Volumen aproximado de titulares</label>
+                <select
+                  className="p2-select"
+                  value={local.volumen}
+                  onChange={(e) => setLocal((prev) => ({ ...prev, volumen: e.target.value }))}
+                >
+                  <option value="">Selecciona un rango...</option>
+                  {VOLUMENES.map((v) => (
+                    <option key={v.valor} value={v.valor}>{v.etiqueta}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="p2-campo-grupo">
+                <label className="p2-campo-label">Origen de los datos</label>
+                <select
+                  className="p2-select"
+                  value={local.origen_datos}
+                  onChange={(e) => setLocal((prev) => ({ ...prev, origen_datos: e.target.value }))}
+                >
+                  <option value="">Selecciona el origen...</option>
+                  {ORIGENES_DATOS.map((o) => (
+                    <option key={o.valor} value={o.valor}>{o.etiqueta}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* ── Columna 2: Categorías de datos ─────────────── */}
             <div className="p2-columna">
               <h3 className="p2-col-titulo">Categoría de datos personales</h3>
               <div className="p2-checkboxes">
@@ -242,14 +327,13 @@ export default function Paso2() {
               </div>
             </div>
 
-            {/* ── Columna 2: Datos sensibles ─────────────────── */}
+            {/* ── Columna 3: Datos sensibles + Destinatarios ── */}
             <div className="p2-columna">
               <h3 className="p2-col-titulo">
                 ¿Este tratamiento incluye datos sensibles?
                 <Tooltip texto="Los datos sensibles exigen mayor protección según el Art. 16 de la Ley 21.719." />
               </h3>
 
-              {/* Sí / No */}
               <div className="p2-sino-row">
                 <button type="button"
                   className={`p2-sino-btn ${local.datos_sensibles  ? "p2-sino-btn--activo" : ""}`}
@@ -261,7 +345,6 @@ export default function Paso2() {
                 >No</button>
               </div>
 
-              {/* Checkboxes sensibles — aparecen solo si Sí */}
               {local.datos_sensibles && (
                 <div className="p2-checkboxes p2-checkboxes--sensibles">
                   {CATEGORIAS_SENSIBLES.map((cat) => {
@@ -288,17 +371,16 @@ export default function Paso2() {
                   })}
                 </div>
               )}
-            </div>
 
-            {/* ── Columna 3: Destinatarios + extranjero ─────── */}
-            <div className="p2-columna">
+              <div className="p2-separador" />
+
               <h3 className="p2-col-titulo">Destinatarios de los datos</h3>
               <textarea
                 className="p2-textarea"
                 placeholder="Ej: AFP Provida, SII, proveedor de nómina externo..."
                 value={local.destinatarios}
                 onChange={(e) => setLocal((prev) => ({ ...prev, destinatarios: e.target.value }))}
-                rows={5}
+                rows={4}
                 maxLength={500}
               />
               <span className="p2-campo-contador">{local.destinatarios.length}/500</span>
