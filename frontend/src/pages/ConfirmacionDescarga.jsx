@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { useLocation, useNavigate, Navigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import BarraLateral from '../components/BarraLateral'
+import { useAuth } from '../context/AuthContext'
 import { descargarInforme, agregarAnalisisIA } from '../services/informesService'
 import '../styles/confirmacionDescarga.css'
 
 export default function ConfirmacionDescarga() {
   const { state } = useLocation()
   const navigate = useNavigate()
+  const { usuario } = useAuth()
 
   const informe = state?.informe
   const resumen = state?.resumen
@@ -20,12 +22,12 @@ export default function ConfirmacionDescarga() {
   if (!informe?.id) return <Navigate to="/informes" replace />
 
   async function descargar() {
-    try {
-      await descargarInforme(informe.id)
-    } catch {
-      alert('No se pudo descargar el informe. Intenta nuevamente.')
-    }
+  try {
+    await descargarInforme(informe.id, usuario?.nombre)
+  } catch {
+    alert('No se pudo descargar el informe. Intenta nuevamente.')
   }
+}
 
   async function handleAgregarIA() {
     setAgregandoIA(true)

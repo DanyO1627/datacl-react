@@ -15,14 +15,18 @@ export async function obtenerInformes() {
   return res.data
 }
 
-export async function descargarInforme(id) {
+export async function descargarInforme(id, nombreOrg) {
   const respuesta = await api.get(`/informes/${id}/descargar`, {
     responseType: 'blob'
   })
   const url = window.URL.createObjectURL(new Blob([respuesta.data]))
   const link = document.createElement('a')
   link.href = url
-  link.setAttribute('download', `informe_${id}.pdf`)
+  const fecha = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+  const nombreSeguro = (nombreOrg || 'organizacion')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-zA-Z0-9]/g, '_')
+  link.setAttribute('download', `RAT_${nombreSeguro}_${fecha}.pdf`)
   document.body.appendChild(link)
   link.click()
   link.remove()
