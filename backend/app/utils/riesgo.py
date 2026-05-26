@@ -39,7 +39,7 @@ def calcular_impacto(tratamiento) -> str:
 
     # Verificar si tiene campos RUT o fecha_nacimiento detectados
     # Solo si la relación campos está cargada (puede ser None si no se hizo join)
-    campos = getattr(tratamiento, "campos", None) or []
+    campos = getattr(tratamiento, "campos", None) or getattr(tratamiento, "campos_detectados", None) or []
     tiene_dato_identificador = any(
         c.nombre_columna.lower() in ("rut", "fecha_nacimiento", "fecha_nac")
         for c in campos

@@ -41,9 +41,7 @@ def _pedir_analisis_ia(tratamientos: list) -> str | None:
                 f"- {t.nombre} | base_legal={t.base_legal or 'no especificada'}"
                 f" | nivel_riesgo={t.nivel_riesgo}"
                 f" | datos_sensibles={t.datos_sensibles}"
-                f" | categorias_sensibles={t.categorias_sensibles or 'ninguna'}"
                 f" | sale_extranjero={t.sale_extranjero}"
-                f" | pais_destino={t.pais_destino or 'n/a'}"
                 f" | decisiones_automatizadas={t.decisiones_automatizadas}"
                 f" | finalidad={t.finalidad or 'no especificada'}"
             )
@@ -131,9 +129,13 @@ def generar_informe(
 
     ruta_pdf.write_bytes(construir_pdf(usuario, tratamientos))
 
+    # La IA se corre aquí, con la lista ya filtrada, no en un endpoint aparte.
+    # Si Groq falla, contenido_ia queda None y el PDF se guarda igual.
+    contenido_ia = _pedir_analisis_ia(tratamientos)
+
     nuevo_informe = models.Informe(
         organizacion_id=usuario.id,
-        contenido_ia=None,
+        contenido_ia=contenido_ia,
         ruta_pdf=str(ruta_pdf),
         num_tratamientos=len(tratamientos),
     )
@@ -144,7 +146,7 @@ def generar_informe(
     return {
         "id":          nuevo_informe.id,
         "generado_en": nuevo_informe.generado_en,
-        "tiene_ia":    False,
+        "tiene_ia":    contenido_ia is not None,
         "ruta_pdf":    str(ruta_pdf),
     }
 
@@ -168,6 +170,9 @@ def analizar_informe_ia(
     if not informe:
         raise HTTPException(status_code=404, detail="Informe no encontrado.")
 
+    # Reintento: toma los mismos N tratamientos más recientes que se usaron
+    # al generar el informe (num_tratamientos). Sin IDs guardados en BD es
+    # la mejor aproximación posible sin migración de esquema.
     tratamientos = (
         db.query(models.Tratamiento)
         .options(
@@ -176,6 +181,7 @@ def analizar_informe_ia(
         )
         .filter(models.Tratamiento.organizacion_id == usuario.id)
         .order_by(models.Tratamiento.creado_en.desc())
+        .limit(informe.num_tratamientos or 10)
         .all()
     )
 

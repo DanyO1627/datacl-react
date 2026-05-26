@@ -3,7 +3,7 @@ import { useLocation, useNavigate, Navigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import BarraLateral from '../components/BarraLateral'
 import { useAuth } from '../context/AuthContext'
-import { descargarInforme, agregarAnalisisIA } from '../services/informesService'
+import { descargarInforme, agregarAnalisisIA, obtenerAnalisisIA } from '../services/informesService'
 import '../styles/confirmacionDescarga.css'
 
 export default function ConfirmacionDescarga() {
@@ -33,11 +33,14 @@ export default function ConfirmacionDescarga() {
     setAgregandoIA(true)
     setErrorIA('')
     try {
-      const data = await agregarAnalisisIA(informe.id)
+      // Si el análisis ya existe (generado junto al PDF), solo lo traemos
+      const data = tieneIA
+        ? await obtenerAnalisisIA(informe.id)
+        : await agregarAnalisisIA(informe.id)
       setTextoIA(data.contenido_ia)
       setTieneIA(true)
     } catch (e) {
-      const mensaje = e?.response?.data?.detail || 'No se pudo generar el análisis de IA. Intenta nuevamente.'
+      const mensaje = e?.response?.data?.detail || 'No se pudo obtener el análisis de IA. Intenta nuevamente.'
       setErrorIA(mensaje)
     } finally {
       setAgregandoIA(false)
@@ -106,7 +109,7 @@ export default function ConfirmacionDescarga() {
 
         {/* ── Sección IA ── */}
         <div className="confirmacion-ia-seccion">
-          {!tieneIA && !agregandoIA && (
+          {!textoIA && !agregandoIA && (
             <>
               <div className="ia-pregunta-header">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
