@@ -160,7 +160,7 @@ function BarraProgreso({ pasoActual }) {
 export default function Paso3() {
   const navigate = useNavigate();
   const { token } = useAuth();
-  const { form, actualizarForm, resetForm } = useFormulario();
+  const { form, actualizarForm, resetForm, avanzarActividad } = useFormulario();
   const categoriasDatos = form.categorias_datos || [];
   const categoriasSensibles = form.categorias_sensibles || [];
   const camposDetectados = form.campos_detectados || [];
@@ -231,8 +231,16 @@ export default function Paso3() {
 
     try {
       await crearTratamiento(payload);
-      resetForm();
-      navigate("/mis-tratamientos");
+      const hayMas =
+        form.actividadesPendientes.length > 0 &&
+        form.actividadActual + 1 < form.actividadesPendientes.length;
+      if (hayMas) {
+        avanzarActividad();
+        navigate("/nuevo-tratamiento");
+      } else {
+        resetForm();
+        navigate("/mis-tratamientos");
+      }
     } catch (e) {
       // Si es 401, redirigir al login
       if (e.codigo === 401) {
@@ -478,7 +486,12 @@ export default function Paso3() {
               onClick={handleGuardar}
               disabled={guardando}
             >
-              {guardando ? "Guardando..." : "Guardar"}
+              {guardando
+                ? "Guardando..."
+                : form.actividadesPendientes.length > 0 &&
+                  form.actividadActual + 1 < form.actividadesPendientes.length
+                ? "Guardar y continuar →"
+                : "Guardar"}
             </button>
           </div>
 

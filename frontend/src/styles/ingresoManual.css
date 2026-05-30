@@ -1,0 +1,342 @@
+/* ── Variables (reutiliza las mismas del proyecto) ─────────────── */
+:root {
+  --navy: #021024;
+  --dark: #052659;
+  --mid:  #5483B3;
+  --light: #7DA0CA;
+  --pale: #C1E8FF;
+}
+
+/* ── Layout ───────────────────────────────────────────────────── */
+.im-layout {
+  min-height: 100vh;
+  background: #f0f6ff;
+}
+
+.im-main {
+  margin-left: 220px;
+  padding: 2.4rem 2.4rem 6rem;
+  min-height: 100vh;
+  font-family: 'Georgia', serif;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+/* ── Header ───────────────────────────────────────────────────── */
+.im-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.im-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+
+.im-header p {
+  font-size: 13px;
+  color: var(--mid);
+}
+
+.im-contador-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #fff3cd;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  white-space: nowrap;
+}
+
+.im-contador-badge--ok {
+  background: #e6f4ea;
+  color: #276749;
+  border-color: #a7d7a8;
+}
+
+/* ── Instrucción ──────────────────────────────────────────────── */
+.im-instruccion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #eef4ff;
+  border: 1px solid #c3d8f5;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--dark);
+}
+
+.im-instruccion svg { flex-shrink: 0; color: var(--mid); }
+
+/* ── Lista de secciones ───────────────────────────────────────── */
+.im-secciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Sección colapsable ───────────────────────────────────────── */
+.im-seccion {
+  background: #fff;
+  border-radius: 12px;
+  border: 1.5px solid #dcedf8;
+  overflow: hidden;
+  box-shadow: 0 1px 8px rgba(5, 38, 89, 0.05);
+  transition: border-color 0.15s;
+}
+
+.im-seccion--abierta {
+  border-color: var(--mid);
+}
+
+.im-seccion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+  gap: 0.8rem;
+}
+
+.im-seccion-header:hover {
+  background: #f8fbff;
+}
+
+.im-seccion-izq {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.im-seccion-nombre {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.im-badge-sensible {
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.im-seccion-der {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.im-seccion-contador {
+  font-size: 12px;
+  color: #1d4ed8;
+  font-weight: 700;
+  background: #dbeafe;
+  padding: 2px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.im-chevron {
+  font-size: 11px;
+  color: var(--mid);
+  transition: transform 0.18s;
+  display: flex;
+  align-items: center;
+}
+
+.im-chevron--abierto {
+  transform: rotate(180deg);
+}
+
+/* ── Cuerpo de sección ────────────────────────────────────────── */
+.im-seccion-body {
+  border-top: 1px solid #eef2f8;
+  padding: 8px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── Ítem checkbox ────────────────────────────────────────────── */
+.im-check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+}
+
+.im-check-item:hover {
+  background: #f0f4ff;
+}
+
+.im-check-item--marcado {
+  background: #eef2ff;
+}
+
+.im-check-input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--dark);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.im-check-nombre {
+  flex: 1;
+  font-size: 13px;
+  color: var(--navy);
+  min-width: 0;
+}
+
+.im-check-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.im-check-badge--sensible {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ── Campo personalizado ──────────────────────────────────────── */
+.im-custom-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed #dcedf8;
+}
+
+.im-custom-input {
+  flex: 1;
+  padding: 7px 12px;
+  border: 1.5px solid #dcedf8;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'Georgia', serif;
+  color: var(--navy);
+  outline: none;
+  transition: border-color 0.15s;
+  background: #f8fbff;
+  min-width: 0;
+}
+
+.im-custom-input:focus {
+  border-color: var(--mid);
+  background: #fff;
+}
+
+.im-custom-input::placeholder {
+  color: #9ab5cc;
+}
+
+.im-custom-btn {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--mid);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.im-custom-btn:hover:not(:disabled) {
+  background: var(--dark);
+}
+
+.im-custom-btn:disabled {
+  background: #c8dcee;
+  cursor: not-allowed;
+}
+
+/* ── Footer fijo ──────────────────────────────────────────────── */
+.im-footer {
+  position: fixed;
+  bottom: 0;
+  left: 220px;
+  right: 0;
+  background: #fff;
+  border-top: 1px solid #eef2f8;
+  padding: 14px 2.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  z-index: 30;
+}
+
+.im-btn-volver {
+  padding: 9px 20px;
+  border-radius: 50px;
+  border: 1.5px solid var(--mid);
+  background: transparent;
+  color: var(--dark);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.im-btn-volver:hover {
+  background: var(--dark);
+  color: #fff;
+  border-color: var(--dark);
+}
+
+.im-btn-continuar {
+  padding: 11px 28px;
+  border-radius: 50px;
+  border: none;
+  background: linear-gradient(135deg, var(--dark) 0%, var(--mid) 100%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.12s;
+}
+
+.im-btn-continuar:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.im-btn-continuar:disabled {
+  background: #c8dcee;
+  color: #9ab5cc;
+  cursor: not-allowed;
+  transform: none;
+}

@@ -25,6 +25,7 @@ import Perfil from "./pages/Perfil";
 import VistaPrevia from "./pages/VistaPrevia";
 import ConfirmacionDescarga from "./pages/ConfirmacionDescarga";
 import DetalleOrganizacion from "./pages/DetalleOrganizacion";
+import IngresoManual from "./pages/IngresoManual";
 
 function App() {
   return (
@@ -85,6 +86,11 @@ function App() {
           } />
           <Route path="/resultados-analisis" element={
             <RutaProtegida><ResultadosAnalisis /></RutaProtegida>
+          } />
+
+          {/* ── Ingreso manual ─────────────────────────────── */}
+          <Route path="/nueva-sesion/manual" element={
+            <RutaProtegida><IngresoManual /></RutaProtegida>
           } />
 
           {/* ── Formulario RAT — 3 pasos ───────────────────── */}
