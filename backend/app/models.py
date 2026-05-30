@@ -69,7 +69,7 @@ class DetalleRat(Base):
     es_responsable         = Column(Boolean, default=True, nullable=False)
     departamento           = Column(String(200), nullable=True)
     categorias_titulares   = Column(Text, nullable=True)
-    volumen_titulares      = Column(String(50), nullable=True)
+    universo_titulares     = Column(Text, nullable=True)
     origen_datos           = Column(String(100), nullable=True)
     creado_en              = Column(DateTime, server_default=func.now(), nullable=False)
     actualizado_en         = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)

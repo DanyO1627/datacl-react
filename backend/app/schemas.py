@@ -109,7 +109,7 @@ class DetalleRatBase(BaseModel):
     es_responsable:          bool = True
     departamento:            Optional[str] = None
     categorias_titulares:    Optional[str] = None
-    volumen_titulares:       Optional[str] = None
+    universo_titulares:      Optional[str] = None
     origen_datos:            Optional[str] = None
 
 

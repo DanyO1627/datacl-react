@@ -1,76 +1,60 @@
 import { createContext, useContext, useState } from "react";
 
-/**
- * FormularioContext — comparte el estado del formulario RAT entre los 3 pasos.
- *
- * Uso:
- *   const { form, actualizarForm, resetForm } = useFormulario();
- *
- * Se inicializa desde ResultadosAnalisis vía navigate("/nuevo-tratamiento", { state: {...} })
- * y Paso1 lo lee con useLocation() para pre-cargar los campos detectados.
- */
-
 const FormularioContext = createContext(null);
 
+const FORM_VACIO = {
+  // ── Paso 1 ───────────────────────────────────────────────
+  nombre: "", responsable: "", es_responsable: true,
+  departamento: "", finalidad: "", base_legal: "",
+  // ── Paso 2 ───────────────────────────────────────────────
+  categorias_titulares: [], universo_titulares: "", origen_datos: "",
+  categorias_datos: [], datos_sensibles: false, categorias_sensibles: [],
+  destinatarios: "", sale_extranjero: false, pais_destino: "", otros_datos: "",
+  // ── Paso 3 ───────────────────────────────────────────────
+  plazo_conservacion: "", plazo_otro: "", otras_medidas: "",
+  medidas_seguridad: [], decisiones_automatizadas: false,
+  // ── Análisis ─────────────────────────────────────────────
+  campos_detectados: [], campos_pendientes: [],
+  // ── Sesión / actividades ─────────────────────────────────
+  sesionActual: null,        // id de la sesión guardada como borrador
+  actividadesPendientes: [], // [{ id, nombre, campos[] }] creadas en AsignacionCampos
+  actividadActual: 0,        // índice de la actividad que está completando el formulario
+};
+
 export function FormularioProvider({ children }) {
-  const [form, setForm] = useState({
-    // ── Paso 1: Identificación ───────────────────────────────
-    nombre: "",
-    responsable: "",
-    es_responsable: true,
-    departamento: "",
-    finalidad: "",
-    base_legal: "",
+  const [form, setForm] = useState(FORM_VACIO);
 
-    // ── Paso 2: Datos y titulares ────────────────────────────
-    categorias_titulares: [],  // tipos de personas cuyos datos se tratan
-    volumen: "",               // rango de titulares afectados
-    origen_datos: "",          // de dónde provienen los datos
-
-    categorias_datos: [],
-    datos_sensibles: false,
-    categorias_sensibles: [],
-    destinatarios: "",
-    sale_extranjero: false,
-    pais_destino: "",
-    otros_datos: "",
-
-    // ── Paso 3: Seguridad y conservación ────────────────────
-    plazo_conservacion: "",
-    plazo_otro: "",
-    otras_medidas: "",
-    medidas_seguridad: [],
-    decisiones_automatizadas: false,
-
-    // ── Campos del análisis (vienen de ResultadosAnalisis) ──
-    campos_detectados: [],
-    campos_pendientes: [],
-  });
-
-  // Actualiza solo los campos que se pasan — el resto no se toca
   function actualizarForm(campos) {
     setForm((prev) => ({ ...prev, ...campos }));
   }
 
-  // Reinicia el formulario completo al cancelar o terminar
-  function resetForm() {
-    setForm({
-      nombre: "", responsable: "", es_responsable: true, departamento: "",
-      finalidad: "", base_legal: "",
-      categorias_titulares: [], volumen: "", origen_datos: "",
-      categorias_datos: [], datos_sensibles: false,
-      categorias_sensibles: [], destinatarios: "",
-      sale_extranjero: false, pais_destino: "",
-      otros_datos: "",
-      plazo_conservacion: "", plazo_otro: "",
-      medidas_seguridad: [], otras_medidas: "",
-      decisiones_automatizadas: false,
-      campos_detectados: [], campos_pendientes: [],
+  function actualizarActividades(actividades) {
+    setForm((prev) => ({ ...prev, actividadesPendientes: actividades, actividadActual: 0 }));
+  }
+
+  // Avanza a la siguiente actividad: resetea los campos del formulario pero
+  // mantiene la lista de actividades e incrementa actividadActual.
+  function avanzarActividad() {
+    setForm((prev) => {
+      const siguiente = prev.actividadActual + 1;
+      const sigActividad = prev.actividadesPendientes[siguiente];
+      return {
+        ...FORM_VACIO,
+        sesionActual: prev.sesionActual,
+        actividadesPendientes: prev.actividadesPendientes,
+        actividadActual: siguiente,
+        campos_detectados: sigActividad?.campos || [],
+        campos_pendientes: [],
+      };
     });
   }
 
+  function resetForm() {
+    setForm(FORM_VACIO);
+  }
+
   return (
-    <FormularioContext.Provider value={{ form, actualizarForm, resetForm }}>
+    <FormularioContext.Provider value={{ form, actualizarForm, actualizarActividades, avanzarActividad, resetForm }}>
       {children}
     </FormularioContext.Provider>
   );
