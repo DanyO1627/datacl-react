@@ -272,6 +272,59 @@ TODAS_ABREV_PERSONALES = list(set(ABREV_PERSONALES_ES + ABREV_PERSONALES_EN))
 TODAS_SENSIBLES = list(set(SENSIBLES_ES + SENSIBLES_EN))
 TODAS_ABREV_SENSIBLES = list(set(ABREV_SENSIBLES_ES + ABREV_SENSIBLES_EN))
 
+# ── Categorías temáticas para la tercera dimensión de clasificación ───────────
+# IMPORTANTE: el orden de este diccionario define la prioridad de asignación.
+# Cuando una columna puede pertenecer a más de una categoría (ej. "afp" cae
+# en financieros Y en laborales), gana la que aparece primero. No reordenar
+# sin revisar los tests de clasificación — cambiarlo silencia errores difíciles
+# de detectar.
+CATEGORIAS_TEMATICAS = {
+    "identificatorios": {
+        "keywords": ["rut", "dni", "run", "nombre", "apellido", "pasaporte", "cedula"],
+        "label": "Datos identificatorios",
+    },
+    "contacto": {
+        "keywords": [
+            "correo", "email", "mail", "telefono", "celular", "movil",
+            "fono", "tel", "cel", "direccion", "domicilio", "ciudad", "comuna", "calle",
+        ],
+        "label": "Datos de contacto",
+    },
+    "salud": {
+        "keywords": [
+            "salud", "diagnostico", "medicamento", "enfermedad", "discapacidad",
+            "historial", "clinica", "hospital", "sangre", "sanguineo", "alergia",
+            "dx", "hcl",
+        ],
+        "label": "Datos de salud",
+    },
+    "financieros": {
+        "keywords": [
+            "banco", "cuenta", "salario", "sueldo", "beca", "matricula",
+            "afp", "isapre", "remuneracion", "liquido", "tarjeta", "pago",
+        ],
+        "label": "Datos financieros",
+    },
+    "laborales": {
+        "keywords": [
+            "cargo", "contrato", "departamento", "ingreso", "puesto",
+            "laboral", "supervisor", "operario",
+        ],
+        "label": "Datos laborales",
+    },
+    "academicos": {
+        "keywords": ["nota", "curso", "nivel", "asistencia", "promedio", "situacion"],
+        "label": "Datos académicos",
+    },
+    "biometricos": {
+        # "imagen" y "fotografia" fueron excluidos: son demasiado genéricos y
+        # generan falsos positivos en columnas como imagen_producto, url_imagen.
+        # Se usan tokens específicos del dominio biométrico.
+        "keywords": ["huella", "iris", "biometrico", "dactilar", "facial"],
+        "label": "Datos biométricos",
+    },
+}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # LECTURA DE ARCHIVOS
@@ -350,6 +403,22 @@ def _raiz(palabra: str, largo: int = 7) -> str:
     return palabra[:largo]
 
 
+def _detectar_categoria(tokens: set[str]) -> str:
+    """
+    Retorna el label de la categoría temática para un conjunto de tokens,
+    o "Otros" si ninguna categoría hace match.
+    La búsqueda respeta el orden de CATEGORIAS_TEMATICAS (prioridad implícita).
+    """
+    for config in CATEGORIAS_TEMATICAS.values():
+        keywords = config["keywords"]
+        kw_largas = {_raiz(k) for k in keywords if len(k) >= 8}
+        kw_cortas = {k for k in keywords if len(k) < 8}
+        for token in tokens:
+            if (len(token) >= 8 and _raiz(token) in kw_largas) or token in kw_cortas:
+                return config["label"]
+    return "Otros"
+
+
 def _coincide(tokens: set[str], palabras: list[str], abreviaciones: list[str]) -> bool:
     # Para palabras largas (8+ chars): comparar por raíz truncada de 7 chars
     palabras_largas = [p for p in palabras if len(p) >= 8]
@@ -396,12 +465,40 @@ def clasificar_columnas(columnas: list[str]) -> dict:
 
     for col in columnas:
         tokens = _tokenizar(col)
+        categoria = _detectar_categoria(tokens)
 
         if _coincide(tokens, TODAS_SENSIBLES, TODAS_ABREV_SENSIBLES):
-            detectados.append({"nombre_columna": col, "tipo": "SENSIBLE"})
+            detectados.append({"nombre_columna": col, "tipo": "SENSIBLE", "categoria_tematica": categoria})
         elif _coincide(tokens, TODAS_PERSONALES, TODAS_ABREV_PERSONALES):
-            detectados.append({"nombre_columna": col, "tipo": "PERSONAL"})
+            detectados.append({"nombre_columna": col, "tipo": "PERSONAL", "categoria_tematica": categoria})
         else:
-            pendientes.append({"nombre_columna": col})
+            pendientes.append({"nombre_columna": col, "categoria_tematica": "Otros"})
 
     return {"detectados": detectados, "pendientes": pendientes}
+
+
+def generar_texto_categoria(campos_seleccionados: list) -> str:
+    """
+    Recibe una lista de campos (cada uno con "nombre_columna" y "categoria_tematica")
+    y devuelve el texto agrupado por categoría en formato RAT oficial.
+    El texto es editable por el usuario — es una sugerencia de partida.
+
+    Ejemplo:
+        Input:  [rut_alumno(identificatorios), correo_apoderado(contacto), diagnostico_medico(salud)]
+        Output: "Datos identificatorios — Rut Alumno.\nDatos de contacto — Correo Apoderado.\n..."
+    """
+    grupos: dict[str, list[str]] = {}
+    for campo in campos_seleccionados:
+        categoria = campo.get("categoria_tematica", "Otros")
+        nombre = campo["nombre_columna"].replace("_", " ").title()
+        grupos.setdefault(categoria, []).append(nombre)
+
+    orden = [cfg["label"] for cfg in CATEGORIAS_TEMATICAS.values()] + ["Otros"]
+
+    lineas = []
+    for categoria in orden:
+        if categoria in grupos:
+            nombres = ", ".join(grupos[categoria])
+            lineas.append(f"{categoria} — {nombres}.")
+
+    return "\n".join(lineas)

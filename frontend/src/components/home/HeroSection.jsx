@@ -43,7 +43,7 @@ export default function HeroSection() {
             </div>
 
             {/* Badge de credibilidad */}
-            <p className="hero__badge">Proyecto académico · Duoc UC 2026 · Sin costo</p>
+            <p className="hero__badge">Protégete gratis · Duoc UC 2026 · Ley de protección de datos 21.719</p>
         </section>
     );
 }
