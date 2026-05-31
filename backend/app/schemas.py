@@ -108,9 +108,9 @@ class DetalleRatBase(BaseModel):
     responsable_tratamiento: Optional[str] = None
     es_responsable:          bool = True
     departamento:            Optional[str] = None
-    categorias_titulares:    Optional[str] = None
-    volumen_titulares:       Optional[str] = None
+    universo_titulares:      Optional[str] = None
     origen_datos:            Optional[str] = None
+    categoria_datos:         Optional[str] = None
 
 
 class DetalleRatRespuesta(DetalleRatBase):
@@ -180,8 +180,8 @@ class TratamientoEditar(BaseModel):
     @field_validator("estado")
     @classmethod
     def estado_valido(cls, v: str) -> str:
-        if v is not None and v not in ("PENDIENTE", "COMPLETO"):
-            raise ValueError("estado debe ser PENDIENTE o COMPLETO")
+        if v is not None and v not in ("PENDIENTE", "COMPLETO", "BORRADOR"):
+            raise ValueError("estado debe ser PENDIENTE, COMPLETO o BORRADOR")
         return v
 
 class TratamientoRespuesta(BaseModel):
@@ -226,6 +226,44 @@ class CampoRatRespuesta(BaseModel):
     creado_en: datetime
 
     model_config = {"from_attributes": True}
+
+
+class SesionAnalisisCrear(BaseModel):
+    nombre:        str
+    fuente:        str
+    motor_bd:      Optional[str] = None
+    columnas_json: Optional[list] = None
+
+    @field_validator("fuente")
+    @classmethod
+    def fuente_valida(cls, v: str) -> str:
+        if v not in ("archivo", "bd", "manual"):
+            raise ValueError("fuente debe ser 'archivo', 'bd' o 'manual'")
+        return v
+
+
+class SesionAnalisisRespuesta(BaseModel):
+    id:              int
+    organizacion_id: int
+    nombre:          str
+    fuente:          str
+    motor_bd:        Optional[str] = None
+    columnas_json:   Optional[list] = None
+    estado:          str
+    creado_en:       datetime
+    num_actividades: int = 0
+    model_config = {"from_attributes": True}
+
+
+class ActualizarEstadoSesion(BaseModel):
+    estado: str
+
+    @field_validator("estado")
+    @classmethod
+    def estado_valido(cls, v: str) -> str:
+        if v not in ("activa", "borrador", "completada"):
+            raise ValueError("estado debe ser 'activa', 'borrador' o 'completada'")
+        return v
 
 
 class GenerarInformeRequest(BaseModel):

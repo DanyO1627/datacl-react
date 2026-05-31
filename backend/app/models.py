@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, Enum, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Text, Enum, ForeignKey, Boolean, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.basededatos import Base
@@ -17,6 +17,7 @@ class Organizacion(Base):
 
     tratamientos = relationship("Tratamiento", back_populates="organizacion", cascade="all, delete-orphan")
     informes     = relationship("Informe", back_populates="organizacion", cascade="all, delete-orphan")
+    sesiones     = relationship("SesionAnalisis", back_populates="organizacion", cascade="all, delete-orphan")
 
 
 class Tratamiento(Base):
@@ -34,7 +35,7 @@ class Tratamiento(Base):
     sale_extranjero          = Column(Boolean, default=False, nullable=False)
     decisiones_automatizadas = Column(Boolean, default=False, nullable=False)
     nivel_riesgo             = Column(String(10), nullable=True)
-    estado                   = Column(Enum("PENDIENTE", "COMPLETO"), default="PENDIENTE", nullable=False)
+    estado                   = Column(Enum("PENDIENTE", "COMPLETO", "BORRADOR"), default="PENDIENTE", nullable=False)
     probabilidad             = Column(String(10), nullable=True)
     impacto                  = Column(String(10), nullable=True)
     fecha_evaluacion         = Column(DateTime, nullable=True)
@@ -42,8 +43,9 @@ class Tratamiento(Base):
     actualizado_en           = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
     organizacion = relationship("Organizacion", back_populates="tratamientos")
-    campos       = relationship("CampoRat", back_populates="tratamiento", cascade="all, delete-orphan")
-    detalle      = relationship("DetalleRat", back_populates="tratamiento", uselist=False, cascade="all, delete-orphan")
+    campos             = relationship("CampoRat", back_populates="tratamiento", cascade="all, delete-orphan")
+    detalle            = relationship("DetalleRat", back_populates="tratamiento", uselist=False, cascade="all, delete-orphan")
+    sesiones_actividad = relationship("SesionActividad", back_populates="tratamiento", cascade="all, delete-orphan")
 
 
 class CampoRat(Base):
@@ -63,16 +65,16 @@ class CampoRat(Base):
 class DetalleRat(Base):
     __tablename__ = "detalle_rat"
 
-    id                     = Column(Integer, primary_key=True, index=True)
-    tratamiento_id         = Column(Integer, ForeignKey("tratamientos.id", ondelete="CASCADE"), nullable=False, unique=True)
+    id                      = Column(Integer, primary_key=True, index=True)
+    tratamiento_id          = Column(Integer, ForeignKey("tratamientos.id", ondelete="CASCADE"), nullable=False, unique=True)
     responsable_tratamiento = Column(String(200), nullable=True)
-    es_responsable         = Column(Boolean, default=True, nullable=False)
-    departamento           = Column(String(200), nullable=True)
-    categorias_titulares   = Column(Text, nullable=True)
-    volumen_titulares      = Column(String(50), nullable=True)
-    origen_datos           = Column(String(100), nullable=True)
-    creado_en              = Column(DateTime, server_default=func.now(), nullable=False)
-    actualizado_en         = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    es_responsable          = Column(Boolean, default=True, nullable=False)
+    departamento            = Column(String(200), nullable=True)
+    universo_titulares      = Column(Text, nullable=True)
+    origen_datos            = Column(String(100), nullable=True)
+    categoria_datos         = Column(Text, nullable=True)
+    creado_en               = Column(DateTime, server_default=func.now(), nullable=False)
+    actualizado_en          = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
     tratamiento = relationship("Tratamiento", back_populates="detalle")
 
@@ -88,3 +90,32 @@ class Informe(Base):
     num_tratamientos  = Column(Integer, default=0, nullable=False)
 
     organizacion = relationship("Organizacion", back_populates="informes")
+
+
+class SesionAnalisis(Base):
+    __tablename__ = "sesiones_analisis"
+
+    id              = Column(Integer, primary_key=True, index=True)
+    organizacion_id = Column(Integer, ForeignKey("organizaciones.id", ondelete="CASCADE"), nullable=False)
+    nombre          = Column(String(200), nullable=False)
+    fuente          = Column(Enum("archivo", "bd", "manual"), nullable=False)
+    motor_bd        = Column(String(50), nullable=True)
+    columnas_json   = Column(JSON, nullable=True)
+    estado          = Column(Enum("activa", "borrador", "completada"), default="activa", nullable=False)
+    creado_en       = Column(DateTime, server_default=func.now(), nullable=False)
+
+    organizacion       = relationship("Organizacion", back_populates="sesiones")
+    sesiones_actividad = relationship("SesionActividad", back_populates="sesion", cascade="all, delete-orphan")
+
+
+class SesionActividad(Base):
+    __tablename__ = "sesion_actividad"
+
+    id             = Column(Integer, primary_key=True, index=True)
+    sesion_id      = Column(Integer, ForeignKey("sesiones_analisis.id", ondelete="CASCADE"), nullable=False)
+    tratamiento_id = Column(Integer, ForeignKey("tratamientos.id", ondelete="CASCADE"), nullable=False)
+    campos_usados  = Column(JSON, nullable=True)
+    creado_en      = Column(DateTime, server_default=func.now(), nullable=False)
+
+    sesion      = relationship("SesionAnalisis", back_populates="sesiones_actividad")
+    tratamiento = relationship("Tratamiento", back_populates="sesiones_actividad")

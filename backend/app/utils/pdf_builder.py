@@ -32,29 +32,11 @@ _PLAZO = {
     "otro":             "Otro",
 }
 
-_VOLUMEN = {
-    "1_100":      "1 – 100",
-    "100_1000":   "100 – 1.000",
-    "1000_10000": "1.000 – 10.000",
-    "mas_10000":  "+10.000",
-}
-
 _ORIGEN = {
     "titular":          "Del propio\ntitular",
     "terceros":         "De terceros",
     "fuentes_publicas": "Fuentes\npúblicas",
 }
-
-_TITULARES = {
-    "empleados":   "Empleados y funcionarios",
-    "clientes":    "Clientes y consumidores",
-    "proveedores": "Proveedores y contratistas",
-    "usuarios":    "Usuarios de plataformas digitales",
-    "ciudadanos":  "Ciudadanos",
-    "estudiantes": "Estudiantes",
-    "pacientes":   "Pacientes",
-}
-
 
 # ── Helpers internos ───────────────────────────────────────────────────────
 
@@ -86,14 +68,7 @@ def _fila_rat(t, s_celda) -> list:
     else:
         resp_texto = None
 
-    # Categorías legibles + rango de volumen
-    cats_raw = d.categorias_titulares if d and d.categorias_titulares else ""
-    cats     = ", ".join(
-        _TITULARES.get(c.strip(), c.strip())
-        for c in cats_raw.split(",") if c.strip()
-    )
-    vol      = _VOLUMEN.get(d.volumen_titulares or "", d.volumen_titulares) if d else None
-    universo = "\n".join(filter(None, [cats, vol])) or None
+    universo = d.universo_titulares if d else None
 
     return [
         _p(t.nombre,                                           s_celda),
