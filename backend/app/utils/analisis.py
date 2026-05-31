@@ -63,6 +63,14 @@ PERSONALES_ES = [
     "inspeccion",  # Fecha_Ultima_Inspeccion_Gobierno
     "supervisor",  # Supervisor_Turno_DNI (DNI ya lo detecta)
     "operario",  # Operario_Responsable_Nombre
+    "tarjeta",      # número de tarjeta bancaria (dato financiero, Art. 3 n°6)
+    "pago",         # método/información de pago
+    "cliente",      # identificador de persona natural (Art. 2 n°4)
+    "usuario",      # identificador digital de persona (Art. 2 n°4)
+    "contrasena",   # credencial de autenticación personal
+    "clave",        # credencial de acceso
+    "patente",      # matrícula vehículo → identifica propietario indirectamente
+    "placa",        # ídem (vehículos de carga/delivery)
 ]
 
 # ── Datos PERSONALES — abreviaciones de BDs reales (español) ─────────────────
@@ -85,6 +93,10 @@ ABREV_PERSONALES_ES = [
     "empl",  # empleado
     "usr",
     "user",
+    "pin",   # Personal Identification Number / credencial de acceso
+    "cvv",   # Card Verification Value — dato de seguridad tarjeta bancaria
+    "cvc",   # Card Verification Code — ídem
+    "pwd",   # password abreviado
 ]
 
 # ── Datos PERSONALES — palabras completas (inglés) ───────────────────────────
@@ -126,6 +138,12 @@ PERSONALES_EN = [
     "operator",  # operario
     "inspector",  # inspector
     "worker",  # trabajador
+    "card",        # número de tarjeta bancaria
+    "payment",     # método/datos de pago
+    "customer",    # identificador de cliente (persona natural)
+    "password",    # credencial de acceso
+    "plate",       # matrícula/patente de vehículo
+    "credential",  # credencial de autenticación
 ]
 
 # ── Datos PERSONALES — abreviaciones (inglés / SAP / Oracle) ─────────────────
@@ -194,6 +212,10 @@ SENSIBLES_ES = [
     "tuberculosis",
     "narcotraficante",  # por si acaso
     "droga",
+    "alergia",      # condición médica (alergias) — Art. 16 letra a)
+    "intolerancia", # intolerancia alimentaria = condición médica — Art. 16 a)
+    "dietetica",    # puede revelar condición médica o creencia religiosa — Art. 16 a) y c)
+    "dieta",        # ídem — puede indicar diabetes, celiaquía, o práctica religiosa
 ]
 
 # ── Datos SENSIBLES — abreviaciones (español) ────────────────────────────────
