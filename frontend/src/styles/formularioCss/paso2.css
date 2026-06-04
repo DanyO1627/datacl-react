@@ -148,6 +148,13 @@
   color: var(--navy);
 }
 
+.p2-campo-ayuda {
+  font-size: 11px;
+  color: var(--mid);
+  margin-top: 2px;
+  margin-bottom: 6px;
+}
+
 .p2-select {
   width: 100%;
   padding: 9px 12px;

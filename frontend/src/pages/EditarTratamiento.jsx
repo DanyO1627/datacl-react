@@ -72,6 +72,9 @@ export default function EditarTratamiento() {
     decisiones_automatizadas: false,
     estado: 'PENDIENTE',
     nivel_riesgo: 'BAJO',
+    // campos del detalle_rat
+    universo_titulares: '',
+    categorias_titulares: '',
   })
 
   // ── Cargar tratamiento existente ───────────────────────────────
@@ -95,6 +98,8 @@ export default function EditarTratamiento() {
           decisiones_automatizadas: data.decisiones_automatizadas || false,
           estado: data.estado || 'PENDIENTE',
           nivel_riesgo: data.nivel_riesgo || 'BAJO',
+          universo_titulares: data.detalle?.universo_titulares || '',
+          categorias_titulares: data.detalle?.categorias_titulares || '',
         })
         // Mostrar el riesgo actual como resultado inicial
         if (data.nivel_riesgo) {
@@ -159,13 +164,21 @@ export default function EditarTratamiento() {
     setGuardando(true)
     setError('')
     try {
+      const { universo_titulares, categorias_titulares, nivel_riesgo, ...camposPrincipales } = form
+      const payload = {
+        ...camposPrincipales,
+        detalle: {
+          universo_titulares: universo_titulares || null,
+          categorias_titulares: categorias_titulares || null,
+        },
+      }
       const res = await fetch(`${API}/tratamientos/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -247,6 +260,18 @@ export default function EditarTratamiento() {
             <div className="editar-seccion">
               <h2 className="editar-subtitulo">Datos tratados</h2>
               <p className="editar-descripcion">Características de los datos personales involucrados.</p>
+
+              <div className="campo">
+                <label>Universo de titulares</label>
+                <textarea
+                  name="universo_titulares"
+                  value={form.universo_titulares}
+                  onChange={handleChange}
+                  placeholder="Ej: Alumnos y apoderados del establecimiento educacional"
+                  rows={3}
+                  maxLength={500}
+                />
+              </div>
 
               <div className="campo">
                 <label>Plazo de conservación</label>

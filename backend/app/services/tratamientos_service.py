@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, joinedload
 from app import models
 from app.schemas import TratamientoCrear, TratamientoEditar
 from app.utils.riesgo import calcular_probabilidad, calcular_impacto, determinar_nivel_riesgo
+from app.utils.analisis import generar_texto_categoria
 
 
 def crear_tratamiento(
@@ -47,6 +48,17 @@ def crear_tratamiento(
 
     # Siempre crear DetalleRat — si no vienen datos, queda con nulls
     detalle_campos = datos.detalle.model_dump() if datos.detalle else {}
+
+    # Auto-generar categoria_datos si no viene del frontend pero hay campos con categoría temática
+    if not detalle_campos.get("categoria_datos") and datos.campos_detectados:
+        campos_con_cat = [
+            {"nombre_columna": c.nombre_columna, "categoria_tematica": c.categoria_tematica or "Otros"}
+            for c in datos.campos_detectados
+            if c.categoria_tematica
+        ]
+        if campos_con_cat:
+            detalle_campos["categoria_datos"] = generar_texto_categoria(campos_con_cat)
+
     db.add(models.DetalleRat(tratamiento_id=nuevo.id, **detalle_campos))
 
     db.commit()

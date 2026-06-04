@@ -15,14 +15,6 @@ const CATEGORIAS_TITULARES = [
   { id: "pacientes",   etiqueta: "Pacientes" },
 ];
 
-/* ─── Volumen de titulares ───────────────────────────────────── */
-const VOLUMENES = [
-  { valor: "1_100",        etiqueta: "1 – 100" },
-  { valor: "100_1000",     etiqueta: "100 – 1.000" },
-  { valor: "1000_10000",   etiqueta: "1.000 – 10.000" },
-  { valor: "mas_10000",    etiqueta: "Más de 10.000" },
-];
-
 /* ─── Origen de los datos ────────────────────────────────────── */
 const ORIGENES_DATOS = [
   { valor: "titular",         etiqueta: "Del propio titular" },
@@ -156,7 +148,7 @@ export default function Paso2() {
 
   const [local, setLocal] = useState({
     categorias_titulares: form.categorias_titulares || [],
-    volumen:              form.volumen || "",
+    universo_titulares:   form.universo_titulares || "",
     origen_datos:         form.origen_datos || "",
     categorias_datos: primeraVezEnPaso2
       ? [...detectadas].filter((id) => CATEGORIAS_DATOS.some((c) => c.id === id))
@@ -260,17 +252,17 @@ export default function Paso2() {
               </div>
 
               <div className="p2-campo-grupo">
-                <label className="p2-campo-label">Volumen aproximado de titulares</label>
-                <select
-                  className="p2-select"
-                  value={local.volumen}
-                  onChange={(e) => setLocal((prev) => ({ ...prev, volumen: e.target.value }))}
-                >
-                  <option value="">Selecciona un rango...</option>
-                  {VOLUMENES.map((v) => (
-                    <option key={v.valor} value={v.valor}>{v.etiqueta}</option>
-                  ))}
-                </select>
+                <label className="p2-campo-label">Universo de titulares</label>
+                <p className="p2-campo-ayuda">Describe quiénes son las personas cuyos datos trata esta actividad</p>
+                <textarea
+                  className="p2-textarea"
+                  placeholder="Ej: Alumnos y apoderados del establecimiento educacional"
+                  value={local.universo_titulares}
+                  onChange={(e) => setLocal((prev) => ({ ...prev, universo_titulares: e.target.value }))}
+                  rows={3}
+                  maxLength={500}
+                />
+                <span className="p2-campo-contador">{local.universo_titulares.length}/500</span>
               </div>
 
               <div className="p2-campo-grupo">

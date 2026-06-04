@@ -108,6 +108,7 @@ class DetalleRatBase(BaseModel):
     responsable_tratamiento: Optional[str] = None
     es_responsable:          bool = True
     departamento:            Optional[str] = None
+    categorias_titulares:    Optional[str] = None
     universo_titulares:      Optional[str] = None
     origen_datos:            Optional[str] = None
     categoria_datos:         Optional[str] = None
@@ -124,10 +125,11 @@ class DetalleRatRespuesta(DetalleRatBase):
 # Schema para cada campo que llega desde el análisis de Python
 # Va dentro de la lista campos_detectados al crear un tratamiento
 class CampoRatEntrada(BaseModel):
-    nombre_columna: str
-    tipo_dato: Optional[str] = None
-    es_sensible: bool = False
-    fuente: str = "AUTOMATICO"
+    nombre_columna:    str
+    tipo_dato:         Optional[str] = None
+    es_sensible:       bool = False
+    fuente:            str = "AUTOMATICO"
+    categoria_tematica: Optional[str] = None
 
 class TratamientoCrear(BaseModel):
     nombre: str
@@ -229,8 +231,8 @@ class CampoRatRespuesta(BaseModel):
 
 
 class SesionAnalisisCrear(BaseModel):
-    nombre:        str
-    fuente:        str
+    nombre:        Optional[str] = None
+    fuente:        str = "archivo"
     motor_bd:      Optional[str] = None
     columnas_json: Optional[list] = None
 

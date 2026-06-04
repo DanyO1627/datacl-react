@@ -1,245 +1,297 @@
-import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import BarraLateral from "../components/BarraLateral";
-import "../styles/ResultadosAnalisis.css";
+import { useFormulario } from "../context/FormularioContext";
+import "../styles/asignacionCampos.css";
 
-/* ─── Iconos SVG inline ─────────────────────────────────────── */
-function IconoCheck() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
-
-function IconoReloj() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  );
-}
-
-function IconoInfo() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" y1="8" x2="12" y2="12" />
-      <line x1="12" y1="16" x2="12.01" y2="16" />
-    </svg>
-  );
-}
-
-function IconoFlechaIzq() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="19" y1="12" x2="5" y2="12" />
-      <polyline points="12 19 5 12 12 5" />
-    </svg>
-  );
-}
-
-function IconoFlechaDer() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="5" y1="12" x2="19" y2="12" />
-      <polyline points="12 5 19 12 12 19" />
-    </svg>
-  );
-}
-
-/* ─── Badge campo detectado ─────────────────────────────────── */
-// El backend devuelve: { nombre_columna, tipo: "PERSONAL"|"SENSIBLE", origen?, descripcion? }
-function BadgeDetectado({ campo }) {
-  const esSensible = campo.tipo === "SENSIBLE";
-  return (
-    <div className={`ra-badge ${esSensible ? "ra-badge--sensible" : "ra-badge--personal"}`}>
-      <span className="ra-badge-icono">
-        <IconoCheck />
-      </span>
-      <div className="ra-badge-info">
-        <span className="ra-badge-nombre">{campo.nombre_columna}</span>
-        <span className="ra-badge-tipo">{campo.origen === "diccionario" ? `vía diccionario` : "detectado automáticamente"}</span>
-      </div>
-      <span className="ra-badge-etiqueta">
-        {esSensible ? "SENSIBLE" : "PERSONAL"}
-      </span>
-    </div>
-  );
-}
-
-/* ─── Badge campo pendiente ─────────────────────────────────── */
-// El backend devuelve pendientes como objetos: { nombre_columna }
-function BadgePendiente({ campo }) {
-  const nombre = typeof campo === "string" ? campo : campo.nombre_columna;
-  return (
-    <div className="ra-badge ra-badge--pendiente">
-      <span className="ra-badge-icono">
-        <IconoReloj />
-      </span>
-      <div className="ra-badge-info">
-        <span className="ra-badge-nombre">{nombre}</span>
-        <span className="ra-badge-tipo">sin clasificar</span>
-      </div>
-      <span className="ra-badge-etiqueta">PENDIENTE</span>
-    </div>
-  );
-}
-
-/* ─── Componente principal ──────────────────────────────────── */
-export default function ResultadosAnalisis() {
+/* ─── Componente principal: AsignacionCampos ─────────────────── */
+export default function AsignacionCampos() {
   const { state } = useLocation();
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
+  const { actualizarForm, actualizarActividades } = useFormulario();
 
-  // Si no hay datos redirige a pantalla 7
-  useEffect(() => {
-    if (!state) {
-      navigate("/subir-archivo", { replace: true });
-    }
-  }, [state, navigate]);
+  // Todos los hooks antes de cualquier early return (Rules of Hooks)
+  const detectados = state?.detectados ?? [];
 
-  if (!state) return null;
+  /* ── Estado local ──────────────────────────────────────────── */
+  const [actividades,     setActividades]    = useState([]);
+  const [actividadActiva, setActividadActiva] = useState(null);
+  const [guardando,       setGuardando]      = useState(false);
+  const [msgGuardado,     setMsgGuardado]    = useState("");
 
-  // Estructura esperada del backend:
-  // { detectados: [{nombre_columna, tipo_dato, es_sensible, fuente}], pendientes: ["VAR_001", ...] }
-  const detectados = state.detectados ?? [];
-  const pendientes = state.pendientes ?? [];
+  /* ── Derivados ─────────────────────────────────────────────── */
+  const asignadas = useMemo(
+    () => new Set(actividades.flatMap((a) => a.campos.map((c) => c.nombre_columna))),
+    [actividades],
+  );
+  const sinAsignar  = detectados.filter((c) => !asignadas.has(c.nombre_columna)).length;
+  const puedeAvanzar = sinAsignar === 0 && actividades.length > 0;
 
-  const totalDetectados = detectados.length;
-  const totalPendientes = pendientes.length;
-  const hayDetectados = totalDetectados > 0;
-  const hayPendientes = totalPendientes > 0;
+  if (!state) return <Navigate to="/subir-archivo" replace />;
 
-  // Datos que se pasan al formulario NuevoTratamiento (pre-cargados)
-  function handleContinuar() {
-    navigate("/nuevo-tratamiento", {
-      state: {
-        campos_detectados: detectados,
-        campos_pendientes: pendientes,
-      },
-    });
+  /* ── Acciones sobre actividades ────────────────────────────── */
+  function nuevaActividad() {
+    const id  = `act_${Date.now()}`;
+    const num = actividades.length + 1;
+    setActividades((prev) => [...prev, { id, nombre: `Actividad ${num}`, campos: [] }]);
+    setActividadActiva(id);
   }
 
+  function renombrar(id, nombre) {
+    setActividades((prev) => prev.map((a) => (a.id === id ? { ...a, nombre } : a)));
+  }
+
+  function eliminarActividad(id) {
+    setActividades((prev) => prev.filter((a) => a.id !== id));
+    if (actividadActiva === id) setActividadActiva(null);
+  }
+
+  /* ── Asignación de campos ──────────────────────────────────── */
+  function clickCampo(campo) {
+    if (!actividadActiva) return;
+    const activa = actividades.find((a) => a.id === actividadActiva);
+    if (!activa) return;
+
+    const esMio = activa.campos.some((c) => c.nombre_columna === campo.nombre_columna);
+    if (esMio) {
+      // Desasignar del activa
+      desasignar(actividadActiva, campo.nombre_columna);
+      return;
+    }
+    if (asignadas.has(campo.nombre_columna)) return; // ya está en otra
+
+    // Asignar
+    setActividades((prev) =>
+      prev.map((a) =>
+        a.id === actividadActiva ? { ...a, campos: [...a.campos, campo] } : a,
+      ),
+    );
+  }
+
+  function desasignar(actividadId, nombreColumna) {
+    setActividades((prev) =>
+      prev.map((a) =>
+        a.id === actividadId
+          ? { ...a, campos: a.campos.filter((c) => c.nombre_columna !== nombreColumna) }
+          : a,
+      ),
+    );
+  }
+
+  /* ── Guardar borrador ──────────────────────────────────────── */
+  async function handleGuardarBorrador() {
+    setGuardando(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:8000/sesiones", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ fuente: "archivo", columnas_json: detectados }),
+      });
+      setMsgGuardado(res.ok ? "Borrador guardado" : "No se pudo guardar");
+    } catch {
+      setMsgGuardado("Error de conexión");
+    } finally {
+      setGuardando(false);
+      setTimeout(() => setMsgGuardado(""), 3000);
+    }
+  }
+
+  /* ── Continuar → primer formulario ────────────────────────── */
+  function handleContinuar() {
+    if (!puedeAvanzar) return;
+    actualizarActividades(actividades);
+    actualizarForm({
+      campos_detectados: actividades[0].campos,
+      campos_pendientes: [],
+    });
+    navigate("/nuevo-tratamiento");
+  }
+
+  /* ── Helper: estado visual de un campo ────────────────────── */
+  function estadoCampo(nombreColumna) {
+    const activa = actividades.find((a) => a.id === actividadActiva);
+    if (activa?.campos.some((c) => c.nombre_columna === nombreColumna)) return "en-activa";
+    if (asignadas.has(nombreColumna)) return "asignado-otro";
+    if (!actividadActiva) return "sin-actividad";
+    return "libre";
+  }
+
+  function nombreActividadDeCampo(nombreColumna) {
+    return actividades.find((a) => a.campos.some((c) => c.nombre_columna === nombreColumna))?.nombre ?? "";
+  }
+
+  /* ── Render ────────────────────────────────────────────────── */
   return (
-    <div className="ra-layout">
+    <div className="ac-layout">
       <BarraLateral />
 
-      <main className="ra-main">
+      <main className="ac-main">
+
         {/* ── Header ── */}
-        <div className="ra-header">
-          <h1 className="ra-titulo">Resultados del análisis</h1>
-          <p className="ra-subtitulo">
-            Detectamos lo siguiente en tu archivo
-          </p>
-
-          {/* Resumen rápido */}
-          <div className="ra-resumen">
-            <span className="ra-resumen-item ra-resumen-item--verde">
-              <IconoCheck />
-              {totalDetectados} campo{totalDetectados !== 1 ? "s" : ""} detectado{totalDetectados !== 1 ? "s" : ""}
-            </span>
-            <span className="ra-resumen-sep">·</span>
-            <span className="ra-resumen-item ra-resumen-item--naranja">
-              <IconoReloj />
-              {totalPendientes} pendiente{totalPendientes !== 1 ? "s" : ""}
-            </span>
+        <div className="ac-header">
+          <div className="ac-header-izq">
+            <h1>Asignación de campos a actividades</h1>
+            <p>Crea actividades y asigna cada campo detectado a la que corresponda</p>
           </div>
+          <span className={`ac-badge-contador ${sinAsignar === 0 && detectados.length > 0 ? "ac-badge-contador--ok" : ""}`}>
+            {sinAsignar === 0 && detectados.length > 0
+              ? "✓ Todos asignados"
+              : `${sinAsignar} campo${sinAsignar !== 1 ? "s" : ""} sin asignar`}
+          </span>
         </div>
 
-        {/* ── Contenido ── */}
-        <div className="ra-contenido">
+        {/* ── Instrucción ── */}
+        <div className="ac-instruccion">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          Selecciona una actividad a la derecha y haz clic en los campos libres para asignarlos.
+          Haz clic en un chip <strong>×</strong> para desasignarlo.
+        </div>
 
-          {/* ── Columnas ── */}
-          <div className="ra-columnas">
+        {/* ── Grid dos columnas ── */}
+        <div className="ac-grid">
 
-            {/* Columna izquierda — Detectados */}
-            <div className="ra-columna">
-              <div className="ra-columna-header ra-columna-header--verde">
-                <span className="ra-columna-dot ra-columna-dot--verde" />
-                <h2 className="ra-columna-titulo">Datos detectados automáticamente</h2>
-                <span className="ra-columna-count">{totalDetectados}</span>
-              </div>
-
-              <div className="ra-columna-body">
-                {hayDetectados ? (
-                  <div className="ra-lista">
-                    {detectados.map((campo, i) => (
-                      <BadgeDetectado key={i} campo={campo} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="ra-vacio">
-                    <div className="ra-vacio-icono"><IconoInfo /></div>
-                    <p className="ra-vacio-titulo">No se detectaron campos reconocibles</p>
-                    <p className="ra-vacio-desc">
-                      Los encabezados de tu archivo parecen ser códigos técnicos.
-                      Considera subir un diccionario de datos para mejorar la detección.
-                    </p>
-                  </div>
-                )}
-              </div>
+          {/* ── Columna izquierda: campos detectados ── */}
+          <div className="ac-panel">
+            <div className="ac-panel-header">
+              <span className="ac-panel-titulo">Campos detectados ({detectados.length})</span>
             </div>
-
-            {/* Columna derecha — Pendientes */}
-            <div className="ra-columna">
-              <div className="ra-columna-header ra-columna-header--naranja">
-                <span className="ra-columna-dot ra-columna-dot--naranja" />
-                <h2 className="ra-columna-titulo">Campos pendientes por completar</h2>
-                <span className="ra-columna-count">{totalPendientes}</span>
-              </div>
-
-              <div className="ra-columna-body">
-                {hayPendientes ? (
-                  <>
-                    <div className="ra-lista">
-                      {pendientes.map((campo, i) => (
-                        <BadgePendiente key={i} campo={campo} />
-                      ))}
+            <div className="ac-panel-cuerpo">
+              {detectados.length === 0 ? (
+                <p className="ac-vacio">No se detectaron campos en el archivo.</p>
+              ) : (
+                detectados.map((campo) => {
+                  const estado      = estadoCampo(campo.nombre_columna);
+                  const esSensible  = campo.tipo === "SENSIBLE";
+                  const activNombre = estado === "asignado-otro" ? nombreActividadDeCampo(campo.nombre_columna) : "";
+                  return (
+                    <div
+                      key={campo.nombre_columna}
+                      className={`ac-campo ac-campo--${estado}`}
+                      onClick={() => clickCampo(campo)}
+                      title={
+                        estado === "asignado-otro"   ? `Asignado a "${activNombre}"` :
+                        estado === "sin-actividad"   ? "Selecciona una actividad primero" :
+                        estado === "en-activa"        ? "Clic para desasignar" :
+                        "Clic para asignar a la actividad seleccionada"
+                      }
+                    >
+                      <span className="ac-campo-nombre">{campo.nombre_columna}</span>
+                      <span className={`ac-campo-badge ${esSensible ? "ac-campo-badge--sensible" : "ac-campo-badge--personal"}`}>
+                        {esSensible ? "SENSIBLE" : "PERSONAL"}
+                      </span>
+                      {estado === "asignado-otro" && (
+                        <span className="ac-campo-actividad" title={activNombre}>→ {activNombre}</span>
+                      )}
+                      {estado === "en-activa" && (
+                        <span style={{ fontSize: 11, color: "#1d4ed8", fontWeight: 700 }}>✓</span>
+                      )}
                     </div>
-                    <p className="ra-aviso-pendientes">
-                      Los campos pendientes los completarás al final del registro
-                    </p>
-                  </>
-                ) : (
-                  <div className="ra-vacio ra-vacio--exito">
-                    <div className="ra-vacio-icono ra-vacio-icono--verde"><IconoCheck /></div>
-                    <p className="ra-vacio-titulo">Todos los campos fueron detectados</p>
-                    <p className="ra-vacio-desc">
-                      El análisis identificó correctamente todos los encabezados del archivo.
-                    </p>
-                  </div>
-                )}
-              </div>
+                  );
+                })
+              )}
             </div>
-
           </div>
 
-          {/* ── Acciones ── */}
-          <div className="ra-acciones">
-            <button
-              className="ra-btn ra-btn--secundario"
-              onClick={() => navigate("/subir-archivo")}
-            >
-              <IconoFlechaIzq />
-              Volver a subir archivo
-            </button>
+          {/* ── Columna derecha: actividades ── */}
+          <div className="ac-panel">
+            <div className="ac-panel-header">
+              <span className="ac-panel-titulo">Actividades ({actividades.length})</span>
+            </div>
+            <div className="ac-panel-cuerpo">
 
-            <button
-              className="ra-btn ra-btn--primario"
-              onClick={handleContinuar}
-            >
-              Continuar al formulario RAT
-              <IconoFlechaDer />
-            </button>
+              {actividades.length === 0 && (
+                <p className="ac-vacio">Crea una actividad para empezar a asignar campos.</p>
+              )}
+
+              {actividades.map((act) => (
+                <div
+                  key={act.id}
+                  className={`ac-actividad-card ${actividadActiva === act.id ? "ac-actividad-card--activa" : ""}`}
+                  onClick={() => setActividadActiva(act.id)}
+                >
+                  <div className="ac-actividad-header">
+                    <span className="ac-actividad-dot" />
+                    <input
+                      className="ac-actividad-nombre"
+                      value={act.nombre}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => renombrar(act.id, e.target.value)}
+                      placeholder="Nombre de la actividad"
+                      maxLength={80}
+                    />
+                    <button
+                      className="ac-actividad-eliminar"
+                      onClick={(e) => { e.stopPropagation(); eliminarActividad(act.id); }}
+                      title="Eliminar actividad"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div className="ac-chips" onClick={(e) => e.stopPropagation()}>
+                    {act.campos.length === 0 ? (
+                      <span className="ac-chips-vacio">Sin campos asignados</span>
+                    ) : (
+                      act.campos.map((c) => (
+                        <span
+                          key={c.nombre_columna}
+                          className={`ac-chip ${c.tipo === "SENSIBLE" ? "ac-chip--sensible" : ""}`}
+                        >
+                          {c.nombre_columna}
+                          <button
+                            className="ac-chip-quitar"
+                            onClick={() => desasignar(act.id, c.nombre_columna)}
+                            title="Desasignar campo"
+                          >
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                          </button>
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              <button className="ac-btn-nueva" onClick={nuevaActividad}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Nueva actividad
+              </button>
+            </div>
           </div>
-
         </div>
+
+        {/* ── Footer fijo ── */}
+        <div className="ac-footer">
+          <div className="ac-footer-izq">
+            <button
+              className="ac-btn-borrador"
+              onClick={handleGuardarBorrador}
+              disabled={guardando || actividades.length === 0}
+            >
+              {guardando ? "Guardando..." : "Guardar borrador"}
+            </button>
+            {msgGuardado && <span className="ac-msg-guardado">{msgGuardado}</span>}
+          </div>
+
+          <button
+            className="ac-btn-continuar"
+            onClick={handleContinuar}
+            disabled={!puedeAvanzar}
+            title={!puedeAvanzar ? "Asigna todos los campos antes de continuar" : ""}
+          >
+            Continuar →
+          </button>
+        </div>
+
       </main>
     </div>
   );

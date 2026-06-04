@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
@@ -33,9 +34,10 @@ def crear_sesion(
     db: Session = Depends(get_db),
     usuario: models.Organizacion = Depends(obtener_usuario_actual),
 ):
+    nombre = datos.nombre or f"Sesión {datetime.now().strftime('%d/%m/%Y %H:%M')}"
     sesion = models.SesionAnalisis(
         organizacion_id=usuario.id,
-        nombre=datos.nombre,
+        nombre=nombre,
         fuente=datos.fuente,
         motor_bd=datos.motor_bd,
         columnas_json=datos.columnas_json,

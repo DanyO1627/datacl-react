@@ -529,3 +529,173 @@
   font-weight: 400;
   opacity: 0.85;
 }
+
+/* ─── NuevaSesion — grid de 4 opciones ───────────────────────── */
+.ns-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  max-width: 720px;
+  margin-bottom: 1.8rem;
+}
+
+@media (max-width: 700px) {
+  .ns-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.ns-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 1.4rem 1rem;
+  background: #ffffff;
+  border: 2px solid #dcedf8;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.12s;
+  font-family: 'Georgia', serif;
+  text-align: center;
+}
+
+.ns-card:hover {
+  border-color: var(--mid);
+  box-shadow: 0 4px 16px rgba(84, 131, 179, 0.13);
+  transform: translateY(-2px);
+}
+
+.ns-card--activa {
+  border-color: var(--dark);
+  background: #f0f6ff;
+  box-shadow: 0 4px 16px rgba(5, 38, 89, 0.12);
+}
+
+.ns-card-icono {
+  color: var(--mid);
+}
+
+.ns-card--activa .ns-card-icono {
+  color: var(--dark);
+}
+
+.ns-card-titulo {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.ns-card-desc {
+  font-size: 11px;
+  color: #9ab5cc;
+  line-height: 1.3;
+}
+
+/* ─── NuevaSesion — sesiones anteriores ──────────────────────── */
+.ns-sesiones-wrap {
+  max-width: 720px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2rem 2.4rem;
+  box-shadow: 0 4px 32px rgba(5, 38, 89, 0.08);
+}
+
+.ns-sesiones-msg {
+  font-size: 14px;
+  color: var(--mid);
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.ns-sesiones-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.ns-sesiones-vacio-titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.ns-sesiones-vacio-desc {
+  font-size: 13px;
+  color: var(--mid);
+  max-width: 360px;
+  line-height: 1.5;
+}
+
+.ns-btn-ir-archivo {
+  margin-top: 4px;
+  padding: 9px 22px;
+  border-radius: 50px;
+  border: 1.5px solid var(--mid);
+  background: transparent;
+  color: var(--dark);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.ns-btn-ir-archivo:hover {
+  background: var(--dark);
+  color: #fff;
+  border-color: var(--dark);
+}
+
+.ns-sesiones-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ns-sesion-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 14px 18px;
+  background: #f4f9ff;
+  border-radius: 12px;
+  border: 1px solid #dcedf8;
+}
+
+.ns-sesion-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ns-sesion-nombre {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.ns-sesion-meta {
+  font-size: 12px;
+  color: var(--mid);
+}
+
+.ns-btn-reutilizar {
+  padding: 7px 18px;
+  border-radius: 50px;
+  border: none;
+  background: var(--dark);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s;
+}
+
+.ns-btn-reutilizar:hover {
+  background: var(--navy);
+}

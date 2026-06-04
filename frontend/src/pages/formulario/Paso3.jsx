@@ -82,13 +82,6 @@ const ETIQ_BASE_LEGAL = {
   interes_legitimo: "Interés legítimo (Art. 12 letra f)",
 };
 
-const ETIQ_VOLUMEN = {
-  "1_100":      "1 – 100",
-  "100_1000":   "100 – 1.000",
-  "1000_10000": "1.000 – 10.000",
-  "mas_10000":  "Más de 10.000",
-};
-
 const ETIQ_ORIGEN = {
   titular:          "Del propio titular",
   terceros:         "De terceros",
@@ -160,7 +153,7 @@ function BarraProgreso({ pasoActual }) {
 export default function Paso3() {
   const navigate = useNavigate();
   const { token } = useAuth();
-  const { form, actualizarForm, resetForm } = useFormulario();
+  const { form, actualizarForm, resetForm, avanzarActividad } = useFormulario();
   const categoriasDatos = form.categorias_datos || [];
   const categoriasSensibles = form.categorias_sensibles || [];
   const camposDetectados = form.campos_detectados || [];
@@ -224,15 +217,23 @@ export default function Paso3() {
         departamento:            formularioCompleto.departamento   || null,
         // el backend espera string; el frontend lo tiene como array
         categorias_titulares: (formularioCompleto.categorias_titulares || []).join(",") || null,
-        volumen_titulares:    formularioCompleto.volumen      || null,
+        universo_titulares:   formularioCompleto.universo_titulares || null,
         origen_datos:         formularioCompleto.origen_datos || null,
       },
     };
 
     try {
       await crearTratamiento(payload);
-      resetForm();
-      navigate("/mis-tratamientos");
+      const hayMas =
+        form.actividadesPendientes.length > 0 &&
+        form.actividadActual + 1 < form.actividadesPendientes.length;
+      if (hayMas) {
+        avanzarActividad();
+        navigate("/nuevo-tratamiento");
+      } else {
+        resetForm();
+        navigate("/mis-tratamientos");
+      }
     } catch (e) {
       // Si es 401, redirigir al login
       if (e.codigo === 401) {
@@ -407,7 +408,7 @@ export default function Paso3() {
                     label="Categorías de titulares"
                     valor={(form.categorias_titulares || []).map((id) => ETIQ_TITULARES[id] || id).join(", ")}
                   />
-                  <FilaRevision label="Volumen de titulares" valor={ETIQ_VOLUMEN[form.volumen] || form.volumen} />
+                  <FilaRevision label="Universo de titulares" valor={form.universo_titulares} />
                   <FilaRevision label="Origen de los datos" valor={ETIQ_ORIGEN[form.origen_datos] || form.origen_datos} />
                   <FilaRevision
                     label="Categorías de datos"
@@ -478,7 +479,12 @@ export default function Paso3() {
               onClick={handleGuardar}
               disabled={guardando}
             >
-              {guardando ? "Guardando..." : "Guardar"}
+              {guardando
+                ? "Guardando..."
+                : form.actividadesPendientes.length > 0 &&
+                  form.actividadActual + 1 < form.actividadesPendientes.length
+                ? "Guardar y continuar →"
+                : "Guardar"}
             </button>
           </div>
 

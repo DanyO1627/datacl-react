@@ -70,6 +70,7 @@ class DetalleRat(Base):
     responsable_tratamiento = Column(String(200), nullable=True)
     es_responsable          = Column(Boolean, default=True, nullable=False)
     departamento            = Column(String(200), nullable=True)
+    categorias_titulares    = Column(Text, nullable=True)
     universo_titulares      = Column(Text, nullable=True)
     origen_datos            = Column(String(100), nullable=True)
     categoria_datos         = Column(Text, nullable=True)

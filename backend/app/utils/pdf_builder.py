@@ -32,6 +32,16 @@ _PLAZO = {
     "otro":             "Otro",
 }
 
+_TITULARES = {
+    "empleados":   "Empleados y funcionarios",
+    "clientes":    "Clientes y consumidores",
+    "proveedores": "Proveedores y contratistas",
+    "usuarios":    "Usuarios de plataformas digitales",
+    "ciudadanos":  "Ciudadanos",
+    "estudiantes": "Estudiantes",
+    "pacientes":   "Pacientes",
+}
+
 _ORIGEN = {
     "titular":          "Del propio\ntitular",
     "terceros":         "De terceros",
@@ -68,7 +78,14 @@ def _fila_rat(t, s_celda) -> list:
     else:
         resp_texto = None
 
-    universo = d.universo_titulares if d else None
+    # Categorías legibles + universo de titulares (texto libre)
+    cats_raw  = d.categorias_titulares if d and d.categorias_titulares else ""
+    cats      = ", ".join(
+        _TITULARES.get(c.strip(), c.strip())
+        for c in cats_raw.split(",") if c.strip()
+    )
+    universo_texto = d.universo_titulares if d and d.universo_titulares else None
+    universo  = "\n".join(filter(None, [cats, universo_texto])) or None
 
     return [
         _p(t.nombre,                                           s_celda),

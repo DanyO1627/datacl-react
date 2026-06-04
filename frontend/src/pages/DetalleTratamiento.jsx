@@ -28,12 +28,6 @@ const PLAZO = {
   otro:              "Otro",
 }
 
-const VOLUMEN = {
-  "1_100":      "1 – 100",
-  "100_1000":   "100 – 1.000",
-  "1000_10000": "1.000 – 10.000",
-  mas_10000:    "+10.000",
-}
 
 const ORIGEN = {
   titular:          "Del propio titular",
@@ -294,8 +288,8 @@ export default function DetalleTratamiento() {
             <Campo label="Categorías de titulares">
               <Badges items={parsearTitulares(d?.categorias_titulares)} />
             </Campo>
-            <Campo label="Volumen aproximado">
-              <Valor v={d?.volumen_titulares} mapa={VOLUMEN} />
+            <Campo label="Universo de titulares">
+              <Valor v={d?.universo_titulares} />
             </Campo>
             <Campo label="Origen de los datos">
               <Valor v={d?.origen_datos} mapa={ORIGEN} />
