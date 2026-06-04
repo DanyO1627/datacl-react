@@ -207,12 +207,6 @@ class ConexionBDRequest(BaseModel):
 def _crear_url_conexion(motor: str, host: str, puerto: int,
                          base_datos: str, usuario: str, password: str) -> str:
     if motor == "mysql":
-        import platform
-        if platform.system() == "Windows":
-            return (
-                f"mysql+pymysql://{usuario}:{password}@/"
-                f"{base_datos}?unix_socket=%5C%5C.%5Cpipe%5CMySQL&charset=utf8mb4"
-            )
         return f"mysql+pymysql://{usuario}:{password}@{host}:{puerto}/{base_datos}?charset=utf8mb4"
     elif motor == "postgresql":
         return f"postgresql+psycopg2://{usuario}:{password}@{host}:{puerto}/{base_datos}"

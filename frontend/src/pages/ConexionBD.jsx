@@ -366,7 +366,7 @@ export default function ConexionBD() {
     // (mismo flujo que CargaArchivo para mantener consistencia)
     navigate("/resultados-analisis", {
       state: {
-        resultado,
+        ...resultado,
         fuente: "bd",
         nombre: tabla,
         motor,
