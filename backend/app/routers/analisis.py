@@ -188,3 +188,186 @@ async def analizar_con_diccionario(
             "sin_clasificar": len(pendientes_final),
         },
     }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Agregar al final de backend/app/routers/analisis.py
+# ─────────────────────────────────────────────────────────────────────────────
+from pydantic import BaseModel
+
+class ConexionBDRequest(BaseModel):
+    motor:      str          # 'mysql' | 'postgresql' | 'sqlserver'
+    host:       str
+    puerto:     int
+    base_datos: str
+    usuario:    str
+    password:   str
+    tabla:      str | None = None   # None en /probar, requerido en /conexion
+
+
+def _crear_url_conexion(motor: str, host: str, puerto: int,
+                         base_datos: str, usuario: str, password: str) -> str:
+    if motor == "mysql":
+        import platform
+        if platform.system() == "Windows":
+            return (
+                f"mysql+pymysql://{usuario}:{password}@/"
+                f"{base_datos}?unix_socket=%5C%5C.%5Cpipe%5CMySQL&charset=utf8mb4"
+            )
+        return f"mysql+pymysql://{usuario}:{password}@{host}:{puerto}/{base_datos}?charset=utf8mb4"
+    elif motor == "postgresql":
+        return f"postgresql+psycopg2://{usuario}:{password}@{host}:{puerto}/{base_datos}"
+    elif motor == "sqlserver":
+        return (
+            f"mssql+pyodbc://{usuario}:{password}@{host}:{puerto}/{base_datos}"
+            "?driver=ODBC+Driver+17+for+SQL+Server"
+        )
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Motor '{motor}' no soportado. Usa: mysql, postgresql, sqlserver"
+        )
+
+
+def _engine_temporal(url: str):
+    from sqlalchemy import create_engine
+    from sqlalchemy.pool import NullPool
+    return create_engine(
+        url,
+        poolclass=NullPool,
+        connect_args={"connect_timeout": 10},
+    )
+
+
+@router.post("/conexion/probar")
+async def probar_conexion(
+    datos: ConexionBDRequest,
+    _usuario=Depends(obtener_usuario_actual),
+):
+    """
+    Verifica que la conexión es válida y devuelve la lista de tablas.
+    Las credenciales NUNCA se loggean ni se guardan.
+    """
+    from sqlalchemy import inspect as sa_inspect
+
+    url = _crear_url_conexion(
+        datos.motor, datos.host, datos.puerto,
+        datos.base_datos, datos.usuario, datos.password
+    )
+    engine = None
+    try:
+        engine = _engine_temporal(url)
+        with engine.connect():          # solo verifica que abre conexión
+            inspector = sa_inspect(engine)
+            tablas = inspector.get_table_names()
+        return {"ok": True, "tablas": tablas}
+
+    except HTTPException:
+        raise
+
+    except Exception as exc:
+        msg = str(exc).lower()
+        # Mensajes amigables para los errores más comunes
+        if "access denied" in msg or "authentication" in msg or "password" in msg:
+            raise HTTPException(
+                status_code=401,
+                detail="Credenciales incorrectas. Verifica usuario y contraseña."
+            )
+        if "can't connect" in msg or "connection refused" in msg or "timed out" in msg:
+            raise HTTPException(
+                status_code=503,
+                detail="No se pudo alcanzar el servidor. Verifica host, puerto y que el servidor esté activo."
+            )
+        if "unknown database" in msg or "does not exist" in msg:
+            raise HTTPException(
+                status_code=404,
+                detail=f"La base de datos '{datos.base_datos}' no existe en ese servidor."
+            )
+        raise HTTPException(
+            status_code=500,
+            detail="Error al conectar con la base de datos."
+        )
+    finally:
+        if engine:
+            engine.dispose()   # cierra pool inmediatamente, no queda nada abierto
+
+
+@router.post("/conexion")
+async def analizar_conexion_bd(
+    datos: ConexionBDRequest,
+    _usuario=Depends(obtener_usuario_actual),
+):
+    """
+    Conecta a la BD del cliente, extrae los nombres de columnas de la tabla
+    indicada, los clasifica con el mismo algoritmo que /archivo y devuelve
+    el resultado. Las credenciales NUNCA se loggean ni se guardan.
+    """
+    from sqlalchemy import inspect as sa_inspect
+
+    if not datos.tabla:
+        raise HTTPException(
+            status_code=400,
+            detail="Debes indicar el nombre de la tabla a analizar."
+        )
+
+    url = _crear_url_conexion(
+        datos.motor, datos.host, datos.puerto,
+        datos.base_datos, datos.usuario, datos.password
+    )
+    engine = None
+    try:
+        engine = _engine_temporal(url)
+        with engine.connect():
+            inspector = sa_inspect(engine)
+            tablas_disponibles = inspector.get_table_names()
+
+            if datos.tabla not in tablas_disponibles:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"La tabla '{datos.tabla}' no existe en la base de datos."
+                )
+
+            columnas_raw = inspector.get_columns(datos.tabla)
+            columnas = [col["name"] for col in columnas_raw]
+
+    except HTTPException:
+        raise
+
+    except Exception as exc:
+        msg = str(exc).lower()
+        if "access denied" in msg or "authentication" in msg:
+            raise HTTPException(
+                status_code=401,
+                detail="Credenciales incorrectas. Verifica usuario y contraseña."
+            )
+        if "can't connect" in msg or "connection refused" in msg or "timed out" in msg:
+            raise HTTPException(
+                status_code=503,
+                detail="No se pudo alcanzar el servidor."
+            )
+        raise HTTPException(
+            status_code=500,
+            detail="Error al analizar la base de datos."
+        )
+    finally:
+        if engine:
+            engine.dispose()
+
+    if not columnas:
+        raise HTTPException(
+            status_code=400,
+            detail=f"La tabla '{datos.tabla}' no tiene columnas."
+        )
+
+    resultado = clasificar_columnas(columnas)
+
+    return {
+        "tabla":          datos.tabla,
+        "detectados":     resultado["detectados"],
+        "pendientes":     resultado["pendientes"],
+        "total_columnas": len(columnas),
+        "resumen": {
+            "personales":     sum(1 for d in resultado["detectados"] if d["tipo"] == "PERSONAL"),
+            "sensibles":      sum(1 for d in resultado["detectados"] if d["tipo"] == "SENSIBLE"),
+            "sin_clasificar": len(resultado["pendientes"]),
+        },
+    }
