@@ -202,7 +202,7 @@
 
 .ac-campo-badge--sensible {
   background: #fee2e2;
-  color: #dc2626;
+  color: #991b1b;
 }
 
 .ac-campo-actividad {
@@ -257,16 +257,22 @@
   flex: 1;
   font-size: 13px;
   font-weight: 700;
-  color: var(--navy);
+  color: #5e7f9a;
   border: none;
   background: transparent;
   font-family: 'Georgia', serif;
   padding: 0;
   outline: none;
   min-width: 0;
+  transition: color 0.15s;
+}
+
+.ac-actividad-nombre--editado {
+  color: var(--navy);
 }
 
 .ac-actividad-nombre:focus {
+  color: var(--navy);
   border-bottom: 1.5px solid var(--mid);
 }
 
@@ -430,9 +436,58 @@
 
 .ac-btn-continuar:disabled {
   background: #c8dcee;
-  color: #9ab5cc;
+  color: #3d6080;
   cursor: not-allowed;
   transform: none;
+}
+
+/* ── Ícono lápiz en nombre de actividad ───────────────────────── */
+.ac-actividad-lapiz {
+  color: #c8dcea;
+  flex-shrink: 0;
+  pointer-events: none;
+  transition: color 0.15s;
+}
+
+.ac-actividad-lapiz--editado {
+  color: var(--mid);
+}
+
+.ac-actividad-card--activa .ac-actividad-lapiz {
+  color: var(--mid);
+}
+
+.ac-actividad-nombre:focus ~ .ac-actividad-lapiz {
+  color: var(--mid);
+}
+
+/* ── Separador y campos "sin clasificar" (pendientes) ─────────── */
+.ac-sep-pendientes {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #7a8fa0;
+  padding: 10px 4px 4px;
+  border-top: 1px solid #e4edf6;
+  margin-top: 4px;
+}
+
+.ac-campo--pendiente {
+  border-style: dashed;
+  border-color: #c8dcee;
+  background: #f8fafc;
+}
+
+.ac-campo--pendiente:hover {
+  border-color: #8fafc8;
+  background: #f0f5fa;
+}
+
+.ac-campo-badge--pendiente {
+  background: #f0f4f8;
+  color: #3d5f7a;
+  border: 1px solid #c8dcee;
 }
 
 /* ── Vacío ────────────────────────────────────────────────────── */

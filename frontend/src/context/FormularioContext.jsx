@@ -43,6 +43,7 @@ export function FormularioProvider({ children }) {
         sesionActual: prev.sesionActual,
         actividadesPendientes: prev.actividadesPendientes,
         actividadActual: siguiente,
+        nombre:            sigActividad?.nombre || "",
         campos_detectados: sigActividad?.campos || [],
         campos_pendientes: [],
       };

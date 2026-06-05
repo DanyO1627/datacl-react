@@ -12,6 +12,7 @@ export default function AsignacionCampos() {
 
   // Todos los hooks antes de cualquier early return (Rules of Hooks)
   const detectados = state?.detectados ?? [];
+  const pendientes = state?.pendientes ?? [];
 
   /* ── Estado local ──────────────────────────────────────────── */
   const [actividades,     setActividades]    = useState([]);
@@ -33,12 +34,12 @@ export default function AsignacionCampos() {
   function nuevaActividad() {
     const id  = `act_${Date.now()}`;
     const num = actividades.length + 1;
-    setActividades((prev) => [...prev, { id, nombre: `Actividad ${num}`, campos: [] }]);
+    setActividades((prev) => [...prev, { id, nombre: `Actividad ${num}`, campos: [], nombreEditado: false }]);
     setActividadActiva(id);
   }
 
   function renombrar(id, nombre) {
-    setActividades((prev) => prev.map((a) => (a.id === id ? { ...a, nombre } : a)));
+    setActividades((prev) => prev.map((a) => (a.id === id ? { ...a, nombre, nombreEditado: true } : a)));
   }
 
   function eliminarActividad(id) {
@@ -86,9 +87,15 @@ export default function AsignacionCampos() {
       const res = await fetch("http://localhost:8000/sesiones", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ fuente: "archivo", columnas_json: detectados }),
+        body: JSON.stringify({ fuente: "archivo", estado: "borrador", columnas_json: detectados }),
       });
-      setMsgGuardado(res.ok ? "Borrador guardado" : "No se pudo guardar");
+      if (res.ok) {
+        const data = await res.json();
+        actualizarForm({ sesionActual: data.id });
+        setMsgGuardado("Borrador guardado");
+      } else {
+        setMsgGuardado("No se pudo guardar");
+      }
     } catch {
       setMsgGuardado("Error de conexión");
     } finally {
@@ -102,6 +109,7 @@ export default function AsignacionCampos() {
     if (!puedeAvanzar) return;
     actualizarActividades(actividades);
     actualizarForm({
+      nombre:            actividades[0].nombre,
       campos_detectados: actividades[0].campos,
       campos_pendientes: [],
     });
@@ -159,7 +167,7 @@ export default function AsignacionCampos() {
               <span className="ac-panel-titulo">Campos detectados ({detectados.length})</span>
             </div>
             <div className="ac-panel-cuerpo">
-              {detectados.length === 0 ? (
+              {detectados.length === 0 && pendientes.length === 0 ? (
                 <p className="ac-vacio">No se detectaron campos en el archivo.</p>
               ) : (
                 detectados.map((campo) => {
@@ -192,6 +200,41 @@ export default function AsignacionCampos() {
                   );
                 })
               )}
+
+              {/* ── Campos sin clasificar (pendientes) ── */}
+              {pendientes.length > 0 && (
+                <>
+                  <div className="ac-sep-pendientes">
+                    Sin clasificar ({pendientes.length}) — inclúyelos si contienen datos personales
+                  </div>
+                  {pendientes.map((campo) => {
+                    const estado      = estadoCampo(campo.nombre_columna);
+                    const activNombre = estado === "asignado-otro" ? nombreActividadDeCampo(campo.nombre_columna) : "";
+                    return (
+                      <div
+                        key={campo.nombre_columna}
+                        className={`ac-campo ac-campo--pendiente ac-campo--${estado}`}
+                        onClick={() => clickCampo(campo)}
+                        title={
+                          estado === "asignado-otro"  ? `Asignado a "${activNombre}"` :
+                          estado === "sin-actividad"  ? "Selecciona una actividad primero" :
+                          estado === "en-activa"       ? "Clic para desasignar" :
+                          "Clic para asignar a la actividad seleccionada"
+                        }
+                      >
+                        <span className="ac-campo-nombre">{campo.nombre_columna}</span>
+                        <span className="ac-campo-badge ac-campo-badge--pendiente">?</span>
+                        {estado === "asignado-otro" && (
+                          <span className="ac-campo-actividad" title={activNombre}>→ {activNombre}</span>
+                        )}
+                        {estado === "en-activa" && (
+                          <span style={{ fontSize: 11, color: "#6b8099", fontWeight: 700 }}>✓</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </>
+              )}
             </div>
           </div>
 
@@ -214,8 +257,11 @@ export default function AsignacionCampos() {
                 >
                   <div className="ac-actividad-header">
                     <span className="ac-actividad-dot" />
+                    <svg className={`ac-actividad-lapiz ${act.nombreEditado ? "ac-actividad-lapiz--editado" : ""}`} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" title="Editar nombre">
+                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                    </svg>
                     <input
-                      className="ac-actividad-nombre"
+                      className={`ac-actividad-nombre ${act.nombreEditado ? "ac-actividad-nombre--editado" : ""}`}
                       value={act.nombre}
                       onClick={(e) => e.stopPropagation()}
                       onChange={(e) => renombrar(act.id, e.target.value)}

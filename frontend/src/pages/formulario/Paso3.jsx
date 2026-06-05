@@ -209,6 +209,10 @@ export default function Paso3() {
       otras_medidas:            formularioCompleto.otras_medidas        || null,
       decisiones_automatizadas: formularioCompleto.decisiones_automatizadas ?? false,
       campos_detectados:        formularioCompleto.campos_detectados    || [],
+      sesion_id:                formularioCompleto.sesionActual         || null,
+      campos_usados:            formularioCompleto.sesionActual
+        ? (formularioCompleto.campos_detectados || []).map((c) => c.nombre_columna)
+        : null,
 
       // Objeto detalle — va a la tabla detalle_rat con los nombres del schema
       detalle: {

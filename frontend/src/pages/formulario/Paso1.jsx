@@ -161,6 +161,33 @@ export default function Paso1() {
 
         <div className="p1-card">
 
+          {/* ── Banner progreso multi-actividad ── */}
+          {form.actividadesPendientes?.length > 0 && (() => {
+            const total = form.actividadesPendientes.length;
+            const idx   = form.actividadActual ?? 0;
+            const act   = form.actividadesPendientes[idx];
+            return (
+              <div className="p1-banner-actividad">
+                <div className="p1-banner-top">
+                  <span className="p1-banner-num">Actividad {idx + 1} de {total}</span>
+                  <span className="p1-banner-nombre">{act?.nombre}</span>
+                </div>
+                {act?.campos?.length > 0 && (
+                  <div className="p1-banner-chips">
+                    {act.campos.map((c) => (
+                      <span
+                        key={c.nombre_columna}
+                        className={`p1-banner-chip ${c.tipo === "SENSIBLE" ? "p1-banner-chip--sensible" : ""}`}
+                      >
+                        {c.nombre_columna}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {/* ── Barra de progreso ── */}
           <BarraProgreso pasoActual={1} />
 

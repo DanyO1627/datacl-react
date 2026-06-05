@@ -426,3 +426,61 @@
   height: 15px;
   cursor: pointer;
 }
+
+/* ─── Banner progreso multi-actividad ────────────────────────── */
+.p1-banner-actividad {
+  padding: 12px 16px;
+  background: #eef4ff;
+  border: 1.5px solid #c3d8f5;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.p1-banner-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.p1-banner-num {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--mid);
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.p1-banner-nombre {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.p1-banner-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.p1-banner-chip {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.p1-banner-chip--sensible {
+  background: #fee2e2;
+  color: #991b1b;
+}
