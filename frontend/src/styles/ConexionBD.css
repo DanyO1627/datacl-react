@@ -1,0 +1,370 @@
+/* ConexionBD.css — paleta DataCL */
+:root {
+  --navy:  #021024;
+  --dark:  #052659;
+  --mid:   #5483B3;
+  --light: #7DA0CA;
+  --pale:  #C1E8FF;
+}
+
+.cbd-page {
+  min-height: 100vh;
+  background: linear-gradient(160deg, var(--pale) 0%, #e8f4ff 40%, #f0f8ff 100%);
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+/* ── layout con sidebar (mismo que el resto de la app) ── */
+.cbd-contenido {
+  padding: 2.5rem 2.5rem 2.5rem 2rem;
+  max-width: 860px;
+}
+
+/* ── encabezado ── */
+.cbd-titulo {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 6px;
+}
+
+.cbd-subtitulo {
+  font-size: 14px;
+  color: var(--mid);
+  margin: 0 0 2rem;
+}
+
+/* ── alerta de privacidad ── */
+.cbd-alerta {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: #eef4fb;
+  border-left: 3px solid var(--mid);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 2rem;
+  font-size: 13px;
+  color: var(--dark);
+  line-height: 1.5;
+}
+
+.cbd-alerta-icono {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── tabs de motor ── */
+.cbd-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.cbd-tab {
+  padding: 8px 20px;
+  border-radius: 50px;
+  border: 1.5px solid var(--light);
+  background: transparent;
+  color: var(--mid);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.cbd-tab:hover {
+  background: #eef4fb;
+}
+
+.cbd-tab.activo {
+  background: var(--dark);
+  border-color: var(--dark);
+  color: #fff;
+}
+
+/* ── bloque de código SQL ── */
+.cbd-codigo-wrapper {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.cbd-codigo {
+  background: var(--navy);
+  color: #7DA0CA;
+  border-radius: 12px;
+  padding: 1.4rem 1.6rem;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+}
+
+.cbd-copiar-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  color: #C1E8FF;
+  font-size: 12px;
+  font-family: 'Georgia', serif;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cbd-copiar-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* ── pasos numerados ── */
+.cbd-pasos {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cbd-paso {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  font-size: 14px;
+  color: var(--dark);
+  line-height: 1.5;
+}
+
+.cbd-paso-num {
+  min-width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--dark);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── formulario de conexión ── */
+.cbd-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 24px rgba(5,38,89,0.08);
+  margin-bottom: 1.5rem;
+}
+
+.cbd-grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.cbd-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cbd-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dark);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.cbd-input,
+.cbd-select {
+  padding: 11px 14px;
+  border-radius: 50px;
+  border: none;
+  background: #eef4fb;
+  font-size: 14px;
+  color: var(--navy);
+  font-family: 'Georgia', serif;
+  outline: none;
+  transition: background 0.18s, box-shadow 0.18s;
+}
+
+.cbd-input:focus,
+.cbd-select:focus {
+  background: #e2eef8;
+  box-shadow: 0 0 0 2px var(--light);
+}
+
+.cbd-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235483B3' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 38px;
+}
+
+/* ── nota privacidad bajo el form ── */
+.cbd-nota-privacidad {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  background: #f5f8ff;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--mid);
+  line-height: 1.5;
+  margin-top: 1rem;
+}
+
+/* ── selector de tablas ── */
+.cbd-tablas-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cbd-tabla-chip {
+  padding: 7px 16px;
+  border-radius: 50px;
+  border: 1.5px solid var(--light);
+  background: transparent;
+  color: var(--mid);
+  font-size: 13px;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cbd-tabla-chip:hover {
+  background: #eef4fb;
+}
+
+.cbd-tabla-chip.seleccionada {
+  background: var(--dark);
+  border-color: var(--dark);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ── mensajes de estado ── */
+.cbd-estado-ok {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #2e7d32;
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+.cbd-estado-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #c0392b;
+  font-size: 13px;
+  background: #fff0f0;
+  border-left: 3px solid #e05252;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+.cbd-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #b0c8e0;
+  border-top-color: var(--dark);
+  border-radius: 50%;
+  animation: cbd-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes cbd-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── botones ── */
+.cbd-botones {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.8rem;
+  gap: 12px;
+}
+
+.cbd-btn-secundario {
+  padding: 11px 24px;
+  border-radius: 50px;
+  border: 1.5px solid var(--light);
+  background: transparent;
+  color: var(--mid);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.cbd-btn-secundario:hover {
+  background: #eef4fb;
+}
+
+.cbd-btn-primario {
+  padding: 11px 28px;
+  border-radius: 50px;
+  border: none;
+  background: linear-gradient(135deg, var(--dark) 0%, var(--mid) 100%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  transition: opacity 0.18s, transform 0.12s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.cbd-btn-primario:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.cbd-btn-primario:disabled {
+  background: #b0c8e0;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── responsive ── */
+@media (max-width: 600px) {
+  .cbd-grid2 {
+    grid-template-columns: 1fr;
+  }
+  .cbd-botones {
+    flex-direction: column-reverse;
+  }
+  .cbd-btn-primario,
+  .cbd-btn-secundario {
+    width: 100%;
+    justify-content: center;
+  }
+}

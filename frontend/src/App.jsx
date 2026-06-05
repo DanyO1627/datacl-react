@@ -26,6 +26,7 @@ import VistaPrevia from "./pages/VistaPrevia";
 import ConfirmacionDescarga from "./pages/ConfirmacionDescarga";
 import DetalleOrganizacion from "./pages/DetalleOrganizacion";
 import IngresoManual from "./pages/IngresoManual";
+import ConexionBD from "./pages/ConexionBD";
 
 function App() {
   return (
@@ -59,6 +60,9 @@ function App() {
           } />
           <Route path="/subir-archivo" element={
             <RutaProtegida><CargaArchivo /></RutaProtegida>
+          } />
+          <Route path="/nueva-sesion/conexion-bd" element={
+            <RutaProtegida><ConexionBD /></RutaProtegida>
           } />
           <Route path="/informes" element={
             <RutaProtegida><Informes /></RutaProtegida>
