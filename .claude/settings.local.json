@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(ls \"c:\\\\Users\\\\conyp\\\\Desktop\\\\Proyecto DataCL\\\\\")",
-      "Read(//c/Users/conyp/Desktop/**)"
-    ]
-  }
-}

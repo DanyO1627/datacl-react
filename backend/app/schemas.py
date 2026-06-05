@@ -143,6 +143,8 @@ class TratamientoCrear(BaseModel):
     decisiones_automatizadas: bool = False
     campos_detectados: list[CampoRatEntrada] = []
     detalle: Optional[DetalleRatBase] = None
+    sesion_id: Optional[int] = None
+    campos_usados: Optional[list] = None
 
     @field_validator("nombre")
     @classmethod

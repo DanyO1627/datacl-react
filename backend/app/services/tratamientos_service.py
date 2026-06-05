@@ -13,57 +13,69 @@ def crear_tratamiento(
     datos: TratamientoCrear,
     organizacion_id: int,
 ) -> models.Tratamiento:
-    probabilidad = calcular_probabilidad(datos)
-    impacto = calcular_impacto(datos)
-    nivel_riesgo = determinar_nivel_riesgo(probabilidad, impacto)
+    try:
+        probabilidad = calcular_probabilidad(datos)
+        impacto = calcular_impacto(datos)
+        nivel_riesgo = determinar_nivel_riesgo(probabilidad, impacto)
 
-    nuevo = models.Tratamiento(
-        organizacion_id=organizacion_id,
-        nombre=datos.nombre,
-        finalidad=datos.finalidad,
-        base_legal=datos.base_legal,
-        datos_sensibles=datos.datos_sensibles,
-        destinatarios=datos.destinatarios,
-        plazo_conservacion=datos.plazo_conservacion,
-        medidas_seguridad=datos.medidas_seguridad,
-        sale_extranjero=datos.sale_extranjero,
-        decisiones_automatizadas=datos.decisiones_automatizadas,
-        estado="PENDIENTE",
-        probabilidad=probabilidad,
-        impacto=impacto,
-        nivel_riesgo=nivel_riesgo,
-        fecha_evaluacion=datetime.now(),
-    )
-    db.add(nuevo)
-    db.flush()  # obtenemos el ID sin hacer commit todavía
+        nuevo = models.Tratamiento(
+            organizacion_id=organizacion_id,
+            nombre=datos.nombre,
+            finalidad=datos.finalidad,
+            base_legal=datos.base_legal,
+            datos_sensibles=datos.datos_sensibles,
+            destinatarios=datos.destinatarios,
+            plazo_conservacion=datos.plazo_conservacion,
+            medidas_seguridad=datos.medidas_seguridad,
+            sale_extranjero=datos.sale_extranjero,
+            decisiones_automatizadas=datos.decisiones_automatizadas,
+            estado="PENDIENTE",
+            probabilidad=probabilidad,
+            impacto=impacto,
+            nivel_riesgo=nivel_riesgo,
+            fecha_evaluacion=datetime.now(),
+        )
+        db.add(nuevo)
+        db.flush()  # obtenemos el ID sin hacer commit todavía
 
-    for campo in datos.campos_detectados:
-        db.add(models.CampoRat(
-            tratamiento_id=nuevo.id,
-            nombre_columna=campo.nombre_columna,
-            tipo_dato=campo.tipo_dato,
-            es_sensible=campo.es_sensible,
-            fuente=campo.fuente,
-        ))
+        for campo in datos.campos_detectados:
+            db.add(models.CampoRat(
+                tratamiento_id=nuevo.id,
+                nombre_columna=campo.nombre_columna,
+                tipo_dato=campo.tipo_dato,
+                es_sensible=campo.es_sensible,
+                fuente=campo.fuente,
+            ))
 
-    # Siempre crear DetalleRat — si no vienen datos, queda con nulls
-    detalle_campos = datos.detalle.model_dump() if datos.detalle else {}
+        # Siempre crear DetalleRat — si no vienen datos, queda con nulls
+        detalle_campos = datos.detalle.model_dump() if datos.detalle else {}
 
-    # Auto-generar categoria_datos si no viene del frontend pero hay campos con categoría temática
-    if not detalle_campos.get("categoria_datos") and datos.campos_detectados:
-        campos_con_cat = [
-            {"nombre_columna": c.nombre_columna, "categoria_tematica": c.categoria_tematica or "Otros"}
-            for c in datos.campos_detectados
-            if c.categoria_tematica
-        ]
-        if campos_con_cat:
-            detalle_campos["categoria_datos"] = generar_texto_categoria(campos_con_cat)
+        # Auto-generar categoria_datos si no viene del frontend pero hay campos con categoría temática
+        if not detalle_campos.get("categoria_datos") and datos.campos_detectados:
+            campos_con_cat = [
+                {"nombre_columna": c.nombre_columna, "categoria_tematica": c.categoria_tematica or "Otros"}
+                for c in datos.campos_detectados
+                if c.categoria_tematica
+            ]
+            if campos_con_cat:
+                detalle_campos["categoria_datos"] = generar_texto_categoria(campos_con_cat)
 
-    db.add(models.DetalleRat(tratamiento_id=nuevo.id, **detalle_campos))
+        db.add(models.DetalleRat(tratamiento_id=nuevo.id, **detalle_campos))
 
-    db.commit()
-    db.refresh(nuevo)
-    return nuevo
+        # Vincular a sesión de análisis si viene sesion_id
+        if datos.sesion_id:
+            db.add(models.SesionActividad(
+                sesion_id=datos.sesion_id,
+                tratamiento_id=nuevo.id,
+                campos_usados=datos.campos_usados,
+            ))
+
+        db.commit()
+        db.refresh(nuevo)
+        return nuevo
+    except Exception:
+        db.rollback()
+        raise
 
 
 def listar_tratamientos(
