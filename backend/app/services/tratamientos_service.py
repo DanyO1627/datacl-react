@@ -118,6 +118,7 @@ def editar_tratamiento(
 ) -> models.Tratamiento | None:
     tratamiento = (
         db.query(models.Tratamiento)
+        .options(joinedload(models.Tratamiento.detalle))
         .filter(
             models.Tratamiento.id == tratamiento_id,
             models.Tratamiento.organizacion_id == organizacion_id,
@@ -127,39 +128,43 @@ def editar_tratamiento(
     if not tratamiento:
         return None
 
-    campos_simples = [
-        "nombre", "finalidad", "base_legal", "datos_sensibles", "destinatarios",
-        "plazo_conservacion", "medidas_seguridad", "sale_extranjero", "decisiones_automatizadas",
-    ]
-    for campo in campos_simples:
-        valor = getattr(datos, campo, None)
-        if valor is not None:
-            setattr(tratamiento, campo, valor)
+    try:
+        campos_simples = [
+            "nombre", "finalidad", "base_legal", "datos_sensibles", "destinatarios",
+            "plazo_conservacion", "medidas_seguridad", "sale_extranjero", "decisiones_automatizadas",
+        ]
+        for campo in campos_simples:
+            valor = getattr(datos, campo, None)
+            if valor is not None:
+                setattr(tratamiento, campo, valor)
 
-    if datos.estado is not None:
-        tratamiento.estado = datos.estado.upper()
+        if datos.estado is not None:
+            tratamiento.estado = datos.estado.upper()
 
-    # El riesgo siempre se recalcula tras editar
-    tratamiento.probabilidad = calcular_probabilidad(tratamiento)
-    tratamiento.impacto = calcular_impacto(tratamiento)
-    tratamiento.nivel_riesgo = determinar_nivel_riesgo(tratamiento.probabilidad, tratamiento.impacto)
-    tratamiento.fecha_evaluacion = datetime.now()
+        # El riesgo siempre se recalcula tras editar
+        tratamiento.probabilidad = calcular_probabilidad(tratamiento)
+        tratamiento.impacto = calcular_impacto(tratamiento)
+        tratamiento.nivel_riesgo = determinar_nivel_riesgo(tratamiento.probabilidad, tratamiento.impacto)
+        tratamiento.fecha_evaluacion = datetime.now()
 
-    if datos.detalle is not None:
-        if tratamiento.detalle is None:
-            # Tratamientos viejos sin detalle_rat — se crea ahora
-            db.add(models.DetalleRat(
-                tratamiento_id=tratamiento.id,
-                **datos.detalle.model_dump(),
-            ))
-        else:
-            # Solo actualizar los campos que llegaron explícitamente
-            for campo, valor in datos.detalle.model_dump(exclude_unset=True).items():
-                setattr(tratamiento.detalle, campo, valor)
+        if datos.detalle is not None:
+            if tratamiento.detalle is None:
+                # Tratamientos viejos sin detalle_rat — se crea ahora
+                db.add(models.DetalleRat(
+                    tratamiento_id=tratamiento.id,
+                    **datos.detalle.model_dump(),
+                ))
+            else:
+                # Solo actualizar los campos que llegaron explícitamente
+                for campo, valor in datos.detalle.model_dump(exclude_unset=True).items():
+                    setattr(tratamiento.detalle, campo, valor)
 
-    db.commit()
-    db.refresh(tratamiento)
-    return tratamiento
+        db.commit()
+        db.refresh(tratamiento)
+        return tratamiento
+    except Exception:
+        db.rollback()
+        raise
 
 
 def evaluar_riesgo(
