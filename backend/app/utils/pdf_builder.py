@@ -87,10 +87,12 @@ def _fila_rat(t, s_celda) -> list:
     universo_texto = d.universo_titulares if d and d.universo_titulares else None
     universo  = "\n".join(filter(None, [cats, universo_texto])) or None
 
+    cat_datos = (d.categoria_datos if (d and d.categoria_datos) else None) or _cat_datos(t)
+
     return [
         _p(t.nombre,                                           s_celda),
         _p(resp_texto,                                         s_celda),
-        _p(_cat_datos(t),                                      s_celda),
+        _p(cat_datos,                                          s_celda),
         _p(universo,                                           s_celda),
         _p(t.finalidad,                                        s_celda),
         _p(_BASE_LEGAL.get(t.base_legal or "", t.base_legal), s_celda),
@@ -169,6 +171,16 @@ def construir_pdf(org, tratamientos: list) -> bytes:
         "metodologia", parent=base["Normal"],
         fontSize=9, textColor=colors.HexColor("#888888"),
     )
+    s_advertencia = ParagraphStyle(
+        "advertencia", parent=base["Normal"],
+        fontSize=9.5, textColor=colors.HexColor("#92400e"),
+        leading=14, spaceAfter=4,
+    )
+    s_leyenda = ParagraphStyle(
+        "leyenda", parent=base["Normal"],
+        fontSize=7.5, textColor=colors.HexColor("#92400e"),
+        leading=10,
+    )
 
     elementos = []
 
@@ -190,6 +202,19 @@ def construir_pdf(org, tratamientos: list) -> bytes:
         f"<b>Total de tratamientos incluidos:</b> {len(tratamientos)}",
         s_dato,
     ))
+    pendientes_portada = [t for t in tratamientos if t.estado == "PENDIENTE"]
+    if pendientes_portada:
+        nombres_pend = ", ".join(f'"{t.nombre}"' for t in pendientes_portada[:3])
+        if len(pendientes_portada) > 3:
+            nombres_pend += f" y {len(pendientes_portada) - 3} más"
+        elementos.append(Spacer(1, 0.3 * cm))
+        elementos.append(Paragraph(
+            f"<b>Aviso: {len(pendientes_portada)} tratamiento(s) incompleto(s):</b> "
+            f"{nombres_pend}. Las filas marcadas en amarillo en la tabla RAT tienen "
+            "campos clave sin completar. Complete esta información antes de usar este "
+            "registro para fines de cumplimiento.",
+            s_advertencia,
+        ))
     elementos.append(Spacer(1, 1.5 * cm))
     elementos.append(Paragraph(
         "Elaborado bajo la metodología AEPD adaptada a la Ley 21.719 "
@@ -226,6 +251,12 @@ def construir_pdf(org, tratamientos: list) -> bytes:
 
     filas = [encabezados] + [_fila_rat(t, s_celda) for t in tratamientos]
 
+    filas_pendiente = [
+        ("BACKGROUND", (0, i + 1), (-1, i + 1), colors.HexColor("#fffbeb"))
+        for i, t in enumerate(tratamientos)
+        if t.estado == "PENDIENTE"
+    ]
+
     estilo = TableStyle([
         ("BACKGROUND",    (0, 0), (-1, 0),  colors.HexColor("#021024")),
         ("TEXTCOLOR",     (0, 0), (-1, 0),  colors.white),
@@ -237,11 +268,20 @@ def construir_pdf(org, tratamientos: list) -> bytes:
         ("RIGHTPADDING",  (0, 0), (-1, -1), 4),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1),
          [colors.white, colors.HexColor("#f0f6ff")]),
+        *filas_pendiente,
     ])
 
     tabla = Table(filas, colWidths=anchos, repeatRows=1)
     tabla.setStyle(estilo)
     elementos.append(tabla)
+
+    if filas_pendiente:
+        elementos.append(Spacer(1, 0.4 * cm))
+        elementos.append(Paragraph(
+            "Fila en amarillo = tratamiento con campos clave pendientes de completar "
+            "(finalidad, base legal, destinatarios, plazo de conservacion o medidas de seguridad).",
+            s_leyenda,
+        ))
 
     doc.build(elementos, onFirstPage=_pie, onLaterPages=_pie)
     return buffer.getvalue()

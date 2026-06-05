@@ -8,6 +8,18 @@ from app.utils.riesgo import calcular_probabilidad, calcular_impacto, determinar
 from app.utils.analisis import generar_texto_categoria
 
 
+def _determinar_estado(datos) -> str:
+    """COMPLETO solo si los 5 campos clave del RAT están rellenos."""
+    campos_clave = [
+        datos.finalidad,
+        datos.base_legal,
+        datos.plazo_conservacion,
+        datos.destinatarios,
+        datos.medidas_seguridad,
+    ]
+    return "COMPLETO" if all(campos_clave) else "PENDIENTE"
+
+
 def crear_tratamiento(
     db: Session,
     datos: TratamientoCrear,
@@ -29,7 +41,7 @@ def crear_tratamiento(
             medidas_seguridad=datos.medidas_seguridad,
             sale_extranjero=datos.sale_extranjero,
             decisiones_automatizadas=datos.decisiones_automatizadas,
-            estado="PENDIENTE",
+            estado=_determinar_estado(datos),
             probabilidad=probabilidad,
             impacto=impacto,
             nivel_riesgo=nivel_riesgo,
