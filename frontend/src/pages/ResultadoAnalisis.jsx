@@ -8,7 +8,7 @@ import "../styles/asignacionCampos.css";
 export default function AsignacionCampos() {
   const { state } = useLocation();
   const navigate  = useNavigate();
-  const { actualizarForm, actualizarActividades } = useFormulario();
+  const { actualizarForm, actualizarActividades, form } = useFormulario();
 
   // Todos los hooks antes de cualquier early return (Rules of Hooks)
   const detectados = state?.detectados ?? [];
@@ -84,23 +84,41 @@ export default function AsignacionCampos() {
     setGuardando(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:8000/sesiones", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ fuente: "archivo", estado: "borrador", columnas_json: detectados }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        actualizarForm({ sesionActual: data.id });
-        setMsgGuardado("Borrador guardado");
+      let ok = false;
+
+      if (form.sesionActual) {
+        // Sesión ya existe: marcarla como borrador
+        const res = await fetch(`http://localhost:8000/sesiones/${form.sesionActual}/estado`, {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ estado: "borrador" }),
+        });
+        ok = res.ok;
+      } else {
+        // Primera vez: crear sesión nueva
+        const res = await fetch("http://localhost:8000/sesiones", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ fuente: "archivo", estado: "borrador", columnas_json: detectados }),
+        });
+        ok = res.ok;
+        if (ok) {
+          const data = await res.json();
+          actualizarForm({ sesionActual: data.id });
+        }
+      }
+
+      if (ok) {
+        navigate("/dashboard");
       } else {
         setMsgGuardado("No se pudo guardar");
+        setTimeout(() => setMsgGuardado(""), 3000);
       }
     } catch {
       setMsgGuardado("Error de conexión");
+      setTimeout(() => setMsgGuardado(""), 3000);
     } finally {
       setGuardando(false);
-      setTimeout(() => setMsgGuardado(""), 3000);
     }
   }
 
@@ -321,7 +339,7 @@ export default function AsignacionCampos() {
             <button
               className="ac-btn-borrador"
               onClick={handleGuardarBorrador}
-              disabled={guardando || actividades.length === 0}
+              disabled={guardando || detectados.length === 0}
             >
               {guardando ? "Guardando..." : "Guardar borrador"}
             </button>

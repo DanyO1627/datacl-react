@@ -5,6 +5,7 @@ import { obtenerPerfil } from "../services/authService"
 import { obtenerTratamientos } from "../services/tratamientosService"
 import BarraLateral from "../components/BarraLateral"
 import GraficoRiesgo from "../components/GraficoRiesgo"
+import { useFormulario } from "../context/FormularioContext"
 import "../styles/dashboardCliente.css"
 
 const COLORES_RIESGO = { BAJO: "#38a169", MEDIO: "#d97706", ALTO: "#e53e3e" }
@@ -12,12 +13,14 @@ const COLORES_RIESGO = { BAJO: "#38a169", MEDIO: "#d97706", ALTO: "#e53e3e" }
 export default function Dashboard() {
   const navigate = useNavigate()
   const { usuario, token } = useAuth()
+  const { actualizarForm } = useFormulario()
 
   const [nombreOrg, setNombreOrg] = useState(usuario?.nombre || "")
   const [cargando, setCargando] = useState(true)
   const [metricas, setMetricas] = useState({ total: 0, pendientes: 0, alto: 0 })
   const [ultimos, setUltimos] = useState([])
   const [todosLosTratamientos, setTodosLosTratamientos] = useState([])
+  const [sesionesborrador, setSesionesBorrador] = useState([])
 
   const fechaHoy = new Date().toLocaleDateString("es-CL", {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
@@ -35,13 +38,14 @@ export default function Dashboard() {
         setNombreOrg(perfil.nombre)
         setTodosLosTratamientos(tratamientos)
 
+        const activos = tratamientos.filter(t => t.estado !== "BORRADOR")
         setMetricas({
-          total:      tratamientos.length,
-          pendientes: tratamientos.filter(t => t.estado === "PENDIENTE").length,
-          alto:       tratamientos.filter(t => t.nivel_riesgo === "ALTO").length,
+          total:      activos.length,
+          pendientes: activos.filter(t => t.estado === "PENDIENTE").length,
+          alto:       activos.filter(t => t.nivel_riesgo === "ALTO").length,
         })
 
-        const ordenados = [...tratamientos].sort(
+        const ordenados = [...activos].sort(
           (a, b) => new Date(b.creado_en) - new Date(a.creado_en)
         )
         setUltimos(ordenados.slice(0, 3))
@@ -50,10 +54,35 @@ export default function Dashboard() {
       } finally {
         setCargando(false)
       }
+
+      // Carga borradores separado — si falla no rompe el dashboard
+      try {
+        const res = await fetch("http://localhost:8000/sesiones", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (res.ok) {
+          const todas = await res.json()
+          setSesionesBorrador(todas.filter(s => s.estado === "borrador"))
+        }
+      } catch { /* silencioso */ }
     }
 
     cargar()
   }, [token, navigate])
+
+  async function continuarBorrador(sesion) {
+    try {
+      const res = await fetch(`http://localhost:8000/sesiones/${sesion.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      actualizarForm({ sesionActual: sesion.id })
+      navigate("/resultados-analisis", {
+        state: { detectados: data.columnas_json || [], pendientes: [] },
+      })
+    } catch { /* silencioso */ }
+  }
 
   if (cargando) {
     return (
@@ -102,6 +131,40 @@ export default function Dashboard() {
             </div>
           ))}
         </section>
+
+        {/* Banner borradores */}
+        {sesionesborrador.length > 0 && (
+          <section style={{ background: "#fffbeb", border: "1px solid #f59e0b", borderRadius: 8, padding: "16px 20px", marginBottom: 24 }}>
+            <h3 style={{ margin: "0 0 12px", fontSize: 15, color: "#92400e", fontWeight: 600 }}>
+              {sesionesborrador.length === 1
+                ? "Tienes 1 sesión de análisis guardada como borrador"
+                : `Tienes ${sesionesborrador.length} sesiones de análisis guardadas como borrador`}
+            </h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {sesionesborrador.slice(0, 3).map(s => (
+                <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", border: "1px solid #fde68a", borderRadius: 6, padding: "10px 14px" }}>
+                  <span style={{ fontSize: 14, color: "#2b2b3b", fontWeight: 500 }}>
+                    {s.nombre || "Sesión sin nombre"}
+                    <span style={{ marginLeft: 8, fontSize: 12, color: "#888", fontWeight: 400 }}>
+                      {s.fuente === "archivo" ? "· Archivo" : s.fuente === "manual" ? "· Ingreso manual" : "· Conexión BD"}
+                    </span>
+                  </span>
+                  <button
+                    style={{ background: "#f59e0b", color: "#fff", border: "none", borderRadius: 6, padding: "6px 14px", fontSize: 13, cursor: "pointer", fontWeight: 600 }}
+                    onClick={() => continuarBorrador(s)}
+                  >
+                    Continuar →
+                  </button>
+                </div>
+              ))}
+              {sesionesborrador.length > 3 && (
+                <p style={{ margin: "4px 0 0", fontSize: 12, color: "#92400e" }}>
+                  y {sesionesborrador.length - 3} más...
+                </p>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Fila inferior: gráfico + últimos tratamientos */}
         <div className="dashboard__fila-inferior">

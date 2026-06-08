@@ -110,6 +110,7 @@ def generar_informe(
         .filter(
             models.Tratamiento.id.in_(datos.ids_tratamientos),
             models.Tratamiento.organizacion_id == usuario.id,
+            models.Tratamiento.estado != "BORRADOR",
         )
         .order_by(models.Tratamiento.creado_en.desc())
         .all()

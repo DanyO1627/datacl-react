@@ -251,3 +251,8 @@
   background: #d1e7dd;
   color: #0a5c36;
 }
+
+.badge-estado-borrador {
+  background: #e0e7ff;
+  color: #3730a3;
+}

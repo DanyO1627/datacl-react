@@ -15,6 +15,13 @@ const BADGE_RIESGO = {
 const BADGE_ESTADO = {
   PENDIENTE: 'badge-estado-pendiente',
   COMPLETO:  'badge-estado-completo',
+  BORRADOR:  'badge-estado-borrador',
+}
+
+const LABEL_ESTADO = {
+  COMPLETO:  'Completo',
+  PENDIENTE: 'Pendiente',
+  BORRADOR:  'Borrador',
 }
 
 export default function MisTratamientos() {
@@ -112,6 +119,7 @@ export default function MisTratamientos() {
             <option value="">Todos los estados</option>
             <option value="PENDIENTE">Pendiente</option>
             <option value="COMPLETO">Completo</option>
+            <option value="BORRADOR">Borrador</option>
           </select>
         </div>
 
@@ -164,7 +172,7 @@ export default function MisTratamientos() {
                     </td>
                     <td>
                       <span className={`mt-badge ${BADGE_ESTADO[t.estado] || 'badge-estado-pendiente'}`}>
-                        {t.estado === 'COMPLETO' ? 'Completo' : 'Pendiente'}
+                        {LABEL_ESTADO[t.estado] || t.estado}
                       </span>
                     </td>
                     <td className="mt-celda-fecha">{formatearFecha(t.creado_en)}</td>
