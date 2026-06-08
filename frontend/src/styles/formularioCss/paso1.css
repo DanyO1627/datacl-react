@@ -303,6 +303,11 @@
   color: #dc2626;
 }
 
+.p1-campo-hint--info {
+  color: #6b7280;
+  margin-top: 4px;
+}
+
 /* ─── Tooltips base legal ─────────────────────────────────────── */
 .p1-bases-info {
   display: flex;

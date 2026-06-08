@@ -192,6 +192,28 @@ export default function Paso3() {
     actualizarForm(local);
     const formularioCompleto = { ...form, ...local };
 
+    // categoria_datos: si hubo análisis de archivo el backend genera texto rico
+    // desde los campos detectados; si no (ingreso manual), construimos texto
+    // desde los checkboxes que el usuario seleccionó en Paso2.
+    const hayAnalisis = (formularioCompleto.campos_detectados || []).length > 0;
+    const LABEL_CAT = {
+      nombre_apellido: "Nombre y apellido", rut_dni: "RUT / DNI",
+      correo_electronico: "Correo electrónico", telefono: "Teléfono",
+      direccion: "Dirección", fecha_nacimiento: "Fecha de nacimiento",
+    };
+    const LABEL_SENS = {
+      datos_salud: "Datos de salud", datos_biometricos: "Datos biométricos",
+      origen_etnico: "Origen étnico", religion_creencias: "Religión o creencias",
+      orientacion_sexual: "Orientación sexual", opiniones_politicas: "Opiniones políticas",
+    };
+    const categoriaDatos = hayAnalisis ? null : (() => {
+      const partes = [
+        ...(formularioCompleto.categorias_datos || []).map(id => LABEL_CAT[id] || id),
+        ...(formularioCompleto.categorias_sensibles || []).map(id => LABEL_SENS[id] || id),
+      ].filter(Boolean);
+      return partes.length > 0 ? partes.join(", ") : null;
+    })();
+
     const payload = {
       // Campos del tratamiento principal
       nombre:                   formularioCompleto.nombre,
@@ -223,6 +245,7 @@ export default function Paso3() {
         categorias_titulares: (formularioCompleto.categorias_titulares || []).join(",") || null,
         universo_titulares:   formularioCompleto.universo_titulares || null,
         origen_datos:         formularioCompleto.origen_datos || null,
+        categoria_datos:      categoriaDatos,
       },
     };
 

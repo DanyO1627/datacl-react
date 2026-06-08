@@ -9,38 +9,50 @@ const BASES_LEGALES = [
   {
     valor: "consentimiento",
     etiqueta: "Consentimiento",
-    articulo: "Art. 12 letra a)",
-    descripcion: "El titular otorgó su consentimiento libre, informado, específico e inequívoco para el tratamiento de sus datos (Ley 21.719, Art. 12 letra a).",
+    articulo: "Art. 12",
+    descripcion: "El titular otorgó su consentimiento libre, informado, específico e inequívoco. Debe ser previo y manifestado de forma inequívoca. El responsable debe poder acreditarlo (Ley 21.719, Art. 12).",
   },
   {
-    valor: "contrato",
-    etiqueta: "Ejecución de contrato",
-    articulo: "Art. 12 letra b)",
-    descripcion: "El tratamiento es necesario para la ejecución de un contrato en que el titular es parte, o para aplicar medidas precontractuales (Ley 21.719, Art. 12 letra b).",
+    valor: "datos_economicos",
+    etiqueta: "Obligaciones económicas o financieras",
+    articulo: "Art. 13 letra a)",
+    descripcion: "El tratamiento se refiere a datos relativos a obligaciones de carácter económico, financiero, bancario o comercial, de conformidad con el Título III de la Ley 21.719 (Art. 13 letra a).",
   },
   {
     valor: "obligacion_legal",
     etiqueta: "Obligación legal",
-    articulo: "Art. 12 letra c)",
-    descripcion: "El tratamiento es necesario para cumplir una obligación legal o reglamentaria del responsable, ej: SII, AFP, Dirección del Trabajo (Ley 21.719, Art. 12 letra c).",
+    articulo: "Art. 13 letra b)",
+    descripcion: "El tratamiento es necesario para la ejecución o el cumplimiento de una obligación legal o lo dispone la ley. Ej: reportes al SII, registros laborales, AFP (Ley 21.719, Art. 13 letra b).",
   },
   {
-    valor: "interes_vital",
-    etiqueta: "Interés vital",
-    articulo: "Art. 12 letra d)",
-    descripcion: "El tratamiento es necesario para proteger intereses vitales del titular u otra persona cuando el titular no puede prestar consentimiento (Ley 21.719, Art. 12 letra d).",
-  },
-  {
-    valor: "interes_publico",
-    etiqueta: "Interés público",
-    articulo: "Art. 12 letra e)",
-    descripcion: "El tratamiento es necesario para cumplir una misión de interés público o en el ejercicio de potestades públicas conferidas al responsable (Ley 21.719, Art. 12 letra e).",
+    valor: "contrato",
+    etiqueta: "Ejecución de contrato",
+    articulo: "Art. 13 letra c)",
+    descripcion: "El tratamiento es necesario para la celebración o ejecución de un contrato entre el titular y el responsable, o para la ejecución de medidas precontractuales adoptadas a solicitud del titular (Ley 21.719, Art. 13 letra c).",
   },
   {
     valor: "interes_legitimo",
     etiqueta: "Interés legítimo",
-    articulo: "Art. 12 letra f)",
-    descripcion: "Existe un interés legítimo del responsable o de un tercero que no vulnera los derechos y libertades fundamentales del titular (Ley 21.719, Art. 12 letra f).",
+    articulo: "Art. 13 letra d)",
+    descripcion: "Existe un interés legítimo del responsable o de un tercero que no afecta los derechos y libertades del titular. El titular puede exigir siempre ser informado sobre el tratamiento (Ley 21.719, Art. 13 letra d).",
+  },
+  {
+    valor: "defensa_derechos",
+    etiqueta: "Defensa de derechos ante tribunales",
+    articulo: "Art. 13 letra e)",
+    descripcion: "El tratamiento es necesario para la formulación, ejercicio o defensa de un derecho ante los tribunales de justicia u órganos públicos (Ley 21.719, Art. 13 letra e).",
+  },
+  {
+    valor: "consentimiento_sensibles",
+    etiqueta: "Consentimiento expreso — datos sensibles",
+    articulo: "Art. 16 inc. 1",
+    descripcion: "Datos sensibles (salud, origen étnico, religión, orientación sexual, biométricos, etc.) que requieren consentimiento EXPRESO del titular, otorgado por declaración escrita, verbal o medio tecnológico equivalente (Ley 21.719, Art. 16 inc. 1).",
+  },
+  {
+    valor: "datos_biometricos",
+    etiqueta: "Datos biométricos",
+    articulo: "Art. 16 ter",
+    descripcion: "Datos obtenidos por tratamiento técnico que permiten identificación única (huella, iris, rasgos faciales, voz). Requieren consentimiento expreso más información específica al titular sobre el sistema, finalidad y período de uso (Ley 21.719, Art. 16 ter).",
   },
 ];
 
@@ -125,15 +137,17 @@ export default function Paso1() {
     base_legal:     form.base_legal     || "",
   });
 
-  const [tooltipBaseLegal, setTooltipBaseLegal] = useState(false);
-
   function handleChange(e) {
     const { name, value } = e.target;
     if (name === "finalidad" && contarPalabras(value) > 1000) return;
     setLocal((prev) => ({ ...prev, [name]: value }));
   }
 
-  const puedeAvanzar = local.nombre.trim().length > 0;
+  const puedeAvanzar =
+    local.nombre.trim().length > 0 &&
+    local.responsable.trim().length > 0 &&
+    local.finalidad.trim().length > 0 &&
+    local.base_legal.length > 0;
 
   function handleSiguiente() {
     if (!puedeAvanzar) return;
@@ -242,13 +256,13 @@ export default function Paso1() {
             <div className="p1-fila-dos">
               <div className="p1-campo">
                 <label className="p1-label" htmlFor="responsable">
-                  Responsable del tratamiento
+                  Responsable del tratamiento <span className="p1-requerido">*</span>
                 </label>
                 <input
                   id="responsable"
                   name="responsable"
                   type="text"
-                  className="p1-input"
+                  className={`p1-input ${!local.responsable.trim() ? "p1-input--vacio" : ""}`}
                   placeholder="Ej: Juan Pérez / Encargado de RRHH"
                   value={local.responsable}
                   onChange={handleChange}
@@ -274,6 +288,11 @@ export default function Paso1() {
                     <span>Encargado</span>
                   </label>
                 </div>
+                <p className="p1-campo-hint p1-campo-hint--info">
+                  {local.es_responsable
+                    ? "Responsable: quien decide los fines y medios del tratamiento (Art. 2° n) Ley 21.719)."
+                    : "Encargado/mandatario: quien trata datos por cuenta del responsable (Art. 2° x) Ley 21.719)."}
+                </p>
               </div>
               <div className="p1-campo">
                 <label className="p1-label" htmlFor="departamento">
