@@ -30,6 +30,7 @@ def crear_tratamiento(
         impacto = calcular_impacto(datos)
         nivel_riesgo = determinar_nivel_riesgo(probabilidad, impacto)
 
+        estado_final = "BORRADOR" if datos.estado == "BORRADOR" else _determinar_estado(datos)
         nuevo = models.Tratamiento(
             organizacion_id=organizacion_id,
             nombre=datos.nombre,
@@ -41,7 +42,7 @@ def crear_tratamiento(
             medidas_seguridad=datos.medidas_seguridad,
             sale_extranjero=datos.sale_extranjero,
             decisiones_automatizadas=datos.decisiones_automatizadas,
-            estado=_determinar_estado(datos),
+            estado=estado_final,
             probabilidad=probabilidad,
             impacto=impacto,
             nivel_riesgo=nivel_riesgo,

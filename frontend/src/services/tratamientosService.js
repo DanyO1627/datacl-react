@@ -89,6 +89,25 @@ export async function editarTratamiento(id, datos) {
 }
 
 
+// ── Actualizar parcialmente un tratamiento (borrador) ──────────
+// PUT /tratamientos/:id — envía solo los campos que lleguen (sparse update)
+
+export async function actualizarTratamiento(id, datos) {
+  try {
+    const res = await api.put(`/tratamientos/${id}`, datos);
+    return res.data;
+  } catch (err) {
+    if (err.response?.status === 401) {
+      const e = new Error("Sesión expirada.");
+      e.codigo = 401;
+      throw e;
+    }
+    const detail = err.response?.data?.detail;
+    throw new Error(typeof detail === "string" ? detail : "Error al actualizar el borrador.");
+  }
+}
+
+
 // ── Eliminar un tratamiento ────────────────────────────────────
 // DELETE /tratamientos/:id
 

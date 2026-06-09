@@ -591,3 +591,23 @@
   background: linear-gradient(135deg, var(--dark) 0%, var(--mid) 100%);
   color: #fff;
 }
+
+.p2-nav-izquierda {
+  display: flex;
+  gap: 10px;
+}
+
+.p2-btn--borrador {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1.5px solid #86efac;
+}
+
+.p2-btn--borrador:hover {
+  background: #dcfce7;
+}
+
+.p2-btn--borrador:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

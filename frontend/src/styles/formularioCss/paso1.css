@@ -409,6 +409,26 @@
   opacity: 1 !important;
 }
 
+.p1-nav-izquierda {
+  display: flex;
+  gap: 10px;
+}
+
+.p1-btn--borrador {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1.5px solid #86efac;
+}
+
+.p1-btn--borrador:hover:not(:disabled) {
+  background: #dcfce7;
+}
+
+.p1-btn--borrador:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ─── Radio Responsable / Encargado ──────────────────────────── */
 .p1-rol-row {
   display: flex;

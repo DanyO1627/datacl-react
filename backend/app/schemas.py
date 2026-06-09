@@ -136,6 +136,7 @@ class TratamientoCrear(BaseModel):
     finalidad: Optional[str] = None
     base_legal: Optional[str] = None
     datos_sensibles: bool = False
+    estado: Optional[str] = None
     destinatarios: Optional[str] = None
     plazo_conservacion: Optional[str] = None
     medidas_seguridad: Optional[str] = None
@@ -237,6 +238,7 @@ class SesionAnalisisCrear(BaseModel):
     fuente:        str = "archivo"
     motor_bd:      Optional[str] = None
     columnas_json: Optional[list] = None
+    estado:        Optional[str] = None
 
     @field_validator("fuente")
     @classmethod
@@ -244,6 +246,11 @@ class SesionAnalisisCrear(BaseModel):
         if v not in ("archivo", "bd", "manual"):
             raise ValueError("fuente debe ser 'archivo', 'bd' o 'manual'")
         return v
+
+
+class ActividadBorradorRespuesta(BaseModel):
+    tratamiento_id: int
+    campos_usados:  Optional[list] = None
 
 
 class SesionAnalisisRespuesta(BaseModel):
@@ -256,6 +263,7 @@ class SesionAnalisisRespuesta(BaseModel):
     estado:          str
     creado_en:       datetime
     num_actividades: int = 0
+    actividades:     list[ActividadBorradorRespuesta] = []
     model_config = {"from_attributes": True}
 
 

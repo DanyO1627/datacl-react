@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useFormulario } from "../../context/FormularioContext";
-import { crearTratamiento } from "../../services/tratamientosService";
+import { crearTratamiento, actualizarTratamiento } from "../../services/tratamientosService";
+
+const API = "http://localhost:8000";
 import BarraLateral from "../../components/BarraLateral";
 import "../../styles/formularioCss/paso3.css";
 
@@ -74,12 +76,14 @@ const MEDIDAS = [
  * Necesitamos mostrar texto amigable en vez de los valores internos.
  */
 const ETIQ_BASE_LEGAL = {
-  consentimiento:   "Consentimiento (Art. 12 letra a)",
-  contrato:         "Ejecución de contrato (Art. 12 letra b)",
-  obligacion_legal: "Obligación legal (Art. 12 letra c)",
-  interes_vital:    "Interés vital (Art. 12 letra d)",
-  interes_publico:  "Interés público (Art. 12 letra e)",
-  interes_legitimo: "Interés legítimo (Art. 12 letra f)",
+  consentimiento:           "Consentimiento (Art. 12)",
+  datos_economicos:         "Obligaciones económicas o financieras (Art. 13 letra a)",
+  obligacion_legal:         "Obligación legal (Art. 13 letra b)",
+  contrato:                 "Ejecución de contrato (Art. 13 letra c)",
+  interes_legitimo:         "Interés legítimo (Art. 13 letra d)",
+  defensa_derechos:         "Defensa de derechos ante tribunales (Art. 13 letra e)",
+  consentimiento_sensibles: "Consentimiento expreso — datos sensibles (Art. 16 inc. 1)",
+  datos_biometricos:        "Datos biométricos (Art. 16 ter)",
 };
 
 const ETIQ_ORIGEN = {
@@ -171,6 +175,7 @@ export default function Paso3() {
   const [acordeonAbierto, setAcordeonAbierto] = useState(false);
 
   const [guardando, setGuardando] = useState(false);
+  const [guardandoBorrador, setGuardandoBorrador] = useState(false);
   const [error, setError] = useState("");
 
   /* ── Medidas de seguridad (checkboxes) ──────────────────────── */
@@ -250,7 +255,28 @@ export default function Paso3() {
     };
 
     try {
-      await crearTratamiento(payload);
+      const idx = form.actividadActual ?? 0;
+      const tratId = form.tratamientosGuardados?.[idx];
+
+      if (tratId) {
+        // Ya existe un borrador — actualizar con PUT y cambiar estado
+        const medStr = serializarMedidasSeguridad(
+          formularioCompleto.medidas_seguridad,
+          formularioCompleto.otras_medidas,
+        );
+        const estadoFinal = (
+          formularioCompleto.finalidad &&
+          formularioCompleto.base_legal &&
+          formularioCompleto.plazo_conservacion &&
+          formularioCompleto.destinatarios &&
+          medStr
+        ) ? "COMPLETO" : "PENDIENTE";
+
+        await actualizarTratamiento(tratId, { ...payload, estado: estadoFinal });
+      } else {
+        await crearTratamiento(payload);
+      }
+
       const hayMas =
         form.actividadesPendientes.length > 0 &&
         form.actividadActual + 1 < form.actividadesPendientes.length;
@@ -262,7 +288,6 @@ export default function Paso3() {
         navigate("/mis-tratamientos");
       }
     } catch (e) {
-      // Si es 401, redirigir al login
       if (e.codigo === 401) {
         navigate("/login");
         return;
@@ -270,6 +295,77 @@ export default function Paso3() {
       setError(e.message);
     } finally {
       setGuardando(false);
+    }
+  }
+
+  async function handleGuardarBorrador() {
+    setGuardandoBorrador(true);
+    try {
+      actualizarForm(local);
+      const datos = { ...form, ...local };
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+
+      let sesionId = datos.sesionActual;
+      if (!sesionId) {
+        const res = await fetch(`${API}/sesiones`, {
+          method: "POST", headers,
+          body: JSON.stringify({
+            fuente: datos.campos_detectados?.length > 0 ? "archivo" : "manual",
+            estado: "borrador",
+            columnas_json: datos.campos_detectados?.length > 0 ? datos.campos_detectados : null,
+          }),
+        });
+        if (!res.ok) throw new Error("sesion");
+        const sesion = await res.json();
+        sesionId = sesion.id;
+        actualizarForm({ sesionActual: sesionId });
+      }
+
+      const idx = datos.actividadActual ?? 0;
+      const tratId = datos.tratamientosGuardados?.[idx];
+      const medStr = serializarMedidasSeguridad(local.medidas_seguridad, local.otras_medidas);
+      const payload3 = {
+        nombre: datos.nombre.trim() || "Sin nombre",
+        finalidad: datos.finalidad || null,
+        base_legal: datos.base_legal || null,
+        datos_sensibles: datos.datos_sensibles ?? false,
+        destinatarios: datos.destinatarios || null,
+        sale_extranjero: datos.sale_extranjero ?? false,
+        plazo_conservacion: local.plazo_conservacion || null,
+        medidas_seguridad: medStr,
+        decisiones_automatizadas: local.decisiones_automatizadas ?? false,
+        campos_detectados: datos.campos_detectados || [],
+        detalle: {
+          responsable_tratamiento: datos.responsable || null,
+          es_responsable: datos.es_responsable ?? true,
+          departamento: datos.departamento || null,
+          categorias_titulares: (datos.categorias_titulares || []).join(",") || null,
+          universo_titulares: datos.universo_titulares || null,
+          origen_datos: datos.origen_datos || null,
+        },
+      };
+
+      if (tratId) {
+        await fetch(`${API}/tratamientos/${tratId}`, {
+          method: "PUT", headers, body: JSON.stringify(payload3),
+        });
+      } else {
+        const res = await fetch(`${API}/tratamientos`, {
+          method: "POST", headers,
+          body: JSON.stringify({ ...payload3, estado: "BORRADOR", sesion_id: sesionId }),
+        });
+        if (!res.ok) throw new Error("tratamiento");
+        const trat = await res.json();
+        actualizarForm({
+          tratamientosGuardados: { ...(datos.tratamientosGuardados || {}), [idx]: trat.id },
+        });
+      }
+      navigate("/dashboard");
+    } catch {
+      /* si falla, el usuario se queda en el paso */
+    } finally {
+      setGuardandoBorrador(false);
     }
   }
 
@@ -498,21 +594,32 @@ export default function Paso3() {
 
           {/* ── Navegación ───────────────────────────────────── */}
           <div className="p3-navegacion">
-            <button className="p3-btn p3-btn--anterior" onClick={handleAnterior} disabled={guardando}>
-              ← Atrás
-            </button>
-            <button
-              className={`p3-btn p3-btn--guardar ${guardando ? "p3-btn--cargando" : ""}`}
-              onClick={handleGuardar}
-              disabled={guardando}
-            >
-              {guardando
-                ? "Guardando..."
-                : form.actividadesPendientes.length > 0 &&
-                  form.actividadActual + 1 < form.actividadesPendientes.length
-                ? "Guardar y continuar →"
-                : "Guardar"}
-            </button>
+            <div className="p3-nav-izquierda">
+              <button
+                className="p3-btn p3-btn--borrador"
+                onClick={handleGuardarBorrador}
+                disabled={guardandoBorrador || guardando}
+              >
+                {guardandoBorrador ? "Guardando..." : "Guardar borrador"}
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button className="p3-btn p3-btn--anterior" onClick={handleAnterior} disabled={guardando || guardandoBorrador}>
+                ← Atrás
+              </button>
+              <button
+                className={`p3-btn p3-btn--guardar ${guardando ? "p3-btn--cargando" : ""}`}
+                onClick={handleGuardar}
+                disabled={guardando || guardandoBorrador}
+              >
+                {guardando
+                  ? "Guardando..."
+                  : form.actividadesPendientes.length > 0 &&
+                    form.actividadActual + 1 < form.actividadesPendientes.length
+                  ? "Guardar y continuar →"
+                  : "Guardar"}
+              </button>
+            </div>
           </div>
 
         </div>{/* fin card */}

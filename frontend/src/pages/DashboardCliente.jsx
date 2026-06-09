@@ -72,15 +72,95 @@ export default function Dashboard() {
 
   async function continuarBorrador(sesion) {
     try {
+      // 1. Cargar detalle de la sesión (incluye actividades con tratamiento_id)
       const res = await fetch(`http://localhost:8000/sesiones/${sesion.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) return
-      const data = await res.json()
-      actualizarForm({ sesionActual: sesion.id })
-      navigate("/resultados-analisis", {
-        state: { detectados: data.columnas_json || [], pendientes: [] },
+      const sesionDetalle = await res.json()
+      const actividades = sesionDetalle.actividades || []
+
+      // 2. Si no hay tratamientos guardados, retomar desde asignación de campos
+      if (actividades.length === 0) {
+        actualizarForm({ sesionActual: sesion.id })
+        navigate("/resultados-analisis", {
+          state: { detectados: sesionDetalle.columnas_json || [], pendientes: [] },
+        })
+        return
+      }
+
+      // 3. Cargar cada tratamiento borrador
+      const tratamientos = await Promise.all(
+        actividades.map(async (act) => {
+          const r = await fetch(`http://localhost:8000/tratamientos/${act.tratamiento_id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          return r.ok ? r.json() : null
+        })
+      )
+      const tratsValidos = tratamientos.filter(Boolean)
+      if (tratsValidos.length === 0) return
+
+      // 4. Reconstruir tratamientosGuardados y actividadesPendientes
+      const tratamientosGuardados = {}
+      actividades.forEach((act, idx) => { tratamientosGuardados[idx] = act.tratamiento_id })
+
+      const actividadesPendientes = tratsValidos.map((t) => ({
+        nombre: t.nombre,
+        campos: sesionDetalle.columnas_json || [],
+      }))
+
+      // 5. Reconstruir estado del formulario desde el primer tratamiento
+      const t = tratsValidos[0]
+      const medidasStr = t.medidas_seguridad || ""
+      const medidasArr = medidasStr.split(",").filter(Boolean).map(m =>
+        m.startsWith("otras:") ? "otras" : m
+      )
+      const otrasMedidas = (() => {
+        const o = medidasStr.split(",").find(m => m.startsWith("otras:"))
+        return o ? o.substring(6) : ""
+      })()
+
+      actualizarForm({
+        sesionActual:          sesion.id,
+        tratamientosGuardados,
+        actividadesPendientes,
+        actividadActual:       0,
+        campos_detectados:     sesionDetalle.columnas_json || [],
+        campos_pendientes:     [],
+        // Paso 1
+        nombre:        t.nombre || "",
+        responsable:   t.detalle?.responsable_tratamiento || "",
+        es_responsable: t.detalle?.es_responsable ?? true,
+        departamento:  t.detalle?.departamento || "",
+        finalidad:     t.finalidad || "",
+        base_legal:    t.base_legal || "",
+        // Paso 2
+        categorias_titulares: t.detalle?.categorias_titulares
+          ? t.detalle.categorias_titulares.split(",").filter(Boolean)
+          : [],
+        universo_titulares:   t.detalle?.universo_titulares || "",
+        origen_datos:         t.detalle?.origen_datos || "",
+        datos_sensibles:      t.datos_sensibles ?? false,
+        categorias_sensibles: [],
+        destinatarios:        t.destinatarios || "",
+        sale_extranjero:      t.sale_extranjero ?? false,
+        // Paso 3
+        plazo_conservacion:       t.plazo_conservacion || "",
+        plazo_otro:               otrasMedidas ? "" : "",
+        medidas_seguridad:        medidasArr,
+        otras_medidas:            otrasMedidas,
+        decisiones_automatizadas: t.decisiones_automatizadas ?? false,
       })
+
+      // 6. Navegar al paso correcto según lo que tenía relleno
+      const paso = (() => {
+        if (t.plazo_conservacion || t.medidas_seguridad) return 3
+        if (t.detalle?.categorias_titulares || t.detalle?.universo_titulares || t.destinatarios) return 2
+        return 1
+      })()
+      const rutas = { 1: "/nuevo-tratamiento", 2: "/nuevo-tratamiento/paso2", 3: "/nuevo-tratamiento/paso3" }
+      navigate(rutas[paso])
     } catch { /* silencioso */ }
   }
 

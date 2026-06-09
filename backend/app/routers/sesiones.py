@@ -25,6 +25,10 @@ def _to_response(s: models.SesionAnalisis) -> SesionAnalisisRespuesta:
         estado=s.estado,
         creado_en=s.creado_en,
         num_actividades=len(s.sesiones_actividad),
+        actividades=[
+            {"tratamiento_id": sa.tratamiento_id, "campos_usados": sa.campos_usados}
+            for sa in s.sesiones_actividad
+        ],
     )
 
 
@@ -41,6 +45,7 @@ def crear_sesion(
         fuente=datos.fuente,
         motor_bd=datos.motor_bd,
         columnas_json=datos.columnas_json,
+        estado=datos.estado or "activa",
     )
     db.add(sesion)
     db.commit()

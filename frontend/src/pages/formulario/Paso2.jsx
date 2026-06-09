@@ -4,6 +4,8 @@ import { useFormulario } from "../../context/FormularioContext";
 import BarraLateral from "../../components/BarraLateral";
 import "../../styles/formularioCss/paso2.css";
 
+const API = "http://localhost:8000";
+
 /* ─── Categorías de titulares ────────────────────────────────── */
 const CATEGORIAS_TITULARES = [
   { id: "empleados",   etiqueta: "Empleados y funcionarios" },
@@ -203,10 +205,79 @@ export default function Paso2() {
     setLocal((prev) => ({ ...prev, sale_extranjero: valor, pais_destino: valor ? prev.pais_destino : "" }));
   }
 
+  const [guardandoBorrador, setGuardandoBorrador] = useState(false);
+
   /* ── Navegación ─────────────────────────────────────────────── */
   function handleSiguiente() { actualizarForm(local); navigate("/nuevo-tratamiento/paso3"); }
   function handleAnterior()  { actualizarForm(local); navigate("/nuevo-tratamiento"); }
   function handleCancelar()  { navigate("/dashboard"); }
+
+  async function handleGuardarBorrador() {
+    setGuardandoBorrador(true);
+    try {
+      actualizarForm(local);
+      const datos = { ...form, ...local };
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+
+      let sesionId = datos.sesionActual;
+      if (!sesionId) {
+        const res = await fetch(`${API}/sesiones`, {
+          method: "POST", headers,
+          body: JSON.stringify({
+            fuente: datos.campos_detectados?.length > 0 ? "archivo" : "manual",
+            estado: "borrador",
+            columnas_json: datos.campos_detectados?.length > 0 ? datos.campos_detectados : null,
+          }),
+        });
+        if (!res.ok) throw new Error("sesion");
+        const sesion = await res.json();
+        sesionId = sesion.id;
+        actualizarForm({ sesionActual: sesionId });
+      }
+
+      const idx = datos.actividadActual ?? 0;
+      const tratId = datos.tratamientosGuardados?.[idx];
+      const payload = {
+        nombre: datos.nombre.trim() || "Sin nombre",
+        finalidad: datos.finalidad || null,
+        base_legal: datos.base_legal || null,
+        datos_sensibles: datos.datos_sensibles ?? false,
+        destinatarios: datos.destinatarios || null,
+        sale_extranjero: datos.sale_extranjero ?? false,
+        campos_detectados: datos.campos_detectados || [],
+        detalle: {
+          responsable_tratamiento: datos.responsable || null,
+          es_responsable: datos.es_responsable ?? true,
+          departamento: datos.departamento || null,
+          categorias_titulares: (datos.categorias_titulares || []).join(",") || null,
+          universo_titulares: datos.universo_titulares || null,
+          origen_datos: datos.origen_datos || null,
+        },
+      };
+
+      if (tratId) {
+        await fetch(`${API}/tratamientos/${tratId}`, {
+          method: "PUT", headers, body: JSON.stringify(payload),
+        });
+      } else {
+        const res = await fetch(`${API}/tratamientos`, {
+          method: "POST", headers,
+          body: JSON.stringify({ ...payload, estado: "BORRADOR", sesion_id: sesionId }),
+        });
+        if (!res.ok) throw new Error("tratamiento");
+        const trat = await res.json();
+        actualizarForm({
+          tratamientosGuardados: { ...(datos.tratamientosGuardados || {}), [idx]: trat.id },
+        });
+      }
+      navigate("/dashboard");
+    } catch {
+      /* si falla, el usuario se queda en el paso */
+    } finally {
+      setGuardandoBorrador(false);
+    }
+  }
 
   return (
     <div className="p2-layout">
@@ -405,9 +476,18 @@ export default function Paso2() {
 
           {/* ── Navegación ───────────────────────────────────── */}
           <div className="p2-navegacion">
-            <button className="p2-btn p2-btn--cancelar" onClick={handleCancelar}>
-              Cancelar tratamiento
-            </button>
+            <div className="p2-nav-izquierda">
+              <button className="p2-btn p2-btn--cancelar" onClick={handleCancelar}>
+                Cancelar
+              </button>
+              <button
+                className="p2-btn p2-btn--borrador"
+                onClick={handleGuardarBorrador}
+                disabled={guardandoBorrador}
+              >
+                {guardandoBorrador ? "Guardando..." : "Guardar borrador"}
+              </button>
+            </div>
             <div className="p2-nav-derecha">
               <button className="p2-btn p2-btn--anterior" onClick={handleAnterior}>← Atrás</button>
               <button className="p2-btn p2-btn--siguiente" onClick={handleSiguiente}>Siguiente paso →</button>

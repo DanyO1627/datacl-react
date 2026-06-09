@@ -446,3 +446,23 @@
   background: #c8dcee;
   color: #a0b8cc;
 }
+
+.p3-nav-izquierda {
+  display: flex;
+  gap: 10px;
+}
+
+.p3-btn--borrador {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1.5px solid #86efac;
+}
+
+.p3-btn--borrador:hover:not(:disabled) {
+  background: #dcfce7;
+}
+
+.p3-btn--borrador:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

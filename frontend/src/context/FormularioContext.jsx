@@ -16,9 +16,10 @@ const FORM_VACIO = {
   // ── Análisis ─────────────────────────────────────────────
   campos_detectados: [], campos_pendientes: [],
   // ── Sesión / actividades ─────────────────────────────────
-  sesionActual: null,        // id de la sesión guardada como borrador
-  actividadesPendientes: [], // [{ id, nombre, campos[] }] creadas en AsignacionCampos
-  actividadActual: 0,        // índice de la actividad que está completando el formulario
+  sesionActual: null,          // id de la sesión guardada como borrador
+  actividadesPendientes: [],   // [{ id, nombre, campos[] }] creadas en AsignacionCampos
+  actividadActual: 0,          // índice de la actividad que está completando el formulario
+  tratamientosGuardados: {},   // { [actividadActual]: tratamientoId } — borradores en BD
 };
 
 export function FormularioProvider({ children }) {
@@ -40,12 +41,13 @@ export function FormularioProvider({ children }) {
       const sigActividad = prev.actividadesPendientes[siguiente];
       return {
         ...FORM_VACIO,
-        sesionActual: prev.sesionActual,
+        sesionActual:          prev.sesionActual,
         actividadesPendientes: prev.actividadesPendientes,
-        actividadActual: siguiente,
-        nombre:            sigActividad?.nombre || "",
-        campos_detectados: sigActividad?.campos || [],
-        campos_pendientes: [],
+        actividadActual:       siguiente,
+        tratamientosGuardados: prev.tratamientosGuardados,
+        nombre:                sigActividad?.nombre || "",
+        campos_detectados:     sigActividad?.campos || [],
+        campos_pendientes:     [],
       };
     });
   }

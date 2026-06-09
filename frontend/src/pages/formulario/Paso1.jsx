@@ -4,6 +4,8 @@ import { useFormulario } from "../../context/FormularioContext";
 import BarraLateral from "../../components/BarraLateral";
 import "../../styles/formularioCss/paso1.css";
 
+const API = "http://localhost:8000";
+
 /* ─── Opciones base legal con artículos Ley 21.719 ──────────── */
 const BASES_LEGALES = [
   {
@@ -137,10 +139,73 @@ export default function Paso1() {
     base_legal:     form.base_legal     || "",
   });
 
+  const [guardandoBorrador, setGuardandoBorrador] = useState(false);
+
   function handleChange(e) {
     const { name, value } = e.target;
     if (name === "finalidad" && contarPalabras(value) > 1000) return;
     setLocal((prev) => ({ ...prev, [name]: value }));
+  }
+
+  async function handleGuardarBorrador() {
+    setGuardandoBorrador(true);
+    try {
+      actualizarForm(local);
+      const datos = { ...form, ...local };
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+
+      let sesionId = datos.sesionActual;
+      if (!sesionId) {
+        const res = await fetch(`${API}/sesiones`, {
+          method: "POST", headers,
+          body: JSON.stringify({
+            fuente: datos.campos_detectados?.length > 0 ? "archivo" : "manual",
+            estado: "borrador",
+            columnas_json: datos.campos_detectados?.length > 0 ? datos.campos_detectados : null,
+          }),
+        });
+        if (!res.ok) throw new Error();
+        const sesion = await res.json();
+        sesionId = sesion.id;
+        actualizarForm({ sesionActual: sesionId });
+      }
+
+      const idx = datos.actividadActual ?? 0;
+      const tratId = datos.tratamientosGuardados?.[idx];
+      const payload = {
+        nombre: datos.nombre.trim() || "Sin nombre",
+        finalidad: datos.finalidad || null,
+        base_legal: datos.base_legal || null,
+        campos_detectados: datos.campos_detectados || [],
+        detalle: {
+          responsable_tratamiento: datos.responsable || null,
+          es_responsable: datos.es_responsable ?? true,
+          departamento: datos.departamento || null,
+        },
+      };
+
+      if (tratId) {
+        await fetch(`${API}/tratamientos/${tratId}`, {
+          method: "PUT", headers, body: JSON.stringify(payload),
+        });
+      } else {
+        const res = await fetch(`${API}/tratamientos`, {
+          method: "POST", headers,
+          body: JSON.stringify({ ...payload, estado: "BORRADOR", sesion_id: sesionId }),
+        });
+        if (!res.ok) throw new Error();
+        const trat = await res.json();
+        actualizarForm({
+          tratamientosGuardados: { ...(datos.tratamientosGuardados || {}), [idx]: trat.id },
+        });
+      }
+      navigate("/dashboard");
+    } catch {
+      /* si falla, el usuario se queda en el paso — no hay mensaje bloqueante */
+    } finally {
+      setGuardandoBorrador(false);
+    }
   }
 
   const puedeAvanzar =
@@ -372,9 +437,18 @@ export default function Paso1() {
 
           {/* ── Navegación ── */}
           <div className="p1-navegacion">
-            <button className="p1-btn p1-btn--cancelar" onClick={handleCancelar}>
-              Cancelar tratamiento
-            </button>
+            <div className="p1-nav-izquierda">
+              <button className="p1-btn p1-btn--cancelar" onClick={handleCancelar}>
+                Cancelar
+              </button>
+              <button
+                className="p1-btn p1-btn--borrador"
+                onClick={handleGuardarBorrador}
+                disabled={guardandoBorrador || !local.nombre.trim()}
+              >
+                {guardandoBorrador ? "Guardando..." : "Guardar borrador"}
+              </button>
+            </div>
             <button
               className={`p1-btn p1-btn--siguiente ${!puedeAvanzar ? "p1-btn--disabled" : ""}`}
               disabled={!puedeAvanzar}
