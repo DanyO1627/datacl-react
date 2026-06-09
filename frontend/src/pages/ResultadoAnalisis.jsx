@@ -19,6 +19,7 @@ export default function AsignacionCampos() {
   const [actividadActiva, setActividadActiva] = useState(null);
   const [guardando,       setGuardando]      = useState(false);
   const [msgGuardado,     setMsgGuardado]    = useState("");
+  const [borradorOk,      setBorradorOk]     = useState(false);
 
   /* ── Derivados ─────────────────────────────────────────────── */
   const asignadas = useMemo(
@@ -84,36 +85,54 @@ export default function AsignacionCampos() {
     setGuardando(true);
     try {
       const token = localStorage.getItem("token");
-      let ok = false;
+      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+      let sesionId = form.sesionActual;
 
-      if (form.sesionActual) {
-        // Sesión ya existe: marcarla como borrador
-        const res = await fetch(`http://localhost:8000/sesiones/${form.sesionActual}/estado`, {
-          method: "PATCH",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      if (sesionId) {
+        const res = await fetch(`http://localhost:8000/sesiones/${sesionId}/estado`, {
+          method: "PATCH", headers,
           body: JSON.stringify({ estado: "borrador" }),
         });
-        ok = res.ok;
+        if (!res.ok) throw new Error("sesion");
       } else {
-        // Primera vez: crear sesión nueva
         const res = await fetch("http://localhost:8000/sesiones", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          method: "POST", headers,
           body: JSON.stringify({ fuente: "archivo", estado: "borrador", columnas_json: detectados }),
         });
-        ok = res.ok;
-        if (ok) {
-          const data = await res.json();
-          actualizarForm({ sesionActual: data.id });
-        }
+        if (!res.ok) throw new Error("sesion");
+        const data = await res.json();
+        sesionId = data.id;
+        actualizarForm({ sesionActual: sesionId });
       }
 
-      if (ok) {
-        navigate("/dashboard");
-      } else {
-        setMsgGuardado("No se pudo guardar");
-        setTimeout(() => setMsgGuardado(""), 3000);
+      // Guardar borrador mínimo para cada actividad (preserva nombre y campos asignados)
+      if (actividades.length > 0) {
+        const existentes = { ...(form.tratamientosGuardados || {}) };
+        const nuevosGuardados = { ...existentes };
+        for (let i = 0; i < actividades.length; i++) {
+          if (existentes[i]) continue;
+          const act = actividades[i];
+          try {
+            const res = await fetch("http://localhost:8000/tratamientos", {
+              method: "POST", headers,
+              body: JSON.stringify({
+                nombre: act.nombre,
+                estado: "BORRADOR",
+                sesion_id: sesionId,
+                campos_detectados: act.campos,
+                campos_usados: act.campos,
+              }),
+            });
+            if (res.ok) {
+              const trat = await res.json();
+              nuevosGuardados[i] = trat.id;
+            }
+          } catch { /* continuar con siguiente actividad */ }
+        }
+        actualizarForm({ tratamientosGuardados: nuevosGuardados });
       }
+
+      setBorradorOk(true);
     } catch {
       setMsgGuardado("Error de conexión");
       setTimeout(() => setMsgGuardado(""), 3000);
@@ -130,6 +149,7 @@ export default function AsignacionCampos() {
       nombre:            actividades[0].nombre,
       campos_detectados: actividades[0].campos,
       campos_pendientes: [],
+      campos_sesion:     [...detectados, ...pendientes],
     });
     navigate("/nuevo-tratamiento");
   }
@@ -332,6 +352,21 @@ export default function AsignacionCampos() {
             </div>
           </div>
         </div>
+
+        {/* ── Toast borrador guardado ── */}
+        {borradorOk && (
+          <div className="ac-toast-borrador">
+            <span className="ac-toast-texto">✓ Borrador guardado correctamente.</span>
+            <div className="ac-toast-acciones">
+              <button className="ac-toast-btn ac-toast-btn--dashboard" onClick={() => navigate("/dashboard")}>
+                Ir al dashboard
+              </button>
+              <button className="ac-toast-btn ac-toast-btn--continuar" onClick={() => setBorradorOk(false)}>
+                Continuar aquí
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── Footer fijo ── */}
         <div className="ac-footer">

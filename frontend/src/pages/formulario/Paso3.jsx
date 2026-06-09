@@ -4,7 +4,6 @@ import { useAuth } from "../../context/AuthContext";
 import { useFormulario } from "../../context/FormularioContext";
 import { crearTratamiento, actualizarTratamiento } from "../../services/tratamientosService";
 
-const API = "http://localhost:8000";
 import BarraLateral from "../../components/BarraLateral";
 import "../../styles/formularioCss/paso3.css";
 
@@ -176,6 +175,7 @@ export default function Paso3() {
 
   const [guardando, setGuardando] = useState(false);
   const [guardandoBorrador, setGuardandoBorrador] = useState(false);
+  const [borradorOk, setBorradorOk] = useState(false);
   const [error, setError] = useState("");
 
   /* ── Medidas de seguridad (checkboxes) ──────────────────────── */
@@ -284,6 +284,13 @@ export default function Paso3() {
         avanzarActividad();
         navigate("/nuevo-tratamiento");
       } else {
+        if (form.sesionActual) {
+          await fetch(`${API}/sesiones/${form.sesionActual}/estado`, {
+            method: "PATCH",
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ estado: "completada" }),
+          });
+        }
         resetForm();
         navigate("/mis-tratamientos");
       }
@@ -306,14 +313,18 @@ export default function Paso3() {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
+      const camposParaSesion = datos.campos_sesion?.length > 0
+        ? datos.campos_sesion
+        : (datos.campos_detectados || []);
+
       let sesionId = datos.sesionActual;
       if (!sesionId) {
         const res = await fetch(`${API}/sesiones`, {
           method: "POST", headers,
           body: JSON.stringify({
-            fuente: datos.campos_detectados?.length > 0 ? "archivo" : "manual",
+            fuente: camposParaSesion.length > 0 ? "archivo" : "manual",
             estado: "borrador",
-            columnas_json: datos.campos_detectados?.length > 0 ? datos.campos_detectados : null,
+            columnas_json: camposParaSesion.length > 0 ? camposParaSesion : null,
           }),
         });
         if (!res.ok) throw new Error("sesion");
@@ -336,6 +347,7 @@ export default function Paso3() {
         medidas_seguridad: medStr,
         decisiones_automatizadas: local.decisiones_automatizadas ?? false,
         campos_detectados: datos.campos_detectados || [],
+        campos_usados: datos.campos_detectados || [],
         detalle: {
           responsable_tratamiento: datos.responsable || null,
           es_responsable: datos.es_responsable ?? true,
@@ -346,6 +358,7 @@ export default function Paso3() {
         },
       };
 
+      let currentTratId = tratId;
       if (tratId) {
         await fetch(`${API}/tratamientos/${tratId}`, {
           method: "PUT", headers, body: JSON.stringify(payload3),
@@ -357,11 +370,29 @@ export default function Paso3() {
         });
         if (!res.ok) throw new Error("tratamiento");
         const trat = await res.json();
-        actualizarForm({
-          tratamientosGuardados: { ...(datos.tratamientosGuardados || {}), [idx]: trat.id },
-        });
+        currentTratId = trat.id;
       }
-      navigate("/dashboard");
+
+      const todosGuardados = { ...(datos.tratamientosGuardados || {}), [idx]: currentTratId };
+      for (let i = 0; i < (datos.actividadesPendientes || []).length; i++) {
+        if (i === idx || todosGuardados[i]) continue;
+        const act = datos.actividadesPendientes[i];
+        try {
+          const res = await fetch(`${API}/tratamientos`, {
+            method: "POST", headers,
+            body: JSON.stringify({
+              nombre: act.nombre || `Actividad ${i + 1}`,
+              estado: "BORRADOR",
+              sesion_id: sesionId,
+              campos_detectados: act.campos || [],
+              campos_usados: act.campos || [],
+            }),
+          });
+          if (res.ok) { const trat = await res.json(); todosGuardados[i] = trat.id; }
+        } catch { /* continuar */ }
+      }
+      actualizarForm({ tratamientosGuardados: todosGuardados });
+      setBorradorOk(true);
     } catch {
       /* si falla, el usuario se queda en el paso */
     } finally {
@@ -591,6 +622,21 @@ export default function Paso3() {
           </div>
 
           {error && <p className="p3-error">{error}</p>}
+
+          {/* ── Toast borrador guardado ── */}
+          {borradorOk && (
+            <div className="p3-toast-borrador">
+              <span className="p3-toast-texto">✓ Borrador guardado correctamente.</span>
+              <div className="p3-toast-acciones">
+                <button className="p3-toast-btn p3-toast-btn--dashboard" onClick={() => navigate("/dashboard")}>
+                  Ir al dashboard
+                </button>
+                <button className="p3-toast-btn p3-toast-btn--continuar" onClick={() => setBorradorOk(false)}>
+                  Continuar aquí
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* ── Navegación ───────────────────────────────────── */}
           <div className="p3-navegacion">

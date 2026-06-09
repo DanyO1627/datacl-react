@@ -62,7 +62,11 @@ export default function Dashboard() {
         })
         if (res.ok) {
           const todas = await res.json()
-          setSesionesBorrador(todas.filter(s => s.estado === "borrador"))
+          setSesionesBorrador(
+            todas
+              .filter(s => s.estado === "borrador")
+              .sort((a, b) => new Date(b.creado_en) - new Date(a.creado_en))
+          )
         }
       } catch { /* silencioso */ }
     }
@@ -105,13 +109,21 @@ export default function Dashboard() {
       const tratamientosGuardados = {}
       actividades.forEach((act, idx) => { tratamientosGuardados[idx] = act.tratamiento_id })
 
-      const actividadesPendientes = tratsValidos.map((t) => ({
+      const actividadesPendientes = tratsValidos.map((t, idx) => ({
         nombre: t.nombre,
-        campos: sesionDetalle.columnas_json || [],
+        campos: actividades[idx]?.campos_usados || [],
       }))
 
-      // 5. Reconstruir estado del formulario desde el primer tratamiento
-      const t = tratsValidos[0]
+      // 5. Reconstruir estado del formulario desde la primera actividad incompleta (BORRADOR)
+      const primerBorradorIdx = tratsValidos.findIndex(t => t.estado === "BORRADOR")
+      // Si todos están COMPLETO/PENDIENTE pero la sesión sigue como borrador (ej. PATCH falló),
+      // no tiene sentido reabrir el formulario — ir directo a mis tratamientos.
+      if (primerBorradorIdx === -1) {
+        navigate("/mis-tratamientos")
+        return
+      }
+      const idxResumen = primerBorradorIdx
+      const t = tratsValidos[idxResumen]
       const medidasStr = t.medidas_seguridad || ""
       const medidasArr = medidasStr.split(",").filter(Boolean).map(m =>
         m.startsWith("otras:") ? "otras" : m
@@ -125,9 +137,10 @@ export default function Dashboard() {
         sesionActual:          sesion.id,
         tratamientosGuardados,
         actividadesPendientes,
-        actividadActual:       0,
-        campos_detectados:     sesionDetalle.columnas_json || [],
+        actividadActual:       idxResumen,
+        campos_detectados:     actividades[idxResumen]?.campos_usados || sesionDetalle.columnas_json || [],
         campos_pendientes:     [],
+        campos_sesion:         sesionDetalle.columnas_json || [],
         // Paso 1
         nombre:        t.nombre || "",
         responsable:   t.detalle?.responsable_tratamiento || "",
@@ -161,6 +174,18 @@ export default function Dashboard() {
       })()
       const rutas = { 1: "/nuevo-tratamiento", 2: "/nuevo-tratamiento/paso2", 3: "/nuevo-tratamiento/paso3" }
       navigate(rutas[paso])
+    } catch { /* silencioso */ }
+  }
+
+  async function descartarBorrador(sesionId) {
+    try {
+      const res = await fetch(`http://localhost:8000/sesiones/${sesionId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok || res.status === 204) {
+        setSesionesBorrador((prev) => prev.filter((s) => s.id !== sesionId))
+      }
     } catch { /* silencioso */ }
   }
 
@@ -221,27 +246,35 @@ export default function Dashboard() {
                 : `Tienes ${sesionesborrador.length} sesiones de análisis guardadas como borrador`}
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {sesionesborrador.slice(0, 3).map(s => (
-                <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", border: "1px solid #fde68a", borderRadius: 6, padding: "10px 14px" }}>
-                  <span style={{ fontSize: 14, color: "#2b2b3b", fontWeight: 500 }}>
+              {sesionesborrador.map(s => (
+                <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: "#fff", border: "1px solid #fde68a", borderRadius: 6, padding: "10px 14px" }}>
+                  <span style={{ fontSize: 14, color: "#2b2b3b", fontWeight: 500, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {s.nombre || "Sesión sin nombre"}
                     <span style={{ marginLeft: 8, fontSize: 12, color: "#888", fontWeight: 400 }}>
                       {s.fuente === "archivo" ? "· Archivo" : s.fuente === "manual" ? "· Ingreso manual" : "· Conexión BD"}
                     </span>
+                    {s.creado_en && (
+                      <span style={{ marginLeft: 8, fontSize: 11, color: "#aaa", fontWeight: 400 }}>
+                        · {new Date(s.creado_en).toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
                   </span>
-                  <button
-                    style={{ background: "#f59e0b", color: "#fff", border: "none", borderRadius: 6, padding: "6px 14px", fontSize: 13, cursor: "pointer", fontWeight: 600 }}
-                    onClick={() => continuarBorrador(s)}
-                  >
-                    Continuar →
-                  </button>
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                    <button
+                      style={{ background: "#fff", color: "#b45309", border: "1px solid #fcd34d", borderRadius: 6, padding: "5px 12px", fontSize: 13, cursor: "pointer", fontWeight: 500 }}
+                      onClick={() => descartarBorrador(s.id)}
+                    >
+                      Descartar
+                    </button>
+                    <button
+                      style={{ background: "#f59e0b", color: "#fff", border: "none", borderRadius: 6, padding: "6px 14px", fontSize: 13, cursor: "pointer", fontWeight: 600 }}
+                      onClick={() => continuarBorrador(s)}
+                    >
+                      Continuar →
+                    </button>
+                  </div>
                 </div>
               ))}
-              {sesionesborrador.length > 3 && (
-                <p style={{ margin: "4px 0 0", fontSize: 12, color: "#92400e" }}>
-                  y {sesionesborrador.length - 3} más...
-                </p>
-              )}
             </div>
           </section>
         )}

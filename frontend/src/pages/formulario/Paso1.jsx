@@ -140,6 +140,7 @@ export default function Paso1() {
   });
 
   const [guardandoBorrador, setGuardandoBorrador] = useState(false);
+  const [borradorOk, setBorradorOk] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -155,14 +156,19 @@ export default function Paso1() {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
+      // campos_sesion = lista completa del archivo; fallback a campos de la actividad actual
+      const camposParaSesion = datos.campos_sesion?.length > 0
+        ? datos.campos_sesion
+        : (datos.campos_detectados || []);
+
       let sesionId = datos.sesionActual;
       if (!sesionId) {
         const res = await fetch(`${API}/sesiones`, {
           method: "POST", headers,
           body: JSON.stringify({
-            fuente: datos.campos_detectados?.length > 0 ? "archivo" : "manual",
+            fuente: camposParaSesion.length > 0 ? "archivo" : "manual",
             estado: "borrador",
-            columnas_json: datos.campos_detectados?.length > 0 ? datos.campos_detectados : null,
+            columnas_json: camposParaSesion.length > 0 ? camposParaSesion : null,
           }),
         });
         if (!res.ok) throw new Error();
@@ -178,6 +184,7 @@ export default function Paso1() {
         finalidad: datos.finalidad || null,
         base_legal: datos.base_legal || null,
         campos_detectados: datos.campos_detectados || [],
+        campos_usados: datos.campos_detectados || [],
         detalle: {
           responsable_tratamiento: datos.responsable || null,
           es_responsable: datos.es_responsable ?? true,
@@ -185,6 +192,7 @@ export default function Paso1() {
         },
       };
 
+      let currentTratId = tratId;
       if (tratId) {
         await fetch(`${API}/tratamientos/${tratId}`, {
           method: "PUT", headers, body: JSON.stringify(payload),
@@ -196,13 +204,32 @@ export default function Paso1() {
         });
         if (!res.ok) throw new Error();
         const trat = await res.json();
-        actualizarForm({
-          tratamientosGuardados: { ...(datos.tratamientosGuardados || {}), [idx]: trat.id },
-        });
+        currentTratId = trat.id;
       }
-      navigate("/dashboard");
+
+      // Guardar borradores para las demás actividades que aún no tienen uno
+      const todosGuardados = { ...(datos.tratamientosGuardados || {}), [idx]: currentTratId };
+      for (let i = 0; i < (datos.actividadesPendientes || []).length; i++) {
+        if (i === idx || todosGuardados[i]) continue;
+        const act = datos.actividadesPendientes[i];
+        try {
+          const res = await fetch(`${API}/tratamientos`, {
+            method: "POST", headers,
+            body: JSON.stringify({
+              nombre: act.nombre || `Actividad ${i + 1}`,
+              estado: "BORRADOR",
+              sesion_id: sesionId,
+              campos_detectados: act.campos || [],
+              campos_usados: act.campos || [],
+            }),
+          });
+          if (res.ok) { const trat = await res.json(); todosGuardados[i] = trat.id; }
+        } catch { /* continuar */ }
+      }
+      actualizarForm({ tratamientosGuardados: todosGuardados });
+      setBorradorOk(true);
     } catch {
-      /* si falla, el usuario se queda en el paso — no hay mensaje bloqueante */
+      /* si falla, el usuario se queda en el paso */
     } finally {
       setGuardandoBorrador(false);
     }
@@ -434,6 +461,21 @@ export default function Paso1() {
               })()}
             </div>
           </div>
+
+          {/* ── Toast borrador guardado ── */}
+          {borradorOk && (
+            <div className="p1-toast-borrador">
+              <span className="p1-toast-texto">✓ Borrador guardado correctamente.</span>
+              <div className="p1-toast-acciones">
+                <button className="p1-toast-btn p1-toast-btn--dashboard" onClick={() => navigate("/dashboard")}>
+                  Ir al dashboard
+                </button>
+                <button className="p1-toast-btn p1-toast-btn--continuar" onClick={() => setBorradorOk(false)}>
+                  Continuar aquí
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* ── Navegación ── */}
           <div className="p1-navegacion">

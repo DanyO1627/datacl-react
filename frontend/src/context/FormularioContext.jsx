@@ -20,6 +20,7 @@ const FORM_VACIO = {
   actividadesPendientes: [],   // [{ id, nombre, campos[] }] creadas en AsignacionCampos
   actividadActual: 0,          // índice de la actividad que está completando el formulario
   tratamientosGuardados: {},   // { [actividadActual]: tratamientoId } — borradores en BD
+  campos_sesion: [],           // todos los campos originales del archivo (detectados + pendientes)
 };
 
 export function FormularioProvider({ children }) {
@@ -45,6 +46,7 @@ export function FormularioProvider({ children }) {
         actividadesPendientes: prev.actividadesPendientes,
         actividadActual:       siguiente,
         tratamientosGuardados: prev.tratamientosGuardados,
+        campos_sesion:         prev.campos_sesion,
         nombre:                sigActividad?.nombre || "",
         campos_detectados:     sigActividad?.campos || [],
         campos_pendientes:     [],

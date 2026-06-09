@@ -611,3 +611,25 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+/* ─── Toast borrador guardado ─────────────────────────────────── */
+.p2-toast-borrador {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+.p2-toast-texto { font-size: 14px; color: #166534; font-weight: 500; }
+.p2-toast-acciones { display: flex; gap: 8px; flex-shrink: 0; }
+.p2-toast-btn {
+  padding: 6px 14px; border-radius: 6px; font-size: 13px;
+  cursor: pointer; font-weight: 500; border: 1.5px solid;
+}
+.p2-toast-btn--dashboard { background: #fff; color: #166534; border-color: #86efac; }
+.p2-toast-btn--dashboard:hover { background: #dcfce7; }
+.p2-toast-btn--continuar { background: #166534; color: #fff; border-color: #166534; }
+.p2-toast-btn--continuar:hover { background: #15803d; }
