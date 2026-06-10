@@ -47,6 +47,14 @@ class Tratamiento(Base):
     detalle            = relationship("DetalleRat", back_populates="tratamiento", uselist=False, cascade="all, delete-orphan")
     sesiones_actividad = relationship("SesionActividad", back_populates="tratamiento", cascade="all, delete-orphan")
 
+    @property
+    def sesion_origen(self) -> str | None:
+        """Nombre de la sesión de análisis de la que provienen los campos, si la hay."""
+        if self.sesiones_actividad:
+            sesion = self.sesiones_actividad[0].sesion
+            return sesion.nombre if sesion else None
+        return None
+
 
 class CampoRat(Base):
     __tablename__ = "campos_rat"

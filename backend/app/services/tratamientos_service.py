@@ -114,7 +114,11 @@ def obtener_tratamiento_por_id(
 ) -> models.Tratamiento | None:
     return (
         db.query(models.Tratamiento)
-        .options(joinedload(models.Tratamiento.detalle))
+        .options(
+            joinedload(models.Tratamiento.detalle),
+            joinedload(models.Tratamiento.sesiones_actividad)
+            .joinedload(models.SesionActividad.sesion),
+        )
         .filter(
             models.Tratamiento.id == tratamiento_id,
             models.Tratamiento.organizacion_id == organizacion_id,
