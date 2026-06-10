@@ -14,12 +14,14 @@ from reportlab.platypus import (
 # ── Mapas de valores internos a texto legible ──────────────────────────────
 
 _BASE_LEGAL = {
-    "consentimiento":   "Consentimiento\n(Art. 12 letra a)",
-    "contrato":         "Ejecución de\ncontrato\n(Art. 12 letra b)",
-    "obligacion_legal": "Obligación\nlegal\n(Art. 12 letra c)",
-    "interes_vital":    "Interés vital\n(Art. 12 letra d)",
-    "interes_publico":  "Interés\npúblico\n(Art. 12 letra e)",
-    "interes_legitimo": "Interés\nlegítimo\n(Art. 12 letra f)",
+    "consentimiento":           "Consentimiento<br/>(Art. 12)",
+    "datos_economicos":         "Obligaciones<br/>económicas o<br/>financieras<br/>(Art. 13 letra a)",
+    "obligacion_legal":         "Obligación legal<br/>(Art. 13 letra b)",
+    "contrato":                 "Ejecución de<br/>contrato<br/>(Art. 13 letra c)",
+    "interes_legitimo":         "Interés legítimo<br/>(Art. 13 letra d)",
+    "defensa_derechos":         "Defensa de<br/>derechos ante<br/>tribunales<br/>(Art. 13 letra e)",
+    "consentimiento_sensibles": "Consentimiento<br/>datos sensibles<br/>(Art. 16 inc. 1)",
+    "datos_biometricos":        "Datos<br/>biométricos<br/>(Art. 16 ter)",
 }
 
 _PLAZO = {
@@ -85,7 +87,7 @@ def _fila_rat(t, s_celda) -> list:
         for c in cats_raw.split(",") if c.strip()
     )
     universo_texto = d.universo_titulares if d and d.universo_titulares else None
-    universo  = "\n".join(filter(None, [cats, universo_texto])) or None
+    universo  = "<br/>".join(filter(None, [cats, universo_texto])) or None
 
     cat_datos = (d.categoria_datos if (d and d.categoria_datos) else None) or _cat_datos(t)
 
