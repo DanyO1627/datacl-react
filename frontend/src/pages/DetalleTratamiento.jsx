@@ -307,6 +307,12 @@ export default function DetalleTratamiento() {
             <Campo label="Origen de los datos">
               <Valor v={d?.origen_datos} mapa={ORIGEN} />
             </Campo>
+            <Campo label="Categoría de datos (detalle RAT)">
+              {d?.categoria_datos
+                ? <span className="detalle-campo-valor">{d.categoria_datos}</span>
+                : <span className="detalle-campo-pendiente">No se generó una descripción detallada — puedes agregarla desde "Editar"</span>
+              }
+            </Campo>
           </div>
         </div>
 

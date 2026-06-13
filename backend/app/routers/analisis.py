@@ -10,7 +10,7 @@ from app.utils.jwt import obtener_usuario_actual
 # ─────────────────────────────────────────────────────────────────────────────
 # DECISIÓN: ¿Requiere autenticación /analizar?
 #
-# SÍ requiere JWT — razones:
+# SÍ requiere JWT: razones:
 #
 # 1. ABUSO DE RECURSOS: sin autenticación cualquier persona o bot puede subir
 #    archivos de forma masiva y consumir CPU/RAM del servidor indefinidamente.
@@ -78,7 +78,7 @@ async def analizar_archivo(
     _usuario=Depends(obtener_usuario_actual),
 ):
     """
-    Nivel 1 — recibe un archivo CSV o Excel y clasifica sus columnas.
+    Nivel 1: recibe un archivo CSV o Excel y clasifica sus columnas.
     Los datos se analizan SOLO en memoria; nunca se persisten en la BD.
     Requiere autenticación JWT.
     """
@@ -116,7 +116,7 @@ async def analizar_con_diccionario(
     _usuario=Depends(obtener_usuario_actual),
 ):
     """
-    Nivel 2 — recibe el archivo de datos y un diccionario técnico.
+    Nivel 2 : recibe el archivo de datos y un diccionario técnico.
     Requiere autenticación JWT.
     """
     tipo_datos = _detectar_tipo_archivo(archivo.filename)

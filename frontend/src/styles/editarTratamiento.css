@@ -127,7 +127,8 @@
 }
 
 .campo select,
-.campo input {
+.campo input,
+.campo textarea {
   padding: 10px 14px;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -135,11 +136,20 @@
   outline: none;
   transition: border 0.2s;
   background: #fff;
+  font-family: inherit;
+  resize: vertical;
 }
 
 .campo select:focus,
-.campo input:focus {
+.campo input:focus,
+.campo textarea:focus {
   border-color: #6c4fcf;
+}
+
+.editar-campo-contador {
+  font-size: 11px;
+  color: #9ab5cc;
+  text-align: right;
 }
 
 /* Botón recalcular */

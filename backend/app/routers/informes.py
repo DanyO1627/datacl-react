@@ -17,13 +17,13 @@ load_dotenv()
 
 router = APIRouter(prefix="/informes", tags=["Informes"])
 
-# Carpeta donde se guardan los PDFs — se crea automáticamente si no existe
+# Carpeta donde se guardan los PDFs : se crea automáticamente si no existe
 CARPETA_INFORMES = Path("informes_generados")
 CARPETA_INFORMES.mkdir(exist_ok=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# GROQ — análisis IA
+# GROQ : análisis IA
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _pedir_analisis_ia(tratamientos: list) -> str | None:
