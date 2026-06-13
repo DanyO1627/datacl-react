@@ -120,6 +120,43 @@
   color: var(--mid);
 }
 
+/* ── Tooltip de información ───────────────────────────────────── */
+.ac-tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.ac-tooltip-trigger {
+  display: flex;
+  align-items: center;
+  color: #9ab5cc;
+  cursor: help;
+  transition: color 0.15s;
+}
+
+.ac-tooltip-trigger:hover { color: var(--mid); }
+
+.ac-tooltip-burbuja {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: var(--navy);
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  width: 260px;
+  z-index: 200;
+  pointer-events: none;
+  line-height: 1.5;
+  box-shadow: 0 4px 16px rgba(2,16,36,0.25);
+}
+
 .ac-panel-cuerpo {
   overflow-y: auto;
   flex: 1;
