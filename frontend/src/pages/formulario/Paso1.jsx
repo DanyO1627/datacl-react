@@ -120,15 +120,18 @@ export default function Paso1() {
   const { state: datosAnalisis } = useLocation();
   const { form, actualizarForm } = useFormulario();
 
-  // Pre-cargar nombre desde los datos del análisis si viene vacío
+  // Pre-cargar campos detectados desde el análisis si el formulario viene vacío.
+  // Depende de form.campos_detectados.length (no del array completo) para no
+  // re-disparar el efecto cuando actualizarForm reemplaza el array por otro
+  // de igual longitud, evitando un loop infinito.
   useEffect(() => {
-    if (datosAnalisis?.campos_detectados && form.campos_detectados.length === 0) {
+    if (datosAnalisis?.campos_detectados?.length > 0 && form.campos_detectados.length === 0) {
       actualizarForm({
         campos_detectados: datosAnalisis.campos_detectados,
         campos_pendientes: datosAnalisis.campos_pendientes ?? [],
       });
     }
-  }, []);
+  }, [datosAnalisis, form.campos_detectados.length]);
 
   const [local, setLocal] = useState({
     nombre:         form.nombre         || "",

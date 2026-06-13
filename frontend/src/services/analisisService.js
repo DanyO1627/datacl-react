@@ -42,3 +42,18 @@ export async function analizarArchivo(archivo, diccionario = null) {
   const respuesta = await api.post("/analizar/archivo", formData);
   return respuesta.data;
 }
+
+// ANALIZAR SOLO DICCIONARIO
+// Para organizaciones que no quieren subir sus datos reales: clasifica los
+// campos usando únicamente el diccionario técnico (nombre_tecnico + descripcion).
+// Llama a /analizar/diccionario sin el campo "archivo".
+//
+// Devuelve: { detectados, pendientes, total_columnas, resumen }
+
+export async function analizarSoloDiccionario(diccionario) {
+  const formData = new FormData();
+  formData.append("diccionario", diccionario);
+
+  const respuesta = await api.post("/analizar/diccionario", formData);
+  return respuesta.data;
+}
