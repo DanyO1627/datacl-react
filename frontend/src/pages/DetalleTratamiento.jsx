@@ -24,7 +24,7 @@ const PLAZO = {
   "5_anios":         "5 años",
   "10_anios":        "10 años",
   indefinido:        "Indefinido",
-  duracion_relacion: "Mientras dure la relación",
+  duracion_relacion: "Mientras dure la relación contractual",
   otro:              "Otro",
 }
 
@@ -68,11 +68,17 @@ const COLOR_ESTADO = {
 
 function parsearMedidas(str) {
   if (!str) return []
-  return str.split(",").map(m => {
-    if (m.startsWith("otras:")) return `Otras: ${m.slice(6)}`
-    if (m === "otras") return "Otras"
-    return MEDIDAS[m] || m
-  })
+  // "otras:" marca el inicio del texto libre y puede contener comas o saltos
+  // de línea propios — todo lo que sigue hasta el final pertenece a ese texto.
+  const idxOtras = str.indexOf("otras:")
+  if (idxOtras !== -1) {
+    const antes = str.slice(0, idxOtras).replace(/,$/, "")
+    const libre = str.slice(idxOtras + "otras:".length)
+    const items = antes ? antes.split(",").filter(Boolean).map(m => MEDIDAS[m] || m) : []
+    items.push(`Otras: ${libre}`)
+    return items
+  }
+  return str.split(",").filter(Boolean).map(m => m === "otras" ? "Otras" : (MEDIDAS[m] || m))
 }
 
 function parsearTitulares(str) {
@@ -249,7 +255,14 @@ export default function DetalleTratamiento() {
               <span className="detalle-campo-valor">{tratamiento.decisiones_automatizadas ? 'Sí' : 'No'}</span>
             </Campo>
             <Campo label="Plazo de conservación">
-              <Valor v={tratamiento.plazo_conservacion} mapa={PLAZO} />
+              <Valor
+                v={
+                  tratamiento.plazo_conservacion === "otro" && tratamiento.plazo_otro
+                    ? tratamiento.plazo_otro
+                    : tratamiento.plazo_conservacion
+                }
+                mapa={PLAZO}
+              />
             </Campo>
             <Campo label="Destinatarios">
               <Valor v={tratamiento.destinatarios} />

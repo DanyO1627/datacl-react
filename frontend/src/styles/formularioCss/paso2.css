@@ -295,6 +295,28 @@
   box-shadow: 0 0 0 3px rgba(84,131,179,0.12);
 }
 
+.p2-otros-textarea {
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1.5px solid #c8dcee;
+  font-family: 'Georgia', serif;
+  font-size: 13px;
+  color: var(--navy);
+  background: #fff;
+  outline: none;
+  transition: border-color 0.18s;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 50px;
+  line-height: 1.5;
+}
+
+.p2-otros-textarea:focus {
+  border-color: var(--mid);
+  box-shadow: 0 0 0 3px rgba(84,131,179,0.12);
+}
+
 /* ─── Toggle Sí / No (datos sensibles) ────────────────────────── */
 .p2-sino-row {
   display: flex;

@@ -55,7 +55,7 @@ const PLAZOS = [
   { valor: "5_anios", etiqueta: "5 años" },
   { valor: "10_anios", etiqueta: "10 años" },
   { valor: "indefinido", etiqueta: "Indefinido" },
-  { valor: "duracion_relacion", etiqueta: "Mientras dure la relación" },
+  { valor: "duracion_relacion", etiqueta: "Mientras dure la relación contractual" },
   { valor: "otro", etiqueta: "Otro" },
 ];
 
@@ -107,7 +107,7 @@ const ETIQ_PLAZO = {
   "5_anios": "5 años",
   "10_anios": "10 años",
   indefinido: "Indefinido",
-  duracion_relacion: "Mientras dure la relación",
+  duracion_relacion: "Mientras dure la relación contractual",
   otro: "Otro",
 };
 
@@ -197,28 +197,6 @@ export default function Paso3() {
     actualizarForm(local);
     const formularioCompleto = { ...form, ...local };
 
-    // categoria_datos: si hubo análisis de archivo el backend genera texto rico
-    // desde los campos detectados; si no (ingreso manual), construimos texto
-    // desde los checkboxes que el usuario seleccionó en Paso2.
-    const hayAnalisis = (formularioCompleto.campos_detectados || []).length > 0;
-    const LABEL_CAT = {
-      nombre_apellido: "Nombre y apellido", rut_dni: "RUT / DNI",
-      correo_electronico: "Correo electrónico", telefono: "Teléfono",
-      direccion: "Dirección", fecha_nacimiento: "Fecha de nacimiento",
-    };
-    const LABEL_SENS = {
-      datos_salud: "Datos de salud", datos_biometricos: "Datos biométricos",
-      origen_etnico: "Origen étnico", religion_creencias: "Religión o creencias",
-      orientacion_sexual: "Orientación sexual", opiniones_politicas: "Opiniones políticas",
-    };
-    const categoriaDatos = hayAnalisis ? null : (() => {
-      const partes = [
-        ...(formularioCompleto.categorias_datos || []).map(id => LABEL_CAT[id] || id),
-        ...(formularioCompleto.categorias_sensibles || []).map(id => LABEL_SENS[id] || id),
-      ].filter(Boolean);
-      return partes.length > 0 ? partes.join(", ") : null;
-    })();
-
     const payload = {
       // Campos del tratamiento principal
       nombre:                   formularioCompleto.nombre,
@@ -250,7 +228,7 @@ export default function Paso3() {
         categorias_titulares: (formularioCompleto.categorias_titulares || []).join(",") || null,
         universo_titulares:   formularioCompleto.universo_titulares || null,
         origen_datos:         formularioCompleto.origen_datos || null,
-        categoria_datos:      categoriaDatos,
+        categoria_datos:      formularioCompleto.categoria_datos || null,
       },
     };
 
@@ -355,6 +333,7 @@ export default function Paso3() {
           categorias_titulares: (datos.categorias_titulares || []).join(",") || null,
           universo_titulares: datos.universo_titulares || null,
           origen_datos: datos.origen_datos || null,
+          categoria_datos: datos.categoria_datos || null,
         },
       };
 
@@ -494,14 +473,18 @@ export default function Paso3() {
                 })}
                 {/* Campo libre para "Otras" */}
                 {local.medidas_seguridad.includes("otras") && (
-                  <input
-                    type="text"
-                    className="p3-input-otro"
-                    placeholder="Describe otras medidas..."
-                    value={local.otras_medidas}
-                    onChange={(e) => setLocal((prev) => ({ ...prev, otras_medidas: e.target.value }))}
-                    maxLength={300}
-                  />
+                  <>
+                    <textarea
+                      className="p3-textarea-otro"
+                      placeholder="Describe otras medidas..."
+                      value={local.otras_medidas}
+                      onChange={(e) => setLocal((prev) => ({ ...prev, otras_medidas: e.target.value }))}
+                      rows={3}
+                      maxLength={500}
+                    />
+                    <p className="p3-campo-ayuda">Si son varias medidas, sepáralas por comas o en líneas distintas.</p>
+                    <span className="p3-campo-contador">{local.otras_medidas.length}/500</span>
+                  </>
                 )}
               </div>
             </div>

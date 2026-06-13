@@ -9,6 +9,7 @@ const FORM_VACIO = {
   // ── Paso 2 ───────────────────────────────────────────────
   categorias_titulares: [], universo_titulares: "", origen_datos: "",
   categorias_datos: [], datos_sensibles: false, categorias_sensibles: [],
+  categoria_datos: "",
   destinatarios: "", sale_extranjero: false, pais_destino: "", otros_datos: "",
   // ── Paso 3 ───────────────────────────────────────────────
   plazo_conservacion: "", plazo_otro: "", otras_medidas: "",

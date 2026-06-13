@@ -124,14 +124,14 @@ export default function Dashboard() {
       }
       const idxResumen = primerBorradorIdx
       const t = tratsValidos[idxResumen]
+      // "otras:" marca el inicio del texto libre y puede contener comas o
+      // saltos de línea propios — todo lo que sigue hasta el final le pertenece.
       const medidasStr = t.medidas_seguridad || ""
-      const medidasArr = medidasStr.split(",").filter(Boolean).map(m =>
-        m.startsWith("otras:") ? "otras" : m
-      )
-      const otrasMedidas = (() => {
-        const o = medidasStr.split(",").find(m => m.startsWith("otras:"))
-        return o ? o.substring(6) : ""
-      })()
+      const idxOtras = medidasStr.indexOf("otras:")
+      const medidasArr = idxOtras !== -1
+        ? [...medidasStr.slice(0, idxOtras).replace(/,$/, "").split(",").filter(Boolean), "otras"]
+        : medidasStr.split(",").filter(Boolean)
+      const otrasMedidas = idxOtras !== -1 ? medidasStr.slice(idxOtras + "otras:".length) : ""
 
       actualizarForm({
         sesionActual:          sesion.id,
@@ -160,7 +160,7 @@ export default function Dashboard() {
         sale_extranjero:      t.sale_extranjero ?? false,
         // Paso 3
         plazo_conservacion:       t.plazo_conservacion || "",
-        plazo_otro:               otrasMedidas ? "" : "",
+        plazo_otro:               t.plazo_otro || "",
         medidas_seguridad:        medidasArr,
         otras_medidas:            otrasMedidas,
         decisiones_automatizadas: t.decisiones_automatizadas ?? false,

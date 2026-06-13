@@ -103,6 +103,21 @@ const CATEGORIAS = [
   },
 ];
 
+/* ─── Etiquetas RAT por categoría temática ────────────────────────
+ * Los ids de CATEGORIAS coinciden con las claves de CATEGORIAS_TEMATICAS
+ * en backend/app/utils/analisis.py — generar_texto_categoria() agrupa
+ * por estas etiquetas (labels), no por el id.
+ */
+const LABEL_TEMATICA = {
+  identificatorios: "Datos identificatorios",
+  contacto:         "Datos de contacto",
+  salud:            "Datos de salud",
+  financieros:      "Datos financieros",
+  laborales:        "Datos laborales",
+  academicos:       "Datos académicos",
+  biometricos:      "Datos biométricos",
+};
+
 /* ─── Componente principal ───────────────────────────────────── */
 export default function IngresoManual() {
   const navigate = useNavigate();
@@ -169,7 +184,7 @@ export default function IngresoManual() {
       const tipo = cat.sensible ? "SENSIBLE" : "PERSONAL";
       for (const nombre of todosLosCampos(cat)) {
         if (seleccionados.has(clave(cat.id, nombre))) {
-          campos.push({ nombre_columna: nombre, tipo, categoria_tematica: cat.id });
+          campos.push({ nombre_columna: nombre, tipo, categoria_tematica: LABEL_TEMATICA[cat.id] || "Otros" });
         }
       }
     }

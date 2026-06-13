@@ -183,6 +183,42 @@
   box-shadow: 0 0 0 3px rgba(84,131,179,0.12);
 }
 
+.p3-textarea-otro {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1.5px solid #c8dcee;
+  font-family: 'Georgia', serif;
+  font-size: 13px;
+  color: var(--navy);
+  background: #fff;
+  outline: none;
+  transition: border-color 0.18s;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 4px;
+  resize: vertical;
+  min-height: 70px;
+  line-height: 1.5;
+}
+
+.p3-textarea-otro:focus {
+  border-color: var(--mid);
+  box-shadow: 0 0 0 3px rgba(84,131,179,0.12);
+}
+
+.p3-campo-ayuda {
+  font-size: 11px;
+  color: var(--mid);
+  margin-top: 4px;
+}
+
+.p3-campo-contador {
+  font-size: 11px;
+  color: #9ab5cc;
+  text-align: right;
+  margin-top: -2px;
+}
+
 /* ─── Checkboxes de medidas ───────────────────────────────────── */
 .p3-checkboxes {
   display: flex;
@@ -347,7 +383,7 @@
   flex-shrink: 0;
 }
 
-.p3-fila-valor         { color: var(--navy); }
+.p3-fila-valor         { color: var(--navy); white-space: pre-line; }
 .p3-fila-valor--vacio  { color: #aaa; font-style: italic; }
 
 /* ─── Tabla de campos detectados ─────────────────────────────── */

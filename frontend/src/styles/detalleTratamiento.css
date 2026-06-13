@@ -211,6 +211,7 @@
   font-weight: 600;
   padding: 3px 10px;
   border-radius: 12px;
+  white-space: pre-line;
 }
 
 .detalle-badge-gris {

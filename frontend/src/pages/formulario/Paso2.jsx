@@ -47,6 +47,68 @@ const CATEGORIAS_SENSIBLES = [
   { id: "opiniones_politicas", etiqueta: "Opiniones políticas", tooltip: "Afiliación o posturas políticas.",                      keywords: ["politico", "politica", "partido", "ideologia"] },
 ];
 
+/* ─── Orden de categorías temáticas para el texto RAT ────────────
+ * DEBE coincidir con el orden de CATEGORIAS_TEMATICAS en
+ * backend/app/utils/analisis.py (+ "Otros" al final). Si se reordena
+ * allá, reordenar también aquí.
+ */
+const ORDEN_CATEGORIAS_TEMATICAS = [
+  "Datos identificatorios",
+  "Datos de contacto",
+  "Datos de salud",
+  "Datos financieros",
+  "Datos laborales",
+  "Datos académicos",
+  "Datos biométricos",
+  "Otros",
+];
+
+/* ─── Genera el texto "Categoría de datos" en formato RAT ────────
+ * Agrupa los campos detectados por categoría temática y produce líneas
+ * "Categoría — Campo1, Campo2." Es solo una sugerencia de partida editable.
+ */
+function generarTextoCategoria(campos) {
+  const grupos = {};
+  campos.forEach((campo) => {
+    const categoria = campo.categoria_tematica || "Otros";
+    const nombre = campo.nombre_columna
+      .replace(/_/g, " ")
+      .split(" ")
+      .map((palabra) => palabra.charAt(0).toUpperCase() + palabra.slice(1).toLowerCase())
+      .join(" ");
+    (grupos[categoria] ??= []).push(nombre);
+  });
+
+  return ORDEN_CATEGORIAS_TEMATICAS
+    .filter((categoria) => grupos[categoria])
+    .map((categoria) => `${categoria} — ${grupos[categoria].join(", ")}.`)
+    .join("\n");
+}
+
+/* ─── Genera el texto "Categoría de datos" para ingreso manual ───
+ * Sin análisis de archivo no hay categoría temática por campo;
+ * se listan las etiquetas de los checkboxes marcados.
+ */
+function generarTextoCategoriaManual(idsDatos, idsSensibles) {
+  const partes = [
+    ...idsDatos.map((id) => CATEGORIAS_DATOS.find((c) => c.id === id)?.etiqueta || id),
+    ...idsSensibles.map((id) => CATEGORIAS_SENSIBLES.find((c) => c.id === id)?.etiqueta || id),
+  ];
+  return partes.join(", ");
+}
+
+/* ─── Sincroniza el campo libre "Otros" dentro del texto RAT ─────
+ * "otros_datos" no tiene columna propia en el backend, así que su
+ * contenido se mantiene como una línea "Otros — ..." al final de
+ * categoria_datos (que sí se persiste). Reemplaza esa línea si ya existía.
+ */
+function sincronizarOtrosEnCategoria(categoriaActual, textoOtros) {
+  const base = (categoriaActual || "").replace(/\n?Otros — .*\.?$/, "").replace(/\s+$/, "");
+  const otros = (textoOtros || "").trim();
+  if (!otros) return base;
+  return base ? `${base}\nOtros — ${otros}.` : `Otros — ${otros}.`;
+}
+
 /* ─── Barra de progreso ──────────────────────────────────────── */
 function BarraProgreso({ pasoActual }) {
   const pasos = ["Identificación", "Datos y titulares", "Seguridad y conservación"];
@@ -148,17 +210,28 @@ export default function Paso2() {
    */
   const primeraVezEnPaso2 = form.categorias_datos.length === 0 && form.categorias_sensibles.length === 0;
 
+  const categoriasDatosIniciales = primeraVezEnPaso2
+    ? [...detectadas].filter((id) => CATEGORIAS_DATOS.some((c) => c.id === id))
+    : form.categorias_datos;
+  const categoriasSensiblesIniciales = primeraVezEnPaso2
+    ? [...detectadas].filter((id) => CATEGORIAS_SENSIBLES.some((c) => c.id === id))
+    : form.categorias_sensibles;
+
+  // Texto RAT pre-generado — solo si el usuario aún no lo había editado/guardado
+  const categoriaDatosInicial = form.categoria_datos || (
+    form.campos_detectados.length > 0
+      ? generarTextoCategoria(form.campos_detectados)
+      : generarTextoCategoriaManual(categoriasDatosIniciales, categoriasSensiblesIniciales)
+  );
+
   const [local, setLocal] = useState({
     categorias_titulares: form.categorias_titulares || [],
     universo_titulares:   form.universo_titulares || "",
     origen_datos:         form.origen_datos || "",
-    categorias_datos: primeraVezEnPaso2
-      ? [...detectadas].filter((id) => CATEGORIAS_DATOS.some((c) => c.id === id))
-      : form.categorias_datos,
+    categorias_datos:     categoriasDatosIniciales,
     datos_sensibles: primeraVezEnPaso2 ? haySensiblesDetectados : form.datos_sensibles,
-    categorias_sensibles: primeraVezEnPaso2
-      ? [...detectadas].filter((id) => CATEGORIAS_SENSIBLES.some((c) => c.id === id))
-      : form.categorias_sensibles,
+    categorias_sensibles: categoriasSensiblesIniciales,
+    categoria_datos:      categoriaDatosInicial,
     destinatarios:   form.destinatarios || "",
     sale_extranjero: form.sale_extranjero ?? false,
     pais_destino:    form.pais_destino || "",
@@ -259,6 +332,7 @@ export default function Paso2() {
           categorias_titulares: (datos.categorias_titulares || []).join(",") || null,
           universo_titulares: datos.universo_titulares || null,
           origen_datos: datos.origen_datos || null,
+          categoria_datos: datos.categoria_datos || null,
         },
       };
 
@@ -404,15 +478,37 @@ export default function Paso2() {
                 {/* Campo "otros" */}
                 <div className="p2-otros-wrap">
                   <label className="p2-otros-label">Otros</label>
-                  <input
-                    type="text"
-                    className="p2-otros-input"
-                    placeholder="Especifica..."
+                  <textarea
+                    className="p2-otros-textarea"
+                    placeholder="Especifica otros tipos de datos personales..."
                     value={local.otros_datos}
-                    onChange={(e) => setLocal((prev) => ({ ...prev, otros_datos: e.target.value }))}
-                    maxLength={100}
+                    onChange={(e) => {
+                      const texto = e.target.value;
+                      setLocal((prev) => ({
+                        ...prev,
+                        otros_datos: texto,
+                        categoria_datos: sincronizarOtrosEnCategoria(prev.categoria_datos, texto),
+                      }));
+                    }}
+                    rows={2}
+                    maxLength={300}
                   />
+                  <span className="p2-campo-contador">{local.otros_datos.length}/300</span>
                 </div>
+              </div>
+
+              <div className="p2-campo-grupo">
+                <label className="p2-campo-label">Categoría de datos (formato RAT)</label>
+                <p className="p2-campo-ayuda">Generado automáticamente. Puedes editarlo.</p>
+                <textarea
+                  className="p2-textarea"
+                  placeholder="Ej: Datos identificatorios — Rut Alumno, Nombre Apoderado."
+                  value={local.categoria_datos}
+                  onChange={(e) => setLocal((prev) => ({ ...prev, categoria_datos: e.target.value }))}
+                  rows={5}
+                  maxLength={1500}
+                />
+                <span className="p2-campo-contador">{local.categoria_datos.length}/1500</span>
               </div>
             </div>
 

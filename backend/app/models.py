@@ -31,6 +31,7 @@ class Tratamiento(Base):
     datos_sensibles          = Column(Boolean, default=False, nullable=False)
     destinatarios            = Column(Text, nullable=True)
     plazo_conservacion       = Column(String(100), nullable=True)
+    plazo_otro               = Column(String(200), nullable=True)
     medidas_seguridad        = Column(Text, nullable=True)
     sale_extranjero          = Column(Boolean, default=False, nullable=False)
     decisiones_automatizadas = Column(Boolean, default=False, nullable=False)
