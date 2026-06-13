@@ -279,7 +279,7 @@ export default function AsignacionCampos() {
           {/* ── Columna derecha: actividades ── */}
           <div className="ac-panel">
             <div className="ac-panel-header">
-              <span className="ac-panel-titulo">Actividades ({actividades.length})</span>
+              <span className="ac-panel-titulo"> Registro de actividades de tratamiento ({actividades.length})</span>
             </div>
             <div className="ac-panel-cuerpo">
 
