@@ -61,7 +61,7 @@ def crear_tratamiento(
                 fuente=campo.fuente,
             ))
 
-        # Siempre crear DetalleRat — si no vienen datos, queda con nulls
+        # Siempre crear DetalleRat (si no vienen datos, queda con null)
         detalle_campos = datos.detalle.model_dump() if datos.detalle else {}
 
         # Auto-generar categoria_datos si no viene del frontend pero hay campos con categoría temática
@@ -344,3 +344,37 @@ def eliminar_tratamiento(
     db.delete(tratamiento)
     db.commit()
     return True
+
+
+# ================================================
+# Para lectura de los historiales de versiones
+# =================================================
+# Estas funciones NO verifican que el tratamiento pertenezca a la organización:
+# ese chequeo (que cubre el acceso de otra org a una que no es suya) ya lo hace el router 
+# llamando primero a la función: 
+# obtener_tratamiento_por_id(db, tratamiento_id, organizacion_id).
+
+def obtener_versiones(db: Session, tratamiento_id: int) -> list[models.VersionTratamiento]:
+    """Lista todas las versiones de un tratamiento, de la más nueva a la más antigua."""
+    return (
+        db.query(models.VersionTratamiento)
+        .filter(models.VersionTratamiento.tratamiento_id == tratamiento_id)
+        .order_by(models.VersionTratamiento.numero_version.desc())
+        .all()
+    )
+
+
+def obtener_version_por_numero(
+    db: Session,
+    tratamiento_id: int,
+    numero: int,
+) -> models.VersionTratamiento | None:
+    """Devuelve una versión puntual (incluye datos_snapshot) o none si no existe."""
+    return (
+        db.query(models.VersionTratamiento)
+        .filter(
+            models.VersionTratamiento.tratamiento_id == tratamiento_id,
+            models.VersionTratamiento.numero_version == numero,
+        )
+        .first()
+    )

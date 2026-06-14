@@ -11,6 +11,8 @@ from app.schemas import (
     TratamientoRespuesta,
     TratamientoListado,
     CampoRatRespuesta,
+    VersionTratamientoResumen,
+    VersionTratamientoDetalle,
 )
 from app.services import tratamientos_service as svc
 
@@ -104,3 +106,34 @@ def obtener_campos_rat(
         .filter(models.CampoRat.tratamiento_id == tratamiento_id)
         .all()
     )
+
+
+@router.get("/{tratamiento_id}/versiones", response_model=list[VersionTratamientoResumen])
+def listar_versiones_tratamiento(
+    tratamiento_id: int,
+    usuario=Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db),
+):
+    # Primero se verifica que el tratamiento sea de la organización logueada
+    # (devuelve none si no existe o es de otra org) para evitar que cualquiera acceda a cualquiera.
+    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, usuario.id)
+    if not tratamiento:
+        raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
+    return svc.obtener_versiones(db, tratamiento_id)
+
+
+@router.get("/{tratamiento_id}/versiones/{numero}", response_model=VersionTratamientoDetalle)
+def obtener_version_tratamiento(
+    tratamiento_id: int,
+    numero: int,
+    usuario=Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db),
+):
+    # Mismo chequeo de pertenencia que en el listado, antes de ir a buscar la versión que busca
+    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, usuario.id)
+    if not tratamiento:
+        raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
+    version = svc.obtener_version_por_numero(db, tratamiento_id, numero)
+    if not version:
+        raise HTTPException(status_code=404, detail="Versión no encontrada.")
+    return version
