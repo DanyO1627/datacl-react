@@ -41,6 +41,8 @@ export default function AsignacionCampos() {
   const [guardando,       setGuardando]      = useState(false);
   const [msgGuardado,     setMsgGuardado]    = useState("");
   const [borradorOk,      setBorradorOk]     = useState(false);
+  const [tablaFiltro,     setTablaFiltro]    = useState("todos");
+  const [toastFiltro,     setToastFiltro]    = useState(false);
 
   /* ── Derivados ─────────────────────────────────────────────── */
   const asignadas = useMemo(
@@ -49,6 +51,27 @@ export default function AsignacionCampos() {
   );
   const sinAsignar  = detectados.filter((c) => !asignadas.has(c.nombre_columna)).length;
   const puedeAvanzar = sinAsignar === 0 && actividades.length > 0;
+
+  const tieneMultiTabla = useMemo(
+    () => [...detectados, ...pendientes].some((c) => c.tabla_origen),
+    [detectados, pendientes],
+  );
+
+  const tablasUnicas = useMemo(() => {
+    if (!tieneMultiTabla) return [];
+    const set = new Set([...detectados, ...pendientes].map((c) => c.tabla_origen).filter(Boolean));
+    return [...set].sort();
+  }, [tieneMultiTabla, detectados, pendientes]);
+
+  const detectadosFiltrados = useMemo(() => {
+    if (!tieneMultiTabla || tablaFiltro === "todos") return detectados;
+    return detectados.filter((c) => c.tabla_origen === tablaFiltro);
+  }, [detectados, tieneMultiTabla, tablaFiltro]);
+
+  const pendientesFiltrados = useMemo(() => {
+    if (!tieneMultiTabla || tablaFiltro === "todos") return pendientes;
+    return pendientes.filter((c) => c.tabla_origen === tablaFiltro);
+  }, [pendientes, tieneMultiTabla, tablaFiltro]);
 
   if (!state) return <Navigate to="/subir-archivo" replace />;
 
@@ -67,6 +90,19 @@ export default function AsignacionCampos() {
   function eliminarActividad(id) {
     setActividades((prev) => prev.filter((a) => a.id !== id));
     if (actividadActiva === id) setActividadActiva(null);
+  }
+
+  /* ── Cambiar filtro por tabla ──────────────────────────────── */
+  function cambiarFiltro(tabla) {
+    if (tabla === tablaFiltro) return;
+    if (tabla !== "todos") {
+      const camposAsignados = actividades.flatMap((a) => a.campos);
+      const hayOtraTabla = camposAsignados.some(
+        (c) => c.tabla_origen && c.tabla_origen !== tabla,
+      );
+      if (hayOtraTabla) setToastFiltro(true);
+    }
+    setTablaFiltro(tabla);
   }
 
   /* ── Asignación de campos ──────────────────────────────────── */
@@ -217,19 +253,37 @@ export default function AsignacionCampos() {
           Haz clic en un chip <strong>×</strong> para desasignarlo.
         </div>
 
+        {/* ── Chips de filtro por tabla (solo BD multi-tabla) ── */}
+        {tieneMultiTabla && (
+          <div className="ac-filtro-tablas">
+            <span className="ac-filtro-titulo">Tablas detectadas</span>
+            <div className="ac-filtro-chips">
+              {["todos", ...tablasUnicas].map((t) => (
+                <button
+                  key={t}
+                  className={`ac-filtro-chip ${tablaFiltro === t ? "ac-filtro-chip--activo" : ""}`}
+                  onClick={() => cambiarFiltro(t)}
+                >
+                  {t === "todos" ? "Todos" : t}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── Grid dos columnas ── */}
         <div className="ac-grid">
 
           {/* ── Columna izquierda: campos detectados ── */}
           <div className="ac-panel">
             <div className="ac-panel-header">
-              <span className="ac-panel-titulo">Campos detectados ({detectados.length})</span>
+              <span className="ac-panel-titulo">Campos detectados ({detectadosFiltrados.length}{tieneMultiTabla && tablaFiltro !== "todos" ? ` de ${detectados.length}` : ""})</span>
             </div>
             <div className="ac-panel-cuerpo">
               {detectados.length === 0 && pendientes.length === 0 ? (
                 <p className="ac-vacio">No se detectaron campos en el archivo.</p>
               ) : (
-                detectados.map((campo) => {
+                detectadosFiltrados.map((campo) => {
                   const estado      = estadoCampo(campo.nombre_columna);
                   const esSensible  = campo.tipo === "SENSIBLE";
                   const activNombre = estado === "asignado-otro" ? nombreActividadDeCampo(campo.nombre_columna) : "";
@@ -249,6 +303,9 @@ export default function AsignacionCampos() {
                       <span className={`ac-campo-badge ${esSensible ? "ac-campo-badge--sensible" : "ac-campo-badge--personal"}`}>
                         {esSensible ? "SENSIBLE" : "PERSONAL"}
                       </span>
+                      {tieneMultiTabla && campo.tabla_origen && (
+                        <span className="ac-campo-tabla">{campo.tabla_origen}</span>
+                      )}
                       {estado === "asignado-otro" && (
                         <span className="ac-campo-actividad" title={activNombre}>→ {activNombre}</span>
                       )}
@@ -261,12 +318,12 @@ export default function AsignacionCampos() {
               )}
 
               {/* ── Campos sin clasificar (pendientes) ── */}
-              {pendientes.length > 0 && (
+              {pendientesFiltrados.length > 0 && (
                 <>
                   <div className="ac-sep-pendientes">
-                    Sin clasificar ({pendientes.length}) — inclúyelos si contienen datos personales
+                    Sin clasificar ({pendientesFiltrados.length}) — inclúyelos si contienen datos personales
                   </div>
-                  {pendientes.map((campo) => {
+                  {pendientesFiltrados.map((campo) => {
                     const estado      = estadoCampo(campo.nombre_columna);
                     const activNombre = estado === "asignado-otro" ? nombreActividadDeCampo(campo.nombre_columna) : "";
                     return (
@@ -283,6 +340,9 @@ export default function AsignacionCampos() {
                       >
                         <span className="ac-campo-nombre">{campo.nombre_columna}</span>
                         <span className="ac-campo-badge ac-campo-badge--pendiente">?</span>
+                        {tieneMultiTabla && campo.tabla_origen && (
+                          <span className="ac-campo-tabla">{campo.tabla_origen}</span>
+                        )}
                         {estado === "asignado-otro" && (
                           <span className="ac-campo-actividad" title={activNombre}>→ {activNombre}</span>
                         )}
@@ -376,6 +436,16 @@ export default function AsignacionCampos() {
             </div>
           </div>
         </div>
+
+        {/* ── Toast advertencia cambio de filtro ── */}
+        {toastFiltro && (
+          <div className="ac-toast-advertencia">
+            <span className="ac-toast-texto">⚠ Hay campos asignados de otra tabla. Revisa la asignación antes de continuar.</span>
+            <button className="ac-toast-btn ac-toast-btn--dashboard" onClick={() => setToastFiltro(false)}>
+              Entendido
+            </button>
+          </div>
+        )}
 
         {/* ── Toast borrador guardado ── */}
         {borradorOk && (

@@ -166,9 +166,13 @@
   to { transform: rotate(360deg); }
 }
 
-/* ── Últimos tratamientos ── */
-.dashboard__ultimos {
-  margin-top: 32px;
+/* ── Últimos tratamientos (standalone card) ── */
+.dashboard__ultimos-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.4rem 1.6rem 1.2rem;
+  box-shadow: 0 2px 16px rgba(5, 38, 89, 0.07);
+  margin-top: 0;
 }
 
 .dashboard__ultimos-titulo {
@@ -190,23 +194,49 @@
 .dashboard__ultimos-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   background: #fff;
   border-radius: 10px;
   padding: 12px 16px;
   cursor: pointer;
   border: 1px solid #e0eaf5;
   transition: box-shadow 0.2s;
+  gap: 10px;
 }
 
 .dashboard__ultimos-item:hover {
   box-shadow: 0 2px 10px rgba(5, 38, 89, 0.1);
 }
 
+.dashboard__ultimos-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  flex: 1;
+}
+
 .dashboard__ultimos-nombre {
   font-size: 14px;
   color: var(--dark);
   font-weight: 500;
+}
+
+.dashboard__ultimos-factores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.dashboard__factor-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: #f0f4f8;
+  color: #52708a;
+  border: 1px solid #c8dcee;
+  white-space: nowrap;
 }
 
 .dashboard__ultimos-badge {
@@ -220,16 +250,22 @@
 .badge-medio { background: #fff3cd; color: #b7791f; }
 .badge-bajo  { background: #e6f4ea; color: #276749; }
 
-/* Fila inferior: gráfico + últimos (lado a lado en pantallas grandes) */
-.dashboard__fila-inferior {
+/* Fila de gráficos: 3 columnas */
+.dashboard__fila-graficos {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 1.5rem;
   margin-top: 1.5rem;
 }
 
-@media (max-width: 900px) {
-  .dashboard__fila-inferior {
+@media (max-width: 1100px) {
+  .dashboard__fila-graficos {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .dashboard__fila-graficos {
     grid-template-columns: 1fr;
   }
 }
