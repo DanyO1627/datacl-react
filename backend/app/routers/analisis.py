@@ -216,7 +216,7 @@ class ConexionBDRequest(BaseModel):
     base_datos: str
     usuario:    str
     password:   str
-    tabla:      str | None = None   # None en /probar, requerido en /conexion
+    tablas:     list[str] | None = None # antes : tabla. Ahora "tablas". 
 
 
 def _crear_url_conexion(motor: str, host: str, puerto: int,
@@ -305,23 +305,32 @@ async def analizar_conexion_bd(
     datos: ConexionBDRequest,
     _usuario=Depends(obtener_usuario_actual),
 ):
+    
     """
-    Conecta a la BD del cliente, extrae los nombres de columnas de la tabla
-    indicada, los clasifica con el mismo algoritmo que /archivo y devuelve
-    el resultado. Las credenciales NUNCA se loggean ni se guardan.
+    Conecta a la BD del cliente, extrae los nombres de columnas de cada tabla
+    indicada, dsp los clasifica con el mismo algoritmo que /archivo y devuelve
+    el resultado combinado de todas las tablas. Cada campo (detectado o
+    pendiente) lleva "tabla_origen" para saber de qué tabla viene.
+    Y las credenciales NUNCA se loggean ni se guardan.
     """
     from sqlalchemy import inspect as sa_inspect
 
-    if not datos.tabla:
+    if not datos.tablas:
         raise HTTPException(
             status_code=400,
-            detail="Debes indicar el nombre de la tabla a analizar."
+            detail="Debes indicar al menos una tabla a analizar."
         )
 
     url = _crear_url_conexion(
         datos.motor, datos.host, datos.puerto,
         datos.base_datos, datos.usuario, datos.password
     )
+
+    # En estos acumuladores se van juntando los CAMPOS de todas las TABLAS.
+    detectados_totales = []
+    pendientes_totales = []
+    total_columnas = 0
+
     engine = None
     try:
         engine = _engine_temporal(url)
@@ -329,14 +338,35 @@ async def analizar_conexion_bd(
             inspector = sa_inspect(engine)
             tablas_disponibles = inspector.get_table_names()
 
-            if datos.tabla not in tablas_disponibles:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"La tabla '{datos.tabla}' no existe en la base de datos."
-                )
+            # Se recorre cada tabla seleccionada y se etiqueta cada campo
+            # con su tabla de origen (tabla_origen), para que el frontend
+            # pueda agruparlos/filtrarlos en AsignacionCampos.
+            for nombre_tabla in datos.tablas:
+                if nombre_tabla not in tablas_disponibles:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"La tabla '{nombre_tabla}' no existe en la base de datos."
+                    )
 
-            columnas_raw = inspector.get_columns(datos.tabla)
-            columnas = [col["name"] for col in columnas_raw]
+                columnas_raw = inspector.get_columns(nombre_tabla)
+                columnas = [col["name"] for col in columnas_raw]
+
+                if not columnas:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"La tabla '{nombre_tabla}' no tiene columnas."
+                    )
+
+                resultado = clasificar_columnas(columnas)
+
+                for campo in resultado["detectados"]:
+                    campo["tabla_origen"] = nombre_tabla
+                for campo in resultado["pendientes"]:
+                    campo["tabla_origen"] = nombre_tabla
+
+                detectados_totales.extend(resultado["detectados"])
+                pendientes_totales.extend(resultado["pendientes"])
+                total_columnas += len(columnas)
 
     except HTTPException:
         raise
@@ -361,22 +391,14 @@ async def analizar_conexion_bd(
         if engine:
             engine.dispose()
 
-    if not columnas:
-        raise HTTPException(
-            status_code=400,
-            detail=f"La tabla '{datos.tabla}' no tiene columnas."
-        )
-
-    resultado = clasificar_columnas(columnas)
-
     return {
-        "tabla":          datos.tabla,
-        "detectados":     resultado["detectados"],
-        "pendientes":     resultado["pendientes"],
-        "total_columnas": len(columnas),
+        "tablas":         datos.tablas,
+        "detectados":     detectados_totales,
+        "pendientes":     pendientes_totales,
+        "total_columnas": total_columnas,
         "resumen": {
-            "personales":     sum(1 for d in resultado["detectados"] if d["tipo"] == "PERSONAL"),
-            "sensibles":      sum(1 for d in resultado["detectados"] if d["tipo"] == "SENSIBLE"),
-            "sin_clasificar": len(resultado["pendientes"]),
+            "personales":     sum(1 for d in detectados_totales if d["tipo"] == "PERSONAL"),
+            "sensibles":      sum(1 for d in detectados_totales if d["tipo"] == "SENSIBLE"),
+            "sin_clasificar": len(pendientes_totales),
         },
     }
