@@ -10,12 +10,14 @@ const API = 'http://localhost:8000'
 // ── Mapas de valores internos a texto legible ──────────────────────────────
 
 const BASE_LEGAL = {
-  consentimiento:   "Consentimiento (Art. 12 letra a)",
-  contrato:         "Ejecución de contrato (Art. 12 letra b)",
-  obligacion_legal: "Obligación legal (Art. 12 letra c)",
-  interes_vital:    "Interés vital (Art. 12 letra d)",
-  interes_publico:  "Interés público (Art. 12 letra e)",
-  interes_legitimo: "Interés legítimo (Art. 12 letra f)",
+  consentimiento:           "Consentimiento del titular (Art. 12)",
+  datos_economicos:         "Obligaciones económicas, financieras, bancarias o comerciales (Art. 13 letra a.)",
+  obligacion_legal:         "Cumplimiento de obligación legal (Art. 13 letra b.)",
+  contrato:                 "Ejecución o cumplimiento de un contrato (Art. 13 letra c.)",
+  interes_legitimo:         "Interés legítimo del responsable o de un tercero (Art. 13 letra d.)",
+  defensa_derechos:         "Formulación, ejercicio o defensa de un derecho ante tribunales (Art. 13 letra e.)",
+  consentimiento_sensibles: "Consentimiento expreso del titular — datos sensibles (Art. 16 inc. 1)",
+  datos_biometricos:        "Tratamiento de datos biométricos (Art. 16 ter)",
 }
 
 const PLAZO = {
@@ -97,10 +99,15 @@ function Campo({ label, children }) {
   )
 }
 
-function Valor({ v, mapa }) {
+function Valor({ v, mapa, vacio = "Por completar" }) {
   const texto = mapa ? (mapa[v] || v) : v
-  if (!texto) return <span className="detalle-campo-pendiente">Por completar</span>
+  if (!texto) return <span className="detalle-campo-pendiente">{vacio}</span>
   return <span className="detalle-campo-valor">{texto}</span>
+}
+
+function ValorMultilinea({ v, vacio = "—" }) {
+  if (!v) return <span className="detalle-campo-pendiente">{vacio}</span>
+  return <span className="detalle-campo-valor detalle-campo-multilinea">{v}</span>
 }
 
 function Badges({ items }) {
@@ -276,20 +283,31 @@ export default function DetalleTratamiento() {
           </div>
         </div>
 
-        {/* ── Sección 2: Responsable del tratamiento ── */}
+        {/* ── Sección 2: Identificación del responsable ── */}
         <div className="detalle-seccion">
-          <h2 className="detalle-columna-titulo">Responsable del tratamiento</h2>
+          <div className="detalle-seccion-header">
+            <h2 className="detalle-columna-titulo">Identificación del responsable</h2>
+            {tratamiento.sesion_origen && (
+              <span className="detalle-sesion-origen">
+                Campos provenientes de: <strong>{tratamiento.sesion_origen}</strong>
+              </span>
+            )}
+          </div>
           <div className="detalle-seccion-campos">
             <Campo label="Responsable">
-              <Valor v={d?.responsable_tratamiento} />
+              <Valor v={d?.responsable_tratamiento} vacio="—" />
             </Campo>
             <Campo label="Departamento o área">
-              <Valor v={d?.departamento} />
+              <Valor v={d?.departamento} vacio="—" />
             </Campo>
             <Campo label="Rol">
-              <span className="detalle-campo-valor">
-                {d ? (d.es_responsable ? 'Responsable' : 'Encargado') : '—'}
-              </span>
+              {d ? (
+                <span className={`detalle-badge ${d.es_responsable ? 'detalle-badge-azul' : 'detalle-badge-morado'}`}>
+                  {d.es_responsable ? 'Responsable' : 'Encargado'}
+                </span>
+              ) : (
+                <span className="detalle-campo-pendiente">—</span>
+              )}
             </Campo>
           </div>
         </div>
@@ -302,7 +320,7 @@ export default function DetalleTratamiento() {
               <Badges items={parsearTitulares(d?.categorias_titulares)} />
             </Campo>
             <Campo label="Universo de titulares">
-              <Valor v={d?.universo_titulares} />
+              <Valor v={d?.universo_titulares} vacio="—" />
             </Campo>
             <Campo label="Origen de los datos">
               <Valor v={d?.origen_datos} mapa={ORIGEN} />
@@ -313,6 +331,10 @@ export default function DetalleTratamiento() {
                 : <span className="detalle-campo-pendiente">No se generó una descripción detallada — puedes agregarla desde "Editar"</span>
               }
             </Campo>
+          </div>
+          <div className="detalle-campo detalle-campo-ancho">
+            <span className="detalle-campo-label">Categoría de datos</span>
+            <ValorMultilinea v={d?.categoria_datos} />
           </div>
         </div>
 

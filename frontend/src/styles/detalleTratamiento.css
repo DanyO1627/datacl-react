@@ -247,6 +247,50 @@
   color: #2b5fd9;
 }
 
+.detalle-badge-morado {
+  background: #f1e8fb;
+  color: #7c3aed;
+}
+
+/* Cabecera de sección con info de sesión de origen */
+.detalle-seccion-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f5;
+}
+
+.detalle-seccion-header .detalle-columna-titulo {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin: 0;
+}
+
+.detalle-sesion-origen {
+  font-size: 12px;
+  color: #888;
+}
+
+.detalle-sesion-origen strong {
+  color: #555;
+}
+
+/* Campo de ancho completo (texto agrupado) */
+.detalle-campo-ancho {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f5;
+}
+
+.detalle-campo-multilinea {
+  white-space: pre-line;
+  line-height: 1.6;
+  display: block;
+}
+
 /* Sección evaluación */
 .detalle-evaluacion {
   background: #fff;

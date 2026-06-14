@@ -1,5 +1,5 @@
 import io
-from typing import Annotated
+from typing import Annotated, Optional
 import pandas as pd
 from pandas.errors import EmptyDataError, ParserError
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
@@ -111,27 +111,24 @@ async def analizar_archivo(
 
 @router.post("/diccionario")
 async def analizar_con_diccionario(
-    archivo:     Annotated[UploadFile, File(...)],
     diccionario: Annotated[UploadFile, File(...)],
+    archivo: Annotated[Optional[UploadFile], File()] = None,
     _usuario=Depends(obtener_usuario_actual),
 ):
     """
-    Nivel 2 : recibe el archivo de datos y un diccionario técnico.
+    Nivel 2 — recibe un diccionario técnico (nombre_tecnico + descripcion) y,
+    opcionalmente, el archivo de datos real.
+
+    Si se envía `archivo`, las columnas a clasificar son las del archivo (igual
+    que antes) y el diccionario solo se usa para las que quedan sin clasificar
+    por nombre.
+
+    Si NO se envía `archivo`, las columnas a clasificar son los nombres
+    técnicos del propio diccionario — permite clasificar campos sin subir
+    los datos reales.
+
     Requiere autenticación JWT.
     """
-    tipo_datos = _detectar_tipo_archivo(archivo.filename)
-    contenido_datos: bytes = await archivo.read()
-
-    if len(contenido_datos) == 0:
-        raise HTTPException(status_code=400, detail="El archivo de datos está vacío.")
-    if len(contenido_datos) > TAMANO_MAXIMO:
-        raise HTTPException(status_code=400, detail="El archivo supera el tamaño máximo permitido (5MB).")
-
-    try:
-        columnas_datos = leer_columnas_csv(contenido_datos) if tipo_datos == 'csv' else leer_columnas_excel(contenido_datos)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Error en archivo de datos: {e}")
-
     tipo_dic = _detectar_tipo_archivo(diccionario.filename)
     contenido_dic: bytes = await diccionario.read()
 
@@ -147,10 +144,6 @@ async def analizar_con_diccionario(
     if len(df_dic) == 0:
         raise HTTPException(status_code=400, detail="El diccionario no tiene filas de datos.")
 
-    resultado_n1  = clasificar_columnas(columnas_datos)
-    detectados    = resultado_n1["detectados"]
-    pendientes_n1 = [p["nombre_columna"] for p in resultado_n1["pendientes"]]
-
     col_tecnica, col_descripcion = df_dic.columns[0], df_dic.columns[1]
     try:
         mapa_dic = {
@@ -160,18 +153,40 @@ async def analizar_con_diccionario(
     except Exception:
         raise HTTPException(status_code=400, detail="No se pudo leer el contenido del diccionario.")
 
+    if archivo is not None:
+        tipo_datos = _detectar_tipo_archivo(archivo.filename)
+        contenido_datos: bytes = await archivo.read()
+
+        if len(contenido_datos) == 0:
+            raise HTTPException(status_code=400, detail="El archivo de datos está vacío.")
+        if len(contenido_datos) > TAMANO_MAXIMO:
+            raise HTTPException(status_code=400, detail="El archivo supera el tamaño máximo permitido (5MB).")
+
+        try:
+            columnas_datos = leer_columnas_csv(contenido_datos) if tipo_datos == 'csv' else leer_columnas_excel(contenido_datos)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=f"Error en archivo de datos: {e}")
+    else:
+        # Sin archivo de datos: los nombres técnicos del diccionario son las columnas a clasificar
+        columnas_datos = [str(row[col_tecnica]).strip() for _, row in df_dic.iterrows()]
+
+    resultado_n1  = clasificar_columnas(columnas_datos)
+    detectados    = resultado_n1["detectados"]
+    pendientes_n1 = [p["nombre_columna"] for p in resultado_n1["pendientes"]]
+
     pendientes_final = []
     for col in pendientes_n1:
         descripcion = mapa_dic.get(col.lower())
         if descripcion:
             resultado_desc = clasificar_columnas([descripcion])
             if resultado_desc["detectados"]:
-                tipo_col = resultado_desc["detectados"][0]["tipo"]
+                clasificado = resultado_desc["detectados"][0]
                 detectados.append({
-                    "nombre_columna": col,
-                    "tipo":           tipo_col,
-                    "origen":         "diccionario",
-                    "descripcion":    descripcion,
+                    "nombre_columna":     col,
+                    "tipo":               clasificado["tipo"],
+                    "categoria_tematica": clasificado.get("categoria_tematica", "Otros"),
+                    "origen":             "diccionario",
+                    "descripcion":        descripcion,
                 })
             else:
                 pendientes_final.append({"nombre_columna": col})

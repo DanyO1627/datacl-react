@@ -212,6 +212,7 @@ class TratamientoRespuesta(BaseModel):
     impacto: Optional[str] = None
     fecha_evaluacion: Optional[datetime] = None
     detalle: Optional[DetalleRatRespuesta] = None
+    sesion_origen: Optional[str] = None
     model_config = {"from_attributes": True}
 
 class TratamientoListado(BaseModel):

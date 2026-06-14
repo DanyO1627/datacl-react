@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { analizarArchivo } from "../services/analisisService";
+import { analizarArchivo, analizarSoloDiccionario } from "../services/analisisService";
 import BarraLateral from "../components/BarraLateral";
 import "../styles/CargaArchivo.css";
 
@@ -95,6 +95,11 @@ export default function NuevaSesion() {
   const inputRef             = useRef(null);
   const inputDiccionarioRef  = useRef(null);
 
+  /* ── Estado modo "solo diccionario" ────────────────────────── */
+  const [modoCarga, setModoCarga]               = useState("archivo"); // "archivo" | "diccionario"
+  const [diccionarioSolo, setDiccionarioSolo]   = useState(null);
+  const inputDiccionarioSoloRef                 = useRef(null);
+
   /* ── Estado sesiones anteriores ────────────────────────────── */
   const [sesiones, setSesiones]               = useState([]);
   const [cargandoSesiones, setCargandoSesiones] = useState(false);
@@ -173,6 +178,18 @@ export default function NuevaSesion() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
+  /* ── Manejo de errores de /analizar (compartido) ───────────── */
+  function manejarErrorAnalisis(err) {
+    if (!err.response) {
+      setAlerta({ tipo: "error", mensaje: "Error de conexión. Intenta nuevamente.", detalle: "No se pudo conectar con el servidor. Verifica que el backend esté corriendo en el puerto 8000." });
+      return;
+    }
+    const status = err.response.status;
+    const detalleBk = err.response?.data?.detail;
+    const mensajePorStatus = { 400: "El archivo no es válido.", 413: "El archivo es demasiado grande. El límite es 5 MB.", 422: "El archivo tiene un formato incorrecto.", 500: "Error interno del servidor. Intenta más tarde." };
+    setAlerta({ tipo: "error", mensaje: mensajePorStatus[status] ?? `Error inesperado (código ${status}).`, detalle: typeof detalleBk === "string" ? detalleBk : undefined });
+  }
+
   /* ── Analizar archivo ──────────────────────────────────────── */
   async function handleAnalizar() {
     if (!archivo) return;
@@ -191,19 +208,41 @@ export default function NuevaSesion() {
       }
       navigate("/resultados-analisis", { state: resultado });
     } catch (err) {
-      if (!err.response) {
-        setAlerta({ tipo: "error", mensaje: "Error de conexión. Intenta nuevamente.", detalle: "No se pudo conectar con el servidor. Verifica que el backend esté corriendo en el puerto 8000." });
-        setCargando(false);
-        return;
-      }
-      const status = err.response.status;
-      const detalleBk = err.response?.data?.detail;
-      const mensajePorStatus = { 400: "El archivo no es válido.", 413: "El archivo es demasiado grande. El límite es 5 MB.", 422: "El archivo tiene un formato incorrecto.", 500: "Error interno del servidor. Intenta más tarde." };
-      setAlerta({ tipo: "error", mensaje: mensajePorStatus[status] ?? `Error inesperado (código ${status}).`, detalle: typeof detalleBk === "string" ? detalleBk : undefined });
+      manejarErrorAnalisis(err);
     } finally {
       setCargando(false);
     }
   }
+
+  /* ── Analizar solo diccionario (sin datos reales) ──────────── */
+  async function handleAnalizarDiccionario() {
+    if (!diccionarioSolo) return;
+    setCargando(true);
+    setAlerta(null);
+    try {
+      const resultado = await analizarSoloDiccionario(diccionarioSolo);
+      if (!resultado.detectados || resultado.detectados.length === 0) {
+        setAlerta({
+          tipo: "advertencia",
+          mensaje: "No se detectaron campos reconocibles en el diccionario.",
+          detalle: "Revisa que la columna de descripciones tenga texto descriptivo (ej: \"Nombre completo del cliente\").",
+        });
+        setCargando(false);
+        return;
+      }
+      navigate("/resultados-analisis", { state: resultado });
+    } catch (err) {
+      manejarErrorAnalisis(err);
+    } finally {
+      setCargando(false);
+    }
+  }
+
+  const handleSeleccionarDiccionarioSolo = (e) => {
+    const file = e.target.files?.[0];
+    if (file) setDiccionarioSolo(file);
+    e.target.value = "";
+  };
 
   /* ── Reutilizar sesión anterior ────────────────────────────── */
   function handleReutilizar(sesion) {
@@ -246,6 +285,25 @@ export default function NuevaSesion() {
         {/* ── Subir archivo ── */}
         {fuenteActiva === "archivo" && (
           <div className="ca-contenido">
+
+            {/* Tabs: archivo de datos vs. solo diccionario */}
+            <div className="ca-modo-tabs">
+              <button
+                className={`ca-modo-tab ${modoCarga === "archivo" ? "ca-modo-tab--activo" : ""}`}
+                onClick={() => { setModoCarga("archivo"); setAlerta(null); }}
+              >
+                Subir archivo de datos
+              </button>
+              <button
+                className={`ca-modo-tab ${modoCarga === "diccionario" ? "ca-modo-tab--activo" : ""}`}
+                onClick={() => { setModoCarga("diccionario"); setAlerta(null); }}
+              >
+                Subir solo diccionario de datos
+              </button>
+            </div>
+
+            {modoCarga === "archivo" && (
+            <>
             <div className="ca-zona-wrapper">
               <div
                 className={`ca-zona ${arrastrando ? "ca-zona--arrastrando" : ""} ${archivo ? "ca-zona--con-archivo" : ""}`}
@@ -374,6 +432,78 @@ export default function NuevaSesion() {
                 </div>
               )}
             </div>
+            </>
+            )}
+
+            {modoCarga === "diccionario" && (
+            <div className="ca-zona-wrapper">
+              <p className="ca-acordeon-desc">
+                No necesitas subir tus datos reales: sube solo un diccionario técnico (nombre de
+                columna + descripción) y clasificaremos los campos según las descripciones.
+                Si prefieres ingresar los campos a mano, usa la opción "Ingresar manualmente" del menú superior.
+              </p>
+
+              <div className="ca-formato-tabla-wrap" style={{ width: "100%" }}>
+                <p className="ca-formato-titulo">Formato esperado del diccionario:</p>
+                <table className="ca-formato-tabla">
+                  <thead><tr><th>nombre_tecnico</th><th>descripcion</th></tr></thead>
+                  <tbody>
+                    <tr><td>KUNNR</td><td>Número de identificación del cliente</td></tr>
+                    <tr><td>VBELN</td><td>Diagnóstico médico asociado al paciente</td></tr>
+                    <tr><td>BUKRS</td><td>Código de la empresa</td></tr>
+                  </tbody>
+                </table>
+                <p className="ca-formato-nota">Acepta CSV o JSON con esas dos columnas/claves.</p>
+              </div>
+
+              <div className="ca-dic-zona-wrap">
+                {!diccionarioSolo ? (
+                  <div className="ca-dic-zona" onClick={() => inputDiccionarioSoloRef.current?.click()}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+                    </svg>
+                    <span className="ca-dic-zona-texto">Subir diccionario</span>
+                    <span className="ca-dic-zona-sub">CSV o JSON</span>
+                  </div>
+                ) : (
+                  <div className="ca-dic-archivo">
+                    <div className="ca-archivo-icono" style={{ color: "var(--mid)" }}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                      </svg>
+                    </div>
+                    <span className="ca-dic-archivo-nombre">{diccionarioSolo.name}</span>
+                    <button className="ca-btn-quitar" onClick={() => setDiccionarioSolo(null)} title="Quitar diccionario">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  </div>
+                )}
+                <input ref={inputDiccionarioSoloRef} type="file" accept=".json,.csv" className="ca-input-hidden" onChange={handleSeleccionarDiccionarioSolo} />
+                {diccionarioSolo && (
+                  <button className="ca-btn-seleccionar-dic" onClick={() => inputDiccionarioSoloRef.current?.click()}>Cambiar archivo</button>
+                )}
+              </div>
+
+              {alerta && <Alert tipo={alerta.tipo} mensaje={alerta.mensaje} detalle={alerta.detalle} />}
+
+              <div className="ca-analizar-row">
+                <button
+                  className={`ca-btn-analizar ${!diccionarioSolo || cargando ? "ca-btn-analizar--disabled" : ""}`}
+                  disabled={!diccionarioSolo || cargando}
+                  onClick={handleAnalizarDiccionario}
+                >
+                  {cargando ? (
+                    <span className="ca-btn-spinner-wrap"><span className="ca-spinner" />Analizando...</span>
+                  ) : "Analizar diccionario"}
+                </button>
+              </div>
+            </div>
+            )}
           </div>
         )}
 
