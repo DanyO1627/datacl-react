@@ -47,6 +47,7 @@ class Tratamiento(Base):
     campos             = relationship("CampoRat", back_populates="tratamiento", cascade="all, delete-orphan")
     detalle            = relationship("DetalleRat", back_populates="tratamiento", uselist=False, cascade="all, delete-orphan")
     sesiones_actividad = relationship("SesionActividad", back_populates="tratamiento", cascade="all, delete-orphan")
+    versiones          = relationship("VersionTratamiento", back_populates="tratamiento", cascade="all, delete-orphan")
 
     @property
     def sesion_origen(self) -> str | None:
@@ -55,6 +56,24 @@ class Tratamiento(Base):
             sesion = self.sesiones_actividad[0].sesion
             return sesion.nombre if sesion else None
         return None
+
+
+# Historial de versiones del RAT: una fila por cada vez que un tratamiento
+# COMPLETO se edita (o llega a COMPLETO por primera vez).
+class VersionTratamiento(Base):
+    __tablename__ = "versiones_tratamiento"
+
+    id                 = Column(Integer, primary_key=True, index=True)
+    tratamiento_id     = Column(Integer, ForeignKey("tratamientos.id", ondelete="CASCADE"), nullable=False)
+    numero_version     = Column(Integer, nullable=False)
+    datos_snapshot     = Column(JSON, nullable=False)
+    campos_modificados = Column(JSON, nullable=False, default=list)
+    modificado_por     = Column(String(200), nullable=True)
+    descripcion_cambio = Column(Text, nullable=True)
+    nivel_riesgo       = Column(String(10), nullable=True)
+    creado_en          = Column(DateTime, server_default=func.now(), nullable=False)
+
+    tratamiento = relationship("Tratamiento", back_populates="versiones")
 
 
 class CampoRat(Base):
