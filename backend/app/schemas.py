@@ -300,3 +300,54 @@ class InformeRespuesta(BaseModel):
     num_tratamientos:   int = 0          # cuántos tratamientos tenía la org al generar
 
     model_config = {"from_attributes": True}
+
+
+# ── Schemas de historial de versiones ──────────────────────────────────────
+# para que los uses cuando quieras simular datos para el frontend (dani)
+
+class CampoModificado(BaseModel):
+    campo: str
+    antes: Optional[str] = None
+    despues: Optional[str] = None
+
+
+class VersionTratamientoResumen(BaseModel):
+    numero_version: int
+    modificado_por: Optional[str] = None
+    descripcion_cambio: Optional[str] = None
+    campos_modificados: list[CampoModificado] = []
+    nivel_riesgo: Optional[str] = None
+    creado_en: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class VersionTratamientoDetalle(VersionTratamientoResumen):
+    datos_snapshot: dict
+    
+    
+    
+# Ejemplo de mock (dato de prueba que simula en el frontend un dato real del backend)
+# una idea de dato mock podría ser esta: 
+
+# const mockVersiones = [
+#   {
+#     numero_version: 2,
+#     modificado_por: "Empresa Demo SpA",
+#     descripcion_cambio: "Se modificaron base_legal y categoria_datos",
+#     campos_modificados: [
+#       { campo: "base_legal", antes: "Consentimiento (Art. 12)", despues: "Obligación legal (Art. 13 b)" },
+#       { campo: "categoria_datos", antes: "Datos de contacto", despues: "Datos de contacto, Datos de salud" },
+#     ],
+#     nivel_riesgo: "ALTO",
+#     creado_en: "2026-06-14T10:30:00",
+#   },
+#   {
+#     numero_version: 1,
+#     modificado_por: "Empresa Demo SpA",
+#     descripcion_cambio: "Versión inicial del RAT",
+#     campos_modificados: [],
+#     nivel_riesgo: "MEDIO",
+#     creado_en: "2026-06-13T09:00:00",
+#   },
+# ];
