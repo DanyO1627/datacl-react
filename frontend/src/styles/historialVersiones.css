@@ -1,0 +1,453 @@
+/* ─── Variables (misma paleta del proyecto) ───────────────────── */
+:root {
+  --navy: #021024;
+  --dark: #052659;
+  --mid:  #5483B3;
+  --light: #7DA0CA;
+  --pale: #C1E8FF;
+}
+
+/* ─── Layout general ──────────────────────────────────────────── */
+.hv-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f5fa;
+}
+
+.hv-main {
+  flex: 1;
+  padding: 36px 40px;
+  max-width: 1100px;
+}
+
+.hv-cargando {
+  font-size: 15px;
+  color: #888;
+  padding: 60px;
+}
+
+.hv-error {
+  color: #e53e3e;
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+.hv-volver {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--dark);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* ─── Breadcrumb ──────────────────────────────────────────────── */
+.hv-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 20px;
+}
+
+.hv-breadcrumb a {
+  color: var(--dark);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.hv-breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+/* ─── Encabezado ──────────────────────────────────────────────── */
+.hv-titulo {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 6px;
+}
+
+.hv-subtitulo {
+  font-size: 14px;
+  color: #777;
+  margin: 0 0 24px;
+}
+
+/* ─── Fila de metadata ────────────────────────────────────────── */
+.hv-metadata {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 800px) {
+  .hv-metadata {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.hv-metadata-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hv-metadata-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hv-metadata-valor {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+/* ─── Tarjeta versión vigente ────────────────────────────────── */
+.hv-vigente-card {
+  background: linear-gradient(135deg, var(--pale) 0%, #eaf5ff 100%);
+  border: 1px solid var(--light);
+  border-radius: 14px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
+}
+
+.hv-vigente-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.hv-vigente-tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--dark);
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+.hv-vigente-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hv-vigente-nombre {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 6px;
+}
+
+.hv-vigente-base-legal {
+  font-size: 14px;
+  color: var(--dark);
+  margin: 0 0 6px;
+}
+
+.hv-vigente-modificado {
+  font-size: 13px;
+  color: #555;
+  margin: 0 0 18px;
+}
+
+.hv-vigente-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ─── Botones ─────────────────────────────────────────────────── */
+.hv-btn {
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.hv-btn-primario {
+  background: var(--navy);
+  color: #fff;
+}
+
+.hv-btn-primario:hover {
+  background: var(--dark);
+}
+
+.hv-btn-secundario {
+  background: #fff;
+  color: var(--dark);
+  border: 1px solid var(--light);
+}
+
+.hv-btn-secundario:hover:not(:disabled) {
+  background: #f0f8ff;
+}
+
+.hv-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Banner informativo ─────────────────────────────────────── */
+.hv-info-banner {
+  background: #eaf5ff;
+  border: 1px solid var(--pale);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 13px;
+  color: var(--dark);
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+
+/* ─── Versiones anteriores ───────────────────────────────────── */
+.hv-anteriores-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.hv-anteriores-titulo {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0;
+}
+
+.hv-buscador {
+  border: 1px solid #e0e0ea;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-size: 13px;
+  min-width: 260px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.hv-buscador:focus {
+  border-color: var(--mid);
+}
+
+.hv-filtros-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.hv-pill {
+  border: 1px solid #e0e0ea;
+  background: #fff;
+  color: #555;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.hv-pill:hover {
+  border-color: var(--light);
+}
+
+.hv-pill-activa {
+  background: var(--dark);
+  color: #fff;
+  border-color: var(--dark);
+}
+
+.hv-vacio {
+  font-size: 14px;
+  color: #999;
+  font-style: italic;
+  padding: 24px;
+  text-align: center;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* ─── Tabla de versiones ──────────────────────────────────────── */
+.hv-tabla-wrapper {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+}
+
+.hv-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.hv-tabla th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f5;
+  white-space: nowrap;
+}
+
+.hv-tabla td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f5f5fa;
+  vertical-align: top;
+  color: #333;
+}
+
+.hv-tabla tr:last-child td {
+  border-bottom: none;
+}
+
+.hv-col-version {
+  font-weight: 700;
+  color: var(--navy);
+  white-space: nowrap;
+}
+
+.hv-col-fecha {
+  white-space: nowrap;
+  color: #777;
+}
+
+.hv-descripcion {
+  margin: 0 0 6px;
+  line-height: 1.4;
+}
+
+/* ─── Avatares ────────────────────────────────────────────────── */
+.hv-persona {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.hv-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--light);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ─── Pills naranjas de campos modificados ───────────────────── */
+.hv-campos-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hv-campo-pill {
+  font-size: 11px;
+  font-weight: 600;
+  color: #92400e;
+  background: #ffedd5;
+  border-radius: 12px;
+  padding: 3px 10px;
+  cursor: default;
+}
+
+/* ─── Acciones de tabla ──────────────────────────────────────── */
+.hv-acciones-tabla {
+  display: flex;
+  gap: 12px;
+}
+
+.hv-btn-link {
+  background: none;
+  border: none;
+  color: var(--dark);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.hv-btn-link:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.hv-btn-link:disabled {
+  color: #bbb;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+/* ─── Badges genéricos (riesgo, estado, internacional) ───────── */
+.hv-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.hv-riesgo-bajo {
+  background: #d1e7dd;
+  color: #0a3622;
+}
+
+.hv-riesgo-medio {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.hv-riesgo-alto {
+  background: #f8d7da;
+  color: #842029;
+}
+
+.hv-estado-pendiente {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.hv-estado-completo {
+  background: #d1e7dd;
+  color: #0a3622;
+}
+
+.hv-badge-internacional {
+  background: #f1e8fb;
+  color: #7c3aed;
+}

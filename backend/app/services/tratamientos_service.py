@@ -251,12 +251,16 @@ def editar_tratamiento(
         if tratamiento.estado == "COMPLETO":
             snapshot_despues = _serializar_tratamiento(tratamiento)
 
-            organizacion = (
-                db.query(models.Organizacion)
-                .filter(models.Organizacion.id == organizacion_id)
-                .first()
-            )
-            modificado_por = organizacion.nombre if organizacion else None
+            # Si el usuario indicó quién está editando, se usa ese nombre;
+            # si no, se usa el nombre de la organización como respaldo.
+            modificado_por = datos.modificado_por.strip() if datos.modificado_por and datos.modificado_por.strip() else None
+            if not modificado_por:
+                organizacion = (
+                    db.query(models.Organizacion)
+                    .filter(models.Organizacion.id == organizacion_id)
+                    .first()
+                )
+                modificado_por = organizacion.nombre if organizacion else None
 
             if estado_antes == "COMPLETO":
                 # Caso A: ya era COMPLETO -> comparamos la snapshot (snapshot : captura al estado actual) antes/después

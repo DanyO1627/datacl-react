@@ -76,6 +76,7 @@ export default function EditarTratamiento() {
     universo_titulares: '',
     categorias_titulares: '',
     categoria_datos: '',
+    modificado_por: '',
   })
 
   // ── Cargar tratamiento existente ───────────────────────────────
@@ -338,6 +339,19 @@ export default function EditarTratamiento() {
                 Usa el botón para calcular el riesgo basado en los datos ingresados.
                 El resultado es solo visual — se guarda cuando apretes "Guardar cambios".
               </p>
+
+              <div className="campo">
+                <label>¿Quién está realizando esta modificación?</label>
+                <input
+                  name="modificado_por"
+                  value={form.modificado_por}
+                  onChange={handleChange}
+                  placeholder="Ej: Constanza Pino"
+                />
+                <span className="editar-campo-ayuda">
+                  Este nombre se mostrará en el historial de versiones del RAT.
+                </span>
+              </div>
 
               {/* Selector manual (respaldo) */}
               <div className="campo">

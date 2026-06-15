@@ -264,7 +264,7 @@ export default function Paso1() {
 
       <main className="p1-main">
         <div className="p1-header">
-          <h1 className="p1-titulo">Nuevo tratamiento</h1>
+          <h1 className="p1-titulo">{local.nombre.trim() || "Nuevo tratamiento"}</h1>
           <p className="p1-subtitulo">Completa la información para registrar este tratamiento en el RAT</p>
         </div>
 

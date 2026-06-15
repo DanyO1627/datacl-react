@@ -186,7 +186,7 @@ export default function MisTratamientos() {
                           className="mt-ver-historial"
                           onClick={(e) => {
                             e.stopPropagation() // evita que también dispare la navegación de la fila
-                            navigate(`/tratamientos/${t.id}/historial`)
+                            navigate(`/mis-tratamientos/${t.id}/historial`)
                           }}
                         >
                           Ver historial de versiones

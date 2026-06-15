@@ -169,6 +169,7 @@ class TratamientoEditar(BaseModel):
     nivel_riesgo: Optional[str] = None
     estado: Optional[str] = None
     detalle: Optional[DetalleRatBase] = None
+    modificado_por: Optional[str] = None
 
     @field_validator("nombre")
     @classmethod

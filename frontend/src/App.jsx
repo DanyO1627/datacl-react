@@ -27,6 +27,7 @@ import ConfirmacionDescarga from "./pages/ConfirmacionDescarga";
 import DetalleOrganizacion from "./pages/DetalleOrganizacion";
 import IngresoManual from "./pages/IngresoManual";
 import ConexionBD from "./pages/ConexionBD";
+import HistorialVersiones from "./pages/HistorialVersiones";
 
 function App() {
   return (
@@ -81,6 +82,9 @@ function App() {
           } />
           <Route path="/tratamientos/:id/editar" element={
             <RutaProtegida><EditarTratamiento /></RutaProtegida>
+          } />
+          <Route path="/mis-tratamientos/:id/historial" element={
+            <RutaProtegida><HistorialVersiones /></RutaProtegida>
           } />
           <Route path="/perfil" element={
             <RutaProtegida><Perfil /></RutaProtegida>
