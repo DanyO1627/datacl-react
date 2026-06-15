@@ -5,10 +5,21 @@ import { obtenerPerfil } from "../services/authService"
 import { obtenerTratamientos } from "../services/tratamientosService"
 import BarraLateral from "../components/BarraLateral"
 import GraficoRiesgo from "../components/GraficoRiesgo"
+import GraficoBasesLicitud from "../components/GraficoBasesLicitud"
+import GraficoEstados from "../components/GraficoEstados"
 import { useFormulario } from "../context/FormularioContext"
 import "../styles/dashboardCliente.css"
 
 const COLORES_RIESGO = { BAJO: "#38a169", MEDIO: "#d97706", ALTO: "#e53e3e" }
+
+function obtenerFactoresRiesgo(t) {
+  const factores = []
+  if (t.datos_sensibles)           factores.push("Datos sensibles")
+  if (t.sale_extranjero)           factores.push("Transferencia al extranjero")
+  if (t.decisiones_automatizadas)  factores.push("Decisiones automatizadas")
+  if (t.destinatarios?.trim())     factores.push("Destinatarios externos")
+  return factores
+}
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -279,35 +290,54 @@ export default function Dashboard() {
           </section>
         )}
 
-        {/* Fila inferior: gráfico + últimos tratamientos */}
-        <div className="dashboard__fila-inferior">
-
+        {/* Fila de gráficos: 3 columnas */}
+        <div className="dashboard__fila-graficos">
           <section className="dashboard__grafico-card">
             <h2 className="dashboard__seccion-titulo">Distribución de riesgo</h2>
             <GraficoRiesgo tratamientos={todosLosTratamientos} />
           </section>
+          <section className="dashboard__grafico-card">
+            <h2 className="dashboard__seccion-titulo">Bases de licitud</h2>
+            <GraficoBasesLicitud tratamientos={todosLosTratamientos} />
+          </section>
+          <section className="dashboard__grafico-card">
+            <h2 className="dashboard__seccion-titulo">Estado de tratamientos</h2>
+            <GraficoEstados tratamientos={todosLosTratamientos} />
+          </section>
+        </div>
 
-          {ultimos.length > 0 && (
-            <section className="dashboard__ultimos">
-              <h2 className="dashboard__ultimos-titulo">Últimos tratamientos</h2>
-              <ul className="dashboard__ultimos-lista">
-                {ultimos.map(t => (
+        {/* Últimos tratamientos */}
+        {ultimos.length > 0 && (
+          <section className="dashboard__ultimos-card">
+            <h2 className="dashboard__ultimos-titulo">Últimos tratamientos</h2>
+            <ul className="dashboard__ultimos-lista">
+              {ultimos.map(t => {
+                const factores = obtenerFactoresRiesgo(t)
+                return (
                   <li
                     key={t.id}
                     className="dashboard__ultimos-item"
                     onClick={() => navigate(`/tratamientos/${t.id}`)}
                   >
-                    <span className="dashboard__ultimos-nombre">{t.nombre}</span>
+                    <div className="dashboard__ultimos-info">
+                      <span className="dashboard__ultimos-nombre">{t.nombre}</span>
+                      {factores.length > 0 && (
+                        <div className="dashboard__ultimos-factores">
+                          {factores.map((f) => (
+                            <span key={f} className="dashboard__factor-pill">{f}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <span className={`dashboard__ultimos-badge badge-${t.nivel_riesgo?.toLowerCase()}`}>
                       {t.nivel_riesgo || '—'}
                     </span>
                   </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-        </div>
+                )
+              })}
+            </ul>
+          </section>
+        )}
       </main>
 
       <button

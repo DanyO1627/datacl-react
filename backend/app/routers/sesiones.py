@@ -108,11 +108,24 @@ def eliminar_sesion(
     db: Session = Depends(get_db),
     usuario: models.Organizacion = Depends(obtener_usuario_actual),
 ):
-    sesion = db.query(models.SesionAnalisis).filter(
-        models.SesionAnalisis.id == sesion_id,
-        models.SesionAnalisis.organizacion_id == usuario.id,
-    ).first()
+    sesion = (
+        db.query(models.SesionAnalisis)
+        .options(joinedload(models.SesionAnalisis.sesiones_actividad))
+        .filter(
+            models.SesionAnalisis.id == sesion_id,
+            models.SesionAnalisis.organizacion_id == usuario.id,
+        )
+        .first()
+    )
     if not sesion:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
+
+    # Copia fija de la colección antes de que el cascade la mute
+    actividades = list(sesion.sesiones_actividad)
+    for sa in actividades:
+        t = sa.tratamiento
+        if t and t.estado in ("BORRADOR", "PENDIENTE"):
+            db.delete(t)
+
     db.delete(sesion)
     db.commit()

@@ -150,7 +150,7 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
       });
       const data = await res.json();
       if (res.ok) {
-        actualizarConexion({ estado: "ok", tablas: data.tablas ?? [] });
+        actualizarConexion({ estado: "ok", tablas: data.tablas ?? [], errorMsg: "" });
       } else {
         actualizarConexion({ estado: "error", errorMsg: data.detail ?? "Error al conectar" });
       }

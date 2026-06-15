@@ -216,6 +216,25 @@
   font-weight: 600;
 }
 
+.mt-celda-historial {
+  white-space: nowrap;
+}
+
+.mt-ver-historial {
+  font-size: 13px;
+  color: #6c4fcf;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mt-ver-historial:hover {
+  text-decoration: underline;
+}
+
+.mt-historial-vacio {
+  color: #ccc;
+}
+
 /* Badges */
 .mt-badge {
   display: inline-block;

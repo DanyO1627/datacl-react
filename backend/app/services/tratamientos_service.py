@@ -61,7 +61,7 @@ def crear_tratamiento(
                 fuente=campo.fuente,
             ))
 
-        # Siempre crear DetalleRat — si no vienen datos, queda con nulls
+        # Siempre crear DetalleRat (si no vienen datos, queda con null)
         detalle_campos = datos.detalle.model_dump() if datos.detalle else {}
 
         # Auto-generar categoria_datos si no viene del frontend pero hay campos con categoría temática
@@ -127,6 +127,69 @@ def obtener_tratamiento_por_id(
         .first()
     )
 
+# (son funciones _con ese guión bajo porque son de uso interno del sistema _)
+
+# Campos "de contenido" del RAT que se guardan en cada snapshot de versión
+# A propósito NO incluye ids, timestamps ni probabilidad/impacto/fecha_evaluacion:
+# esos se recalculan SIEMPRE en cada PUT, así que si entraran en el diff (comparación antes/después de las versiones) 
+# "guardar sin cambios" generaría una versión falsa.
+_CAMPOS_SNAPSHOT_TRATAMIENTO = [
+    "nombre", "finalidad", "base_legal", "datos_sensibles", "destinatarios",
+    "plazo_conservacion", "plazo_otro", "medidas_seguridad",
+    "sale_extranjero", "decisiones_automatizadas",
+]
+
+_CAMPOS_SNAPSHOT_DETALLE = [
+    "responsable_tratamiento", "es_responsable", "departamento",
+    "categorias_titulares", "universo_titulares", "origen_datos", "categoria_datos",
+]
+
+
+# nueva función: junta los campos de Tratamiento + DetalleRat en UN SOLO dict
+# plano (sin sub-dict "detalle"), para poder comparar snapshots campo por
+# campo y que el historial muestre cada cambio como una pill legible.
+def _serializar_tratamiento(tratamiento: models.Tratamiento) -> dict:
+    snapshot = {campo: getattr(tratamiento, campo) for campo in _CAMPOS_SNAPSHOT_TRATAMIENTO}
+    detalle = tratamiento.detalle
+    for campo in _CAMPOS_SNAPSHOT_DETALLE:
+        snapshot[campo] = getattr(detalle, campo) if detalle else None
+    return snapshot
+
+
+# nueva función: pasa valores python a texto legible para campos_modificados
+# (True/False -> "Sí"/"No", None -> "", el resto a str).
+def _formatear_valor(valor) -> str:
+    if valor is None:
+        return ""
+    if isinstance(valor, bool):
+        return "Sí" if valor else "No"
+    return str(valor)
+
+
+# nueva función: compara snapshot antes/después campo por campo y devuelve
+# solo los que cambiaron, en el formato que espera CampoModificado.
+def _comparar_snapshots(antes: dict, despues: dict) -> list[dict]:
+    cambios = []
+    for campo, valor_despues in despues.items():
+        valor_antes = antes.get(campo)
+        if valor_antes != valor_despues:
+            cambios.append({
+                "campo": campo,
+                "antes": _formatear_valor(valor_antes),
+                "despues": _formatear_valor(valor_despues),
+            })
+    return cambios
+
+
+# nueva función: genera la frase descripcion_cambio según cuántos campos cambiaron.
+def _generar_descripcion_cambio(campos_modificados: list[dict]) -> str:
+    nombres = [c["campo"] for c in campos_modificados]
+    if len(nombres) == 1:
+        return f"Se modificó {nombres[0]}"
+    if len(nombres) == 2:
+        return f"Se modificaron {nombres[0]} y {nombres[1]}"
+    return f"Se modificaron {len(nombres)} campos: {', '.join(nombres)}"
+
 
 def editar_tratamiento(
     db: Session,
@@ -147,6 +210,11 @@ def editar_tratamiento(
         return None
 
     try:
+        # snapshot "antes": si ya era COMPLETO, se guarda cómo estaba el
+        # tratamiento ANTES de aplicar los cambios, para compararlo después (ese sería el caso A)
+        estado_antes = tratamiento.estado
+        snapshot_antes = _serializar_tratamiento(tratamiento) if estado_antes == "COMPLETO" else None
+
         campos_simples = [
             "nombre", "finalidad", "base_legal", "datos_sensibles", "destinatarios",
             "plazo_conservacion", "plazo_otro", "medidas_seguridad", "sale_extranjero", "decisiones_automatizadas",
@@ -159,7 +227,7 @@ def editar_tratamiento(
         if datos.estado is not None:
             tratamiento.estado = datos.estado.upper()
 
-        # El riesgo siempre se recalcula tras editar
+        # El riesgo SIEMPRE LO VAMOS A RECALCULAR después de editar
         tratamiento.probabilidad = calcular_probabilidad(tratamiento)
         tratamiento.impacto = calcular_impacto(tratamiento)
         tratamiento.nivel_riesgo = determinar_nivel_riesgo(tratamiento.probabilidad, tratamiento.impacto)
@@ -167,15 +235,62 @@ def editar_tratamiento(
 
         if datos.detalle is not None:
             if tratamiento.detalle is None:
-                # Tratamientos viejos sin detalle_rat — se crea ahora
-                db.add(models.DetalleRat(
-                    tratamiento_id=tratamiento.id,
-                    **datos.detalle.model_dump(),
-                ))
+                # Tratamientos viejos sin detalle_rat se crean ahora.
+                # Se asigna por la relación (no por tratamiento_id a mano) para que
+                # tratamiento.detalle quede disponible de inmediato y el snapshot
+                # "después" no lo vea como None.
+                tratamiento.detalle = models.DetalleRat(**datos.detalle.model_dump())
             else:
-                # Solo actualizar los campos que llegaron explícitamente
+                # Y solo se actualizan los campos que llegaron explícitamente
                 for campo, valor in datos.detalle.model_dump(exclude_unset=True).items():
                     setattr(tratamiento.detalle, campo, valor)
+
+        db.flush()  # aplica los cambios en memoria antes de tomar el snapshot "después"
+
+        # Historial de versiones: solo se registra si el tratamiento queda COMPLETO.
+        if tratamiento.estado == "COMPLETO":
+            snapshot_despues = _serializar_tratamiento(tratamiento)
+
+            organizacion = (
+                db.query(models.Organizacion)
+                .filter(models.Organizacion.id == organizacion_id)
+                .first()
+            )
+            modificado_por = organizacion.nombre if organizacion else None
+
+            if estado_antes == "COMPLETO":
+                # Caso A: ya era COMPLETO -> comparamos la snapshot (snapshot : captura al estado actual) antes/después
+                campos_modificados = _comparar_snapshots(snapshot_antes, snapshot_despues)
+                if campos_modificados:
+                    ultima_version = (
+                        db.query(models.VersionTratamiento)
+                        .filter(models.VersionTratamiento.tratamiento_id == tratamiento.id)
+                        .order_by(models.VersionTratamiento.numero_version.desc())
+                        .first()
+                    )
+                    numero_version = (ultima_version.numero_version + 1) if ultima_version else 1
+                    db.add(models.VersionTratamiento(
+                        tratamiento_id=tratamiento.id,
+                        numero_version=numero_version,
+                        datos_snapshot=snapshot_despues,
+                        campos_modificados=campos_modificados,
+                        modificado_por=modificado_por,
+                        descripcion_cambio=_generar_descripcion_cambio(campos_modificados),
+                        nivel_riesgo=tratamiento.nivel_riesgo,
+                    ))
+                # si no hubo cambios reales, no se crea una versión vacía
+            else:
+                # Caso B: pasa a COMPLETO por primera vez -> versión inicial
+                db.add(models.VersionTratamiento(
+                    tratamiento_id=tratamiento.id,
+                    numero_version=1,
+                    datos_snapshot=snapshot_despues,
+                    campos_modificados=[],
+                    modificado_por=modificado_por,
+                    descripcion_cambio="Versión inicial del RAT",
+                    nivel_riesgo=tratamiento.nivel_riesgo,
+                ))
+        # si después del PUT sigue sin ser COMPLETO, no se crea ninguna versión
 
         db.commit()
         db.refresh(tratamiento)
@@ -229,3 +344,37 @@ def eliminar_tratamiento(
     db.delete(tratamiento)
     db.commit()
     return True
+
+
+# ================================================
+# Para lectura de los historiales de versiones
+# =================================================
+# Estas funciones NO verifican que el tratamiento pertenezca a la organización:
+# ese chequeo (que cubre el acceso de otra org a una que no es suya) ya lo hace el router 
+# llamando primero a la función: 
+# obtener_tratamiento_por_id(db, tratamiento_id, organizacion_id).
+
+def obtener_versiones(db: Session, tratamiento_id: int) -> list[models.VersionTratamiento]:
+    """Lista todas las versiones de un tratamiento, de la más nueva a la más antigua."""
+    return (
+        db.query(models.VersionTratamiento)
+        .filter(models.VersionTratamiento.tratamiento_id == tratamiento_id)
+        .order_by(models.VersionTratamiento.numero_version.desc())
+        .all()
+    )
+
+
+def obtener_version_por_numero(
+    db: Session,
+    tratamiento_id: int,
+    numero: int,
+) -> models.VersionTratamiento | None:
+    """Devuelve una versión puntual (incluye datos_snapshot) o none si no existe."""
+    return (
+        db.query(models.VersionTratamiento)
+        .filter(
+            models.VersionTratamiento.tratamiento_id == tratamiento_id,
+            models.VersionTratamiento.numero_version == numero,
+        )
+        .first()
+    )
