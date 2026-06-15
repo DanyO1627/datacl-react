@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BarraLateral from "../components/BarraLateral";
+import { useFormulario } from "../context/FormularioContext";
 import "../styles/ingresoManual.css";
 
 /* ─── Catálogo de categorías y campos típicos ────────────────── */
@@ -103,39 +104,52 @@ const CATEGORIAS = [
   },
 ];
 
+/* ─── Etiquetas RAT por categoría temática ────────────────────────
+ * Los ids de CATEGORIAS coinciden con las claves de CATEGORIAS_TEMATICAS
+ * en backend/app/utils/analisis.py — generar_texto_categoria() agrupa
+ * por estas etiquetas (labels), no por el id.
+ */
+const LABEL_TEMATICA = {
+  identificatorios: "Datos identificatorios",
+  contacto:         "Datos de contacto",
+  salud:            "Datos de salud",
+  financieros:      "Datos financieros",
+  laborales:        "Datos laborales",
+  academicos:       "Datos académicos",
+  biometricos:      "Datos biométricos",
+};
+
 /* ─── Componente principal ───────────────────────────────────── */
 export default function IngresoManual() {
   const navigate = useNavigate();
+  const { form, actualizarForm } = useFormulario();
 
   /* seleccionados: Set de claves "catId::nombreColumna" */
-  const [seleccionados, setSeleccionados] = useState(new Set());
-  /* secciones abiertas */
-  const [abiertos, setAbiertos] = useState(new Set(["identificatorios"]));
-  /* campos personalizados por categoría { catId: string[] } */
-  const [personalizados, setPersonalizados] = useState({});
-  /* texto del input personalizado por categoría */
-  const [inputCustom, setInputCustom] = useState({});
+  /* abiertos: secciones abiertas */
+  /* personalizados: campos personalizados por categoría { catId: string[] } */
+  /* inputCustom: texto del input personalizado por categoría */
+  const { seleccionados, abiertos, personalizados, inputCustom } = form.ingresoManual;
 
   const [guardando, setGuardando] = useState(false);
+
+  function actualizarIngreso(cambios) {
+    actualizarForm({ ingresoManual: { ...form.ingresoManual, ...cambios } });
+  }
 
   /* ── Helpers ─────────────────────────────────────────────────── */
   function clave(catId, nombre) { return `${catId}::${nombre}`; }
 
   function toggleCampo(catId, nombre) {
-    setSeleccionados((prev) => {
-      const next = new Set(prev);
-      const k = clave(catId, nombre);
-      if (next.has(k)) next.delete(k); else next.add(k);
-      return next;
-    });
+    const next = new Set(seleccionados);
+    const k = clave(catId, nombre);
+    if (next.has(k)) next.delete(k); else next.add(k);
+    actualizarIngreso({ seleccionados: next });
   }
 
   function toggleSeccion(catId) {
-    setAbiertos((prev) => {
-      const next = new Set(prev);
-      if (next.has(catId)) next.delete(catId); else next.add(catId);
-      return next;
-    });
+    const next = new Set(abiertos);
+    if (next.has(catId)) next.delete(catId); else next.add(catId);
+    actualizarIngreso({ abiertos: next });
   }
 
   function seleccionadosDeCat(cat) {
@@ -150,16 +164,13 @@ export default function IngresoManual() {
   function agregarCampoCustom(catId) {
     const texto = (inputCustom[catId] || "").trim();
     if (!texto) return;
-    setPersonalizados((prev) => ({
-      ...prev,
-      [catId]: [...(prev[catId] || []), texto],
-    }));
-    setSeleccionados((prev) => {
-      const next = new Set(prev);
-      next.add(clave(catId, texto));
-      return next;
+    const nuevosSeleccionados = new Set(seleccionados);
+    nuevosSeleccionados.add(clave(catId, texto));
+    actualizarIngreso({
+      personalizados: { ...personalizados, [catId]: [...(personalizados[catId] || []), texto] },
+      seleccionados: nuevosSeleccionados,
+      inputCustom: { ...inputCustom, [catId]: "" },
     });
-    setInputCustom((prev) => ({ ...prev, [catId]: "" }));
   }
 
   /* ── Construir array de campos para el backend ───────────────── */
@@ -169,7 +180,7 @@ export default function IngresoManual() {
       const tipo = cat.sensible ? "SENSIBLE" : "PERSONAL";
       for (const nombre of todosLosCampos(cat)) {
         if (seleccionados.has(clave(cat.id, nombre))) {
-          campos.push({ nombre_columna: nombre, tipo, categoria_tematica: cat.id });
+          campos.push({ nombre_columna: nombre, tipo, categoria_tematica: LABEL_TEMATICA[cat.id] || "Otros" });
         }
       }
     }
@@ -293,7 +304,7 @@ export default function IngresoManual() {
                         placeholder="Campo personalizado..."
                         value={inputCustom[cat.id] || ""}
                         onChange={(e) =>
-                          setInputCustom((prev) => ({ ...prev, [cat.id]: e.target.value }))
+                          actualizarIngreso({ inputCustom: { ...inputCustom, [cat.id]: e.target.value } })
                         }
                         onKeyDown={(e) => {
                           if (e.key === "Enter") agregarCampoCustom(cat.id);

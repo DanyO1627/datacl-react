@@ -9,6 +9,7 @@ const FORM_VACIO = {
   // ── Paso 2 ───────────────────────────────────────────────
   categorias_titulares: [], universo_titulares: "", origen_datos: "",
   categorias_datos: [], datos_sensibles: false, categorias_sensibles: [],
+  categoria_datos: "",
   destinatarios: "", sale_extranjero: false, pais_destino: "", otros_datos: "",
   // ── Paso 3 ───────────────────────────────────────────────
   plazo_conservacion: "", plazo_otro: "", otras_medidas: "",
@@ -21,6 +22,21 @@ const FORM_VACIO = {
   actividadActual: 0,          // índice de la actividad que está completando el formulario
   tratamientosGuardados: {},   // { [actividadActual]: tratamientoId } — borradores en BD
   campos_sesion: [],           // todos los campos originales del archivo (detectados + pendientes)
+  // ── Nueva sesión: conexión a BD ───────────────────────────
+  conexionBD: {
+    paso: 1,            // 1 = instrucciones, 2 = formulario
+    motor: "mysql", host: "", puerto: 3306, base_datos: "", usuario: "", password: "",
+    estado: "idle",     // idle | ok | error
+    errorMsg: "",
+    tablas: [], tablaSelec: "",
+  },
+  // ── Nueva sesión: ingreso manual ──────────────────────────
+  ingresoManual: {
+    seleccionados: new Set(),
+    abiertos: new Set(["identificatorios"]),
+    personalizados: {},
+    inputCustom: {},
+  },
 };
 
 export function FormularioProvider({ children }) {

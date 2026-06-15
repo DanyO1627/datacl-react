@@ -4,6 +4,27 @@ import BarraLateral from "../components/BarraLateral";
 import { useFormulario } from "../context/FormularioContext";
 import "../styles/asignacionCampos.css";
 
+/* ─── Tooltip de información ──────────────────────────────────── */
+function Tooltip({ texto }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <span className="ac-tooltip-wrap"
+      onMouseEnter={() => setVisible(true)}
+      onMouseLeave={() => setVisible(false)}
+    >
+      <span className="ac-tooltip-trigger">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </span>
+      {visible && <div className="ac-tooltip-burbuja">{texto}</div>}
+    </span>
+  );
+}
+
 /* ─── Componente principal: AsignacionCampos ─────────────────── */
 export default function AsignacionCampos() {
   const { state } = useLocation();
@@ -279,7 +300,10 @@ export default function AsignacionCampos() {
           {/* ── Columna derecha: actividades ── */}
           <div className="ac-panel">
             <div className="ac-panel-header">
-              <span className="ac-panel-titulo">Actividades ({actividades.length})</span>
+              <span className="ac-panel-titulo">
+                Registro de actividades de tratamiento ({actividades.length})
+                <Tooltip texto="Nombra la actividad según su propósito (ej: «Gestión de nómina», «Atención al cliente», «Reclutamiento de personal»), no según el sistema o departamento. Si los mismos datos se usan para dos fines distintos, créalos como actividades separadas." />
+              </span>
             </div>
             <div className="ac-panel-cuerpo">
 

@@ -39,6 +39,7 @@ def crear_tratamiento(
             datos_sensibles=datos.datos_sensibles,
             destinatarios=datos.destinatarios,
             plazo_conservacion=datos.plazo_conservacion,
+            plazo_otro=datos.plazo_otro,
             medidas_seguridad=datos.medidas_seguridad,
             sale_extranjero=datos.sale_extranjero,
             decisiones_automatizadas=datos.decisiones_automatizadas,
@@ -148,7 +149,7 @@ def editar_tratamiento(
     try:
         campos_simples = [
             "nombre", "finalidad", "base_legal", "datos_sensibles", "destinatarios",
-            "plazo_conservacion", "medidas_seguridad", "sale_extranjero", "decisiones_automatizadas",
+            "plazo_conservacion", "plazo_otro", "medidas_seguridad", "sale_extranjero", "decisiones_automatizadas",
         ]
         for campo in campos_simples:
             valor = getattr(datos, campo, None)

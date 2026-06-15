@@ -139,6 +139,7 @@ class TratamientoCrear(BaseModel):
     estado: Optional[str] = None
     destinatarios: Optional[str] = None
     plazo_conservacion: Optional[str] = None
+    plazo_otro: Optional[str] = None
     medidas_seguridad: Optional[str] = None
     sale_extranjero: bool = False
     decisiones_automatizadas: bool = False
@@ -161,6 +162,7 @@ class TratamientoEditar(BaseModel):
     datos_sensibles: Optional[bool] = None
     destinatarios: Optional[str] = None
     plazo_conservacion: Optional[str] = None
+    plazo_otro: Optional[str] = None
     medidas_seguridad: Optional[str] = None
     sale_extranjero: Optional[bool] = None
     decisiones_automatizadas: Optional[bool] = None
@@ -198,6 +200,7 @@ class TratamientoRespuesta(BaseModel):
     datos_sensibles: bool
     destinatarios: Optional[str] = None
     plazo_conservacion: Optional[str] = None
+    plazo_otro: Optional[str] = None
     medidas_seguridad: Optional[str] = None
     sale_extranjero: bool
     decisiones_automatizadas: bool

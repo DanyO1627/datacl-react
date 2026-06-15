@@ -55,7 +55,7 @@ const PLAZOS = [
   { valor: "5_anios", etiqueta: "5 años" },
   { valor: "10_anios", etiqueta: "10 años" },
   { valor: "indefinido", etiqueta: "Indefinido" },
-  { valor: "duracion_relacion", etiqueta: "Mientras dure la relación" },
+  { valor: "duracion_relacion", etiqueta: "Mientras dure la relación contractual" },
   { valor: "otro", etiqueta: "Otro" },
 ];
 
@@ -107,7 +107,7 @@ const ETIQ_PLAZO = {
   "5_anios": "5 años",
   "10_anios": "10 años",
   indefinido: "Indefinido",
-  duracion_relacion: "Mientras dure la relación",
+  duracion_relacion: "Mientras dure la relación contractual",
   otro: "Otro",
 };
 
@@ -128,35 +128,6 @@ const ETIQ_CATEGORIAS = {
   direccion: "Dirección",
   fecha_nacimiento: "Fecha de nacimiento",
 };
-
-const ETIQ_CATEGORIAS_SENSIBLES = {
-  datos_salud: "Datos de salud",
-  datos_biometricos: "Datos biométricos",
-  origen_etnico: "Origen étnico",
-  religion_creencias: "Religión o creencias",
-  orientacion_sexual: "Orientación sexual",
-  opiniones_politicas: "Opiniones políticas",
-};
-
-/* ─── Helpers de payload ─────────────────────────────────────────
- * Compartidos entre handleGuardar y handleGuardarBorrador para que
- * "categoria_datos" y el plazo libre ("otro") nunca se omitan al guardar.
- */
-function construirCategoriaDatos(datos) {
-  // si hubo análisis de archivo, el backend genera/mantiene el texto a partir de
-  // los campos detectados — devolvemos undefined para no pisarlo con null.
-  if ((datos.campos_detectados || []).length > 0) return undefined;
-  const partes = [
-    ...(datos.categorias_datos || []).map((id) => ETIQ_CATEGORIAS[id] || id),
-    ...(datos.categorias_sensibles || []).map((id) => ETIQ_CATEGORIAS_SENSIBLES[id] || id),
-  ].filter(Boolean);
-  return partes.length > 0 ? partes.join(", ") : null;
-}
-
-function resolverPlazoConservacion(plazo, plazoOtro) {
-  if (plazo === "otro" && plazoOtro?.trim()) return plazoOtro.trim();
-  return plazo || null;
-}
 
 /* ─── Barra de progreso ──────────────────────────────────────── */
 function BarraProgreso({ pasoActual }) {
@@ -226,18 +197,6 @@ export default function Paso3() {
     actualizarForm(local);
     const formularioCompleto = { ...form, ...local };
 
-    // categoria_datos: si hubo análisis de archivo el backend genera texto rico
-    // desde los campos detectados; si no (ingreso manual), construimos texto
-    // desde los checkboxes que el usuario seleccionó en Paso2.
-    const categoriaDatos = construirCategoriaDatos(formularioCompleto);
-
-    // plazo_conservacion: si el usuario eligió "otro", se guarda el texto libre
-    // que escribió en vez del literal "otro".
-    const plazoFinal = resolverPlazoConservacion(
-      formularioCompleto.plazo_conservacion,
-      formularioCompleto.plazo_otro
-    );
-
     const payload = {
       // Campos del tratamiento principal
       nombre:                   formularioCompleto.nombre,
@@ -246,11 +205,13 @@ export default function Paso3() {
       datos_sensibles:          formularioCompleto.datos_sensibles      ?? false,
       destinatarios:            formularioCompleto.destinatarios        || null,
       sale_extranjero:          formularioCompleto.sale_extranjero      ?? false,
-      plazo_conservacion:       plazoFinal,
+      plazo_conservacion:       formularioCompleto.plazo_conservacion   || null,
+      plazo_otro:               formularioCompleto.plazo_otro           || null,
       medidas_seguridad: serializarMedidasSeguridad(
         formularioCompleto.medidas_seguridad,
         formularioCompleto.otras_medidas
       ),
+      otras_medidas:            formularioCompleto.otras_medidas        || null,
       decisiones_automatizadas: formularioCompleto.decisiones_automatizadas ?? false,
       campos_detectados:        formularioCompleto.campos_detectados    || [],
       sesion_id:                formularioCompleto.sesionActual         || null,
@@ -267,7 +228,7 @@ export default function Paso3() {
         categorias_titulares: (formularioCompleto.categorias_titulares || []).join(",") || null,
         universo_titulares:   formularioCompleto.universo_titulares || null,
         origen_datos:         formularioCompleto.origen_datos || null,
-        ...(categoriaDatos !== undefined ? { categoria_datos: categoriaDatos } : {}),
+        categoria_datos:      formularioCompleto.categoria_datos || null,
       },
     };
 
@@ -353,7 +314,6 @@ export default function Paso3() {
       const idx = datos.actividadActual ?? 0;
       const tratId = datos.tratamientosGuardados?.[idx];
       const medStr = serializarMedidasSeguridad(local.medidas_seguridad, local.otras_medidas);
-      const categoriaDatosBorrador = construirCategoriaDatos(datos);
       const payload3 = {
         nombre: datos.nombre.trim() || "Sin nombre",
         finalidad: datos.finalidad || null,
@@ -361,7 +321,7 @@ export default function Paso3() {
         datos_sensibles: datos.datos_sensibles ?? false,
         destinatarios: datos.destinatarios || null,
         sale_extranjero: datos.sale_extranjero ?? false,
-        plazo_conservacion: resolverPlazoConservacion(local.plazo_conservacion, local.plazo_otro),
+        plazo_conservacion: local.plazo_conservacion || null,
         medidas_seguridad: medStr,
         decisiones_automatizadas: local.decisiones_automatizadas ?? false,
         campos_detectados: datos.campos_detectados || [],
@@ -373,7 +333,7 @@ export default function Paso3() {
           categorias_titulares: (datos.categorias_titulares || []).join(",") || null,
           universo_titulares: datos.universo_titulares || null,
           origen_datos: datos.origen_datos || null,
-          ...(categoriaDatosBorrador !== undefined ? { categoria_datos: categoriaDatosBorrador } : {}),
+          categoria_datos: datos.categoria_datos || null,
         },
       };
 
@@ -513,14 +473,18 @@ export default function Paso3() {
                 })}
                 {/* Campo libre para "Otras" */}
                 {local.medidas_seguridad.includes("otras") && (
-                  <input
-                    type="text"
-                    className="p3-input-otro"
-                    placeholder="Describe otras medidas..."
-                    value={local.otras_medidas}
-                    onChange={(e) => setLocal((prev) => ({ ...prev, otras_medidas: e.target.value }))}
-                    maxLength={300}
-                  />
+                  <>
+                    <textarea
+                      className="p3-textarea-otro"
+                      placeholder="Describe otras medidas..."
+                      value={local.otras_medidas}
+                      onChange={(e) => setLocal((prev) => ({ ...prev, otras_medidas: e.target.value }))}
+                      rows={3}
+                      maxLength={500}
+                    />
+                    <p className="p3-campo-ayuda">Si son varias medidas, sepáralas por comas o en líneas distintas.</p>
+                    <span className="p3-campo-contador">{local.otras_medidas.length}/500</span>
+                  </>
                 )}
               </div>
             </div>

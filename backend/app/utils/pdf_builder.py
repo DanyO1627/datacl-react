@@ -30,7 +30,7 @@ _PLAZO = {
     "5_anios":          "5 años",
     "10_anios":         "10 años",
     "indefinido":       "Indefinido",
-    "duracion_relacion": "Mientras dure la relación",
+    "duracion_relacion": "Mientras dure la relación contractual",
     "otro":             "Otro",
 }
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BarraLateral from "../components/BarraLateral";
+import { useFormulario } from "../context/FormularioContext";
 import "../styles/ConexionBD.css";
 
 // ── SQL de instrucciones por motor ────────────────────────────────────────
@@ -105,48 +106,39 @@ function PantallaInstrucciones({ onContinuar, onVolver }) {
 
 // ── Pantalla 2: Formulario de conexión ──────────────────────────────────
 function PantallaFormulario({ onVolver, onAnalisis }) {
-  const [form, setForm] = useState({
-    motor: "mysql",
-    host: "",
-    puerto: 3306,
-    base_datos: "",
-    usuario: "",
-    password: "",
-  });
+  const { form: formGlobal, actualizarForm } = useFormulario();
+  const conexion = formGlobal.conexionBD;
 
-  const [estado, setEstado] = useState("idle"); // idle | probando | ok | error | analizando
-  const [errorMsg, setErrorMsg] = useState("");
-  const [tablas, setTablas] = useState([]);
-  const [tablaSelec, setTablaSelec] = useState("");
+  const actualizarConexion = (cambios) => {
+    actualizarForm({ conexionBD: { ...formGlobal.conexionBD, ...cambios } });
+  };
+
+  const { motor, host, puerto, base_datos, usuario, password, estado, errorMsg, tablas, tablaSelec } = conexion;
 
   const token = localStorage.getItem("token");
 
   const cambiar = (campo) => (e) => {
     const val = campo === "puerto" ? Number(e.target.value) : e.target.value;
-    setForm((prev) => ({ ...prev, [campo]: val }));
+    const cambios = { [campo]: val };
     // Si cambia el motor, actualizar puerto por defecto
     if (campo === "motor") {
-      setForm((prev) => ({
-        ...prev,
-        motor: e.target.value,
-        puerto: PUERTOS_DEFAULT[e.target.value] ?? prev.puerto,
-      }));
+      cambios.puerto = PUERTOS_DEFAULT[e.target.value] ?? puerto;
     }
-    // Resetear estado si el usuario edita algo
-    setEstado("idle");
-    setTablas([]);
-    setTablaSelec("");
+    // Resetear estado de prueba si el usuario edita algo
+    cambios.estado = "idle";
+    cambios.tablas = [];
+    cambios.tablaSelec = "";
+    actualizarConexion(cambios);
   };
 
   const formCompleto =
-    form.host.trim() &&
-    form.base_datos.trim() &&
-    form.usuario.trim() &&
-    form.puerto;
+    host.trim() &&
+    base_datos.trim() &&
+    usuario.trim() &&
+    puerto;
 
   const probarConexion = async () => {
-    setEstado("probando");
-    setErrorMsg("");
+    actualizarConexion({ estado: "probando", errorMsg: "" });
     try {
       const res = await fetch("http://localhost:8000/analizar/conexion/probar", {
         method: "POST",
@@ -154,26 +146,22 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ motor, host, puerto, base_datos, usuario, password }),
       });
       const data = await res.json();
       if (res.ok) {
-        setEstado("ok");
-        setTablas(data.tablas ?? []);
+        actualizarConexion({ estado: "ok", tablas: data.tablas ?? [] });
       } else {
-        setEstado("error");
-        setErrorMsg(data.detail ?? "Error al conectar");
+        actualizarConexion({ estado: "error", errorMsg: data.detail ?? "Error al conectar" });
       }
     } catch {
-      setEstado("error");
-      setErrorMsg("No se pudo conectar con el servidor. Verifica que el backend esté corriendo.");
+      actualizarConexion({ estado: "error", errorMsg: "No se pudo conectar con el servidor. Verifica que el backend esté corriendo." });
     }
   };
 
   const analizar = async () => {
     if (!tablaSelec) return;
-    setEstado("analizando");
-    setErrorMsg("");
+    actualizarConexion({ estado: "analizando", errorMsg: "" });
     try {
       const res = await fetch("http://localhost:8000/analizar/conexion", {
         method: "POST",
@@ -181,19 +169,17 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ ...form, tabla: tablaSelec }),
+        body: JSON.stringify({ motor, host, puerto, base_datos, usuario, password, tabla: tablaSelec }),
       });
       const data = await res.json();
       if (res.ok) {
         // Navega a resultados pasando el resultado por state (mismo flujo que archivo)
-        onAnalisis(data, tablaSelec, form.motor);
+        onAnalisis(data, tablaSelec, motor);
       } else {
-        setEstado("ok"); // vuelve a estado ok para no perder la selección
-        setErrorMsg(data.detail ?? "Error al analizar");
+        actualizarConexion({ estado: "ok", errorMsg: data.detail ?? "Error al analizar" }); // vuelve a estado ok para no perder la selección
       }
     } catch {
-      setEstado("ok");
-      setErrorMsg("No se pudo conectar con el servidor.");
+      actualizarConexion({ estado: "ok", errorMsg: "No se pudo conectar con el servidor." });
     }
   };
 
@@ -212,7 +198,7 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
             <label className="cbd-label">Motor de base de datos</label>
             <select
               className="cbd-select"
-              value={form.motor}
+              value={motor}
               onChange={cambiar("motor")}
             >
               <option value="mysql">MySQL</option>
@@ -225,7 +211,7 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
             <input
               className="cbd-input"
               placeholder="mi_base_de_datos"
-              value={form.base_datos}
+              value={base_datos}
               onChange={cambiar("base_datos")}
             />
           </div>
@@ -238,7 +224,7 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
             <input
               className="cbd-input"
               placeholder="192.168.1.100"
-              value={form.host}
+              value={host}
               onChange={cambiar("host")}
             />
           </div>
@@ -247,7 +233,7 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
             <input
               className="cbd-input"
               type="number"
-              value={form.puerto}
+              value={puerto}
               onChange={cambiar("puerto")}
             />
           </div>
@@ -260,7 +246,7 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
             <input
               className="cbd-input"
               placeholder="datacl_reader"
-              value={form.usuario}
+              value={usuario}
               onChange={cambiar("usuario")}
               autoComplete="off"
             />
@@ -271,7 +257,7 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
               className="cbd-input"
               type="password"
               placeholder="••••••••"
-              value={form.password}
+              value={password}
               onChange={cambiar("password")}
               autoComplete="new-password"
             />
@@ -316,7 +302,7 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
                 <button
                   key={t}
                   className={`cbd-tabla-chip${tablaSelec === t ? " seleccionada" : ""}`}
-                  onClick={() => setTablaSelec(t)}
+                  onClick={() => actualizarConexion({ tablaSelec: t })}
                 >
                   {t}
                 </button>
@@ -359,7 +345,9 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
 // ── Componente principal ─────────────────────────────────────────────────
 export default function ConexionBD() {
   const navigate = useNavigate();
-  const [paso, setPaso] = useState(1); // 1 = instrucciones, 2 = formulario
+  const { form, actualizarForm } = useFormulario();
+  const paso = form.conexionBD.paso; // 1 = instrucciones, 2 = formulario
+  const setPaso = (p) => actualizarForm({ conexionBD: { ...form.conexionBD, paso: p } });
 
   const handleAnalisis = (resultado, tabla, motor) => {
     // Navega a resultados-analisis pasando los datos por location.state

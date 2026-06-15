@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from pathlib import Path
 
@@ -12,73 +11,15 @@ from app import models
 from app.utils.jwt import obtener_usuario_actual
 from app.utils.pdf_builder import construir_pdf
 from app.schemas import InformeRespuesta, GenerarInformeRequest
+from app.services.informes_service import pedir_analisis_ia
 
 load_dotenv()
 
 router = APIRouter(prefix="/informes", tags=["Informes"])
 
-# Carpeta donde se guardan los PDFs — se crea automáticamente si no existe
+# Carpeta donde se guardan los PDFs : se crea automáticamente si no existe
 CARPETA_INFORMES = Path("informes_generados")
 CARPETA_INFORMES.mkdir(exist_ok=True)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# GROQ — análisis IA
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _pedir_analisis_ia(tratamientos: list) -> str | None:
-    """
-    Llama a Groq con un resumen de los tratamientos y devuelve el análisis.
-    Si falla por cualquier motivo devuelve None — el PDF se genera igual.
-    """
-    try:
-        from groq import Groq
-        cliente = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
-        resumen = []
-        for t in tratamientos:
-            linea = (
-                f"- {t.nombre} | base_legal={t.base_legal or 'no especificada'}"
-                f" | nivel_riesgo={t.nivel_riesgo}"
-                f" | datos_sensibles={t.datos_sensibles}"
-                f" | sale_extranjero={t.sale_extranjero}"
-                f" | decisiones_automatizadas={t.decisiones_automatizadas}"
-                f" | finalidad={t.finalidad or 'no especificada'}"
-            )
-            resumen.append(linea)
-
-        prompt = f"""Eres un especialista en protección de datos personales bajo la Ley 21.719 de Chile.
-
-Analiza el RAT de la siguiente organización y entrega un informe ejecutivo útil para su encargado de datos.
-
-TRATAMIENTOS REGISTRADOS:
-{chr(10).join(resumen)}
-
-INSTRUCCIONES:
-Por cada tratamiento indica en máximo 60 palabras:
-- Si la base legal registrada es correcta o debería ajustarse (cita el Art. 12 Ley 21.719)
-- El riesgo principal concreto de este tratamiento específico
-- Una medida prioritaria, mencionando el tipo de organización si es relevante
-
-Si nivel_riesgo es ALTO: indica explícitamente si corresponde EIPD según Art. 22 Ley 21.719.
-Si datos_sensibles=true: menciona la categoría especial (salud, biometría, etc.) y el Art. 16.
-Si sale_extranjero=true: señala si requiere garantías adicionales.
-
-Al final, en máximo 80 palabras:
-CONCLUSIÓN: cumplimiento global (ALTO/MEDIO/BAJO), los 2 riesgos más urgentes y acción prioritaria.
-
-Sé específico. Evita recomendaciones genéricas que apliquen a cualquier organización.
-Formato: encabezado por tratamiento, texto corrido, sin listas."""
-
-        respuesta = cliente.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=2500,
-        )
-        return respuesta.choices[0].message.content
-
-    except Exception:
-        return None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -132,7 +73,7 @@ def generar_informe(
 
     # La IA se corre aquí, con la lista ya filtrada, no en un endpoint aparte.
     # Si Groq falla, contenido_ia queda None y el PDF se guarda igual.
-    contenido_ia = _pedir_analisis_ia(tratamientos)
+    contenido_ia = pedir_analisis_ia(tratamientos)
 
     nuevo_informe = models.Informe(
         organizacion_id=usuario.id,
@@ -186,7 +127,7 @@ def analizar_informe_ia(
         .all()
     )
 
-    contenido_ia = _pedir_analisis_ia(tratamientos)
+    contenido_ia = pedir_analisis_ia(tratamientos)
 
     if contenido_ia is None:
         raise HTTPException(

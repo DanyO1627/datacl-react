@@ -75,6 +75,7 @@ export default function EditarTratamiento() {
     // campos del detalle_rat
     universo_titulares: '',
     categorias_titulares: '',
+    categoria_datos: '',
   })
 
   // ── Cargar tratamiento existente ───────────────────────────────
@@ -100,6 +101,7 @@ export default function EditarTratamiento() {
           nivel_riesgo: data.nivel_riesgo || 'BAJO',
           universo_titulares: data.detalle?.universo_titulares || '',
           categorias_titulares: data.detalle?.categorias_titulares || '',
+          categoria_datos: data.detalle?.categoria_datos || '',
         })
         // Mostrar el riesgo actual como resultado inicial
         if (data.nivel_riesgo) {
@@ -164,12 +166,13 @@ export default function EditarTratamiento() {
     setGuardando(true)
     setError('')
     try {
-      const { universo_titulares, categorias_titulares, nivel_riesgo, ...camposPrincipales } = form
+      const { universo_titulares, categorias_titulares, categoria_datos, nivel_riesgo, ...camposPrincipales } = form
       const payload = {
         ...camposPrincipales,
         detalle: {
           universo_titulares: universo_titulares || null,
           categorias_titulares: categorias_titulares || null,
+          categoria_datos: categoria_datos || null,
         },
       }
       const res = await fetch(`${API}/tratamientos/${id}`, {
@@ -271,6 +274,19 @@ export default function EditarTratamiento() {
                   rows={3}
                   maxLength={500}
                 />
+              </div>
+
+              <div className="campo">
+                <label>Categoría de datos (detalle RAT)</label>
+                <textarea
+                  name="categoria_datos"
+                  value={form.categoria_datos}
+                  onChange={handleChange}
+                  placeholder="Ej: Datos identificatorios — Rut Alumno, Nombre Apoderado."
+                  rows={5}
+                  maxLength={1500}
+                />
+                <span className="editar-campo-contador">{form.categoria_datos.length}/1500</span>
               </div>
 
               <div className="campo">
