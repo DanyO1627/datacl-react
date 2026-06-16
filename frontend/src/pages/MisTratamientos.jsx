@@ -178,22 +178,15 @@ export default function MisTratamientos() {
                     </td>
                     <td className="mt-celda-fecha">{formatearFecha(t.creado_en)}</td>
                     <td className="mt-celda-historial">
-                    
-                    
-                      {/* Solo los tratamientos con estado: COMPLETO tienen versiones (T4 las genera al pasar a COMPLETO) */}
-                      {t.estado === 'COMPLETO' ? (
-                        <span
-                          className="mt-ver-historial"
-                          onClick={(e) => {
-                            e.stopPropagation() // evita que también dispare la navegación de la fila
-                            navigate(`/mis-tratamientos/${t.id}/historial`)
-                          }}
-                        >
-                          Ver historial de versiones
-                        </span>
-                      ) : (
-                        <span className="mt-historial-vacio">-</span>
-                      )}
+                      <span
+                        className="mt-ver-historial"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate(`/mis-tratamientos/${t.id}/historial`)
+                        }}
+                      >
+                        Ver historial de versiones
+                      </span>
                     </td>
                     <td className="mt-celda-accion">
                       <span className="mt-ver-detalle">Ver →</span>

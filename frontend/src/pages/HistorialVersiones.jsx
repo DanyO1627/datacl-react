@@ -282,8 +282,8 @@ export default function HistorialVersiones() {
 
         {/* Banner informativo */}
         <div className="hv-info-banner">
-          Cada vez que se guarda una modificación de este tratamiento en estado "Completo" se genera
-          una nueva versión. Aquí puedes revisar el detalle de cada cambio realizado a lo largo del tiempo.
+          Cada vez que se guarda una modificación de este tratamiento se genera una nueva versión.
+          Aquí puedes revisar el detalle de cada cambio realizado a lo largo del tiempo.
         </div>
 
         {/* Versiones anteriores */}
@@ -304,7 +304,7 @@ export default function HistorialVersiones() {
           {versiones.length === 0 ? (
             <p className="hv-vacio">
               Este tratamiento aún no tiene versiones registradas. Las versiones se generan
-              automáticamente cada vez que el RAT se guarda en estado "Completo".
+              automáticamente cada vez que el RAT se guarda.
             </p>
           ) : anteriores.length === 0 ? (
             <p className="hv-vacio">Aún no hay versiones anteriores. Esta es la primera versión del RAT.</p>

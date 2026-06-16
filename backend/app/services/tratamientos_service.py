@@ -181,9 +181,35 @@ def _comparar_snapshots(antes: dict, despues: dict) -> list[dict]:
     return cambios
 
 
-# nueva función: genera la frase descripcion_cambio según cuántos campos cambiaron.
+_ETIQUETAS_CAMPOS = {
+    "nombre": "Nombre",
+    "finalidad": "Finalidad",
+    "base_legal": "Base legal",
+    "datos_sensibles": "Datos sensibles",
+    "destinatarios": "Destinatarios",
+    "plazo_conservacion": "Plazo de conservación",
+    "plazo_otro": "Plazo (otro)",
+    "medidas_seguridad": "Medidas de seguridad",
+    "sale_extranjero": "Transferencia internacional",
+    "decisiones_automatizadas": "Decisiones automatizadas",
+    "nivel_riesgo": "Nivel de riesgo",
+    "estado": "Estado",
+    "categoria_datos": "Categoría de datos",
+    "categorias_titulares": "Categorías de titulares",
+    "universo_titulares": "Universo de titulares",
+    "origen_datos": "Origen de los datos",
+    "responsable_tratamiento": "Responsable",
+    "departamento": "Departamento",
+    "es_responsable": "Rol del responsable",
+}
+
+
+def _etiqueta_campo(campo: str) -> str:
+    return _ETIQUETAS_CAMPOS.get(campo, campo)
+
+
 def _generar_descripcion_cambio(campos_modificados: list[dict]) -> str:
-    nombres = [c["campo"] for c in campos_modificados]
+    nombres = [_etiqueta_campo(c["campo"]) for c in campos_modificados]
     if len(nombres) == 1:
         return f"Se modificó {nombres[0]}"
     if len(nombres) == 2:
@@ -210,10 +236,9 @@ def editar_tratamiento(
         return None
 
     try:
-        # snapshot "antes": si ya era COMPLETO, se guarda cómo estaba el
-        # tratamiento ANTES de aplicar los cambios, para compararlo después (ese sería el caso A)
-        estado_antes = tratamiento.estado
-        snapshot_antes = _serializar_tratamiento(tratamiento) if estado_antes == "COMPLETO" else None
+        # snapshot "antes": se guarda cómo estaba el tratamiento ANTES de aplicar
+        # los cambios, para compararlo después y detectar qué campos cambiaron.
+        snapshot_antes = _serializar_tratamiento(tratamiento)
 
         campos_simples = [
             "nombre", "finalidad", "base_legal", "datos_sensibles", "destinatarios",
@@ -247,54 +272,52 @@ def editar_tratamiento(
 
         db.flush()  # aplica los cambios en memoria antes de tomar el snapshot "después"
 
-        # Historial de versiones: solo se registra si el tratamiento queda COMPLETO.
-        if tratamiento.estado == "COMPLETO":
-            snapshot_despues = _serializar_tratamiento(tratamiento)
+        # Historial de versiones: se registra en cualquier estado del tratamiento.
+        snapshot_despues = _serializar_tratamiento(tratamiento)
 
-            # Si el usuario indicó quién está editando, se usa ese nombre;
-            # si no, se usa el nombre de la organización como respaldo.
-            modificado_por = datos.modificado_por.strip() if datos.modificado_por and datos.modificado_por.strip() else None
-            if not modificado_por:
-                organizacion = (
-                    db.query(models.Organizacion)
-                    .filter(models.Organizacion.id == organizacion_id)
-                    .first()
-                )
-                modificado_por = organizacion.nombre if organizacion else None
+        # Si el usuario indicó quién está editando, se usa ese nombre;
+        # si no, se usa el nombre de la organización como respaldo.
+        modificado_por = datos.modificado_por.strip() if datos.modificado_por and datos.modificado_por.strip() else None
+        if not modificado_por:
+            organizacion = (
+                db.query(models.Organizacion)
+                .filter(models.Organizacion.id == organizacion_id)
+                .first()
+            )
+            modificado_por = organizacion.nombre if organizacion else None
 
-            if estado_antes == "COMPLETO":
-                # Caso A: ya era COMPLETO -> comparamos la snapshot (snapshot : captura al estado actual) antes/después
-                campos_modificados = _comparar_snapshots(snapshot_antes, snapshot_despues)
-                if campos_modificados:
-                    ultima_version = (
-                        db.query(models.VersionTratamiento)
-                        .filter(models.VersionTratamiento.tratamiento_id == tratamiento.id)
-                        .order_by(models.VersionTratamiento.numero_version.desc())
-                        .first()
-                    )
-                    numero_version = (ultima_version.numero_version + 1) if ultima_version else 1
-                    db.add(models.VersionTratamiento(
-                        tratamiento_id=tratamiento.id,
-                        numero_version=numero_version,
-                        datos_snapshot=snapshot_despues,
-                        campos_modificados=campos_modificados,
-                        modificado_por=modificado_por,
-                        descripcion_cambio=_generar_descripcion_cambio(campos_modificados),
-                        nivel_riesgo=tratamiento.nivel_riesgo,
-                    ))
-                # si no hubo cambios reales, no se crea una versión vacía
-            else:
-                # Caso B: pasa a COMPLETO por primera vez -> versión inicial
+        ultima_version = (
+            db.query(models.VersionTratamiento)
+            .filter(models.VersionTratamiento.tratamiento_id == tratamiento.id)
+            .order_by(models.VersionTratamiento.numero_version.desc())
+            .first()
+        )
+
+        if ultima_version:
+            # Ya existía al menos una versión -> comparamos antes/después
+            campos_modificados = _comparar_snapshots(snapshot_antes, snapshot_despues)
+            if campos_modificados:
                 db.add(models.VersionTratamiento(
                     tratamiento_id=tratamiento.id,
-                    numero_version=1,
+                    numero_version=ultima_version.numero_version + 1,
                     datos_snapshot=snapshot_despues,
-                    campos_modificados=[],
+                    campos_modificados=campos_modificados,
                     modificado_por=modificado_por,
-                    descripcion_cambio="Versión inicial del RAT",
+                    descripcion_cambio=_generar_descripcion_cambio(campos_modificados),
                     nivel_riesgo=tratamiento.nivel_riesgo,
                 ))
-        # si después del PUT sigue sin ser COMPLETO, no se crea ninguna versión
+            # si no hubo cambios reales, no se crea una versión vacía
+        else:
+            # Primera versión del tratamiento
+            db.add(models.VersionTratamiento(
+                tratamiento_id=tratamiento.id,
+                numero_version=1,
+                datos_snapshot=snapshot_despues,
+                campos_modificados=[],
+                modificado_por=modificado_por,
+                descripcion_cambio="Versión inicial del RAT",
+                nivel_riesgo=tratamiento.nivel_riesgo,
+            ))
 
         db.commit()
         db.refresh(tratamiento)
