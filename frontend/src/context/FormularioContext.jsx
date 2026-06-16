@@ -28,7 +28,7 @@ const FORM_VACIO = {
     motor: "mysql", host: "", puerto: 3306, base_datos: "", usuario: "", password: "",
     estado: "idle",     // idle | ok | error
     errorMsg: "",
-    tablas: [], tablaSelec: "",
+    tablas: [], tablasSelec: [],
   },
   // ── Nueva sesión: ingreso manual ──────────────────────────
   ingresoManual: {

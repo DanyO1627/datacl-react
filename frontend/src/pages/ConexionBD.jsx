@@ -113,7 +113,7 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
     actualizarForm({ conexionBD: { ...formGlobal.conexionBD, ...cambios } });
   };
 
-  const { motor, host, puerto, base_datos, usuario, password, estado, errorMsg, tablas, tablaSelec } = conexion;
+  const { motor, host, puerto, base_datos, usuario, password, estado, errorMsg, tablas, tablasSelec } = conexion;
 
   const token = localStorage.getItem("token");
 
@@ -127,7 +127,7 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
     // Resetear estado de prueba si el usuario edita algo
     cambios.estado = "idle";
     cambios.tablas = [];
-    cambios.tablaSelec = "";
+    cambios.tablasSelec = [];
     actualizarConexion(cambios);
   };
 
@@ -160,7 +160,7 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
   };
 
   const analizar = async () => {
-    if (!tablaSelec) return;
+    if (!tablasSelec.length) return;
     actualizarConexion({ estado: "analizando", errorMsg: "" });
     try {
       const res = await fetch("http://localhost:8000/analizar/conexion", {
@@ -169,14 +169,13 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ motor, host, puerto, base_datos, usuario, password, tabla: tablaSelec }),
+        body: JSON.stringify({ motor, host, puerto, base_datos, usuario, password, tablas: tablasSelec }),
       });
       const data = await res.json();
       if (res.ok) {
-        // Navega a resultados pasando el resultado por state (mismo flujo que archivo)
-        onAnalisis(data, tablaSelec, motor);
+        onAnalisis(data, tablasSelec.join(", "), motor);
       } else {
-        actualizarConexion({ estado: "ok", errorMsg: data.detail ?? "Error al analizar" }); // vuelve a estado ok para no perder la selección
+        actualizarConexion({ estado: "ok", errorMsg: data.detail ?? "Error al analizar" });
       }
     } catch {
       actualizarConexion({ estado: "ok", errorMsg: "No se pudo conectar con el servidor." });
@@ -295,14 +294,24 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
         {estado === "ok" && tablas.length > 0 && (
           <div style={{ marginTop: "1.4rem" }}>
             <p className="cbd-label" style={{ marginBottom: "8px" }}>
-              Selecciona la tabla a analizar
+              Selecciona las tablas a analizar
+              {tablasSelec.length > 0 && (
+                <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 600, color: "#052659", background: "#dbeafe", borderRadius: 20, padding: "2px 10px" }}>
+                  {tablasSelec.length} seleccionada{tablasSelec.length !== 1 ? "s" : ""}
+                </span>
+              )}
             </p>
             <div className="cbd-tablas-grid">
               {tablas.map((t) => (
                 <button
                   key={t}
-                  className={`cbd-tabla-chip${tablaSelec === t ? " seleccionada" : ""}`}
-                  onClick={() => actualizarConexion({ tablaSelec: t })}
+                  className={`cbd-tabla-chip${tablasSelec.includes(t) ? " seleccionada" : ""}`}
+                  onClick={() => {
+                    const next = tablasSelec.includes(t)
+                      ? tablasSelec.filter((x) => x !== t)
+                      : [...tablasSelec, t];
+                    actualizarConexion({ tablasSelec: next });
+                  }}
                 >
                   {t}
                 </button>
@@ -329,7 +338,7 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
         <button
           className="cbd-btn-primario"
           onClick={analizar}
-          disabled={!tablaSelec || estado === "analizando" || estado === "probando"}
+          disabled={!tablasSelec.length || estado === "analizando" || estado === "probando"}
         >
           {estado === "analizando" ? (
             <><span className="cbd-spinner" /> Analizando...</>
