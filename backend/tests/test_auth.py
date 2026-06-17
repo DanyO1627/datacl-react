@@ -1,5 +1,5 @@
 """
-Tests de autenticación — CP-03, CP-04, CP-06, CP-08, CP-09, CP-26, CP-27
+Tests de autenticación — CP-01~CP-09, CP-26, CP-27, CP-28
 """
 
 
@@ -81,3 +81,55 @@ def test_cp27_token_invalido(client):
         "Authorization": "Bearer token.falso.inventado",
     })
     assert resp.status_code == 401
+
+
+# ── CP-01: Registro devuelve datos de org, NO un token ───────────────────────
+def test_cp01_registro_devuelve_org(client):
+    resp = client.post("/auth/registro", json={
+        "nombre": "Org CP01",
+        "rut": "22222222-2",
+        "correo": "cp01@datacl.cl",
+        "password": "password123",
+        "confirmar_password": "password123",
+    })
+    assert resp.status_code == 201
+    body = resp.json()
+    assert "id" in body
+    assert body["nombre"] == "Org CP01"
+    assert body["rut"] == "22222222-2"
+    assert "access_token" not in body
+
+
+# ── CP-02: Registro con RUT duplicado → "El RUT ya está registrado" ──────────
+def test_cp02_registro_rut_duplicado(client, org_registrada):
+    resp = client.post("/auth/registro", json={
+        "nombre": "Otra Org",
+        "rut": "12345678-5",
+        "correo": "otra@datacl.cl",
+        "password": "password123",
+        "confirmar_password": "password123",
+    })
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "El RUT ya está registrado"
+
+
+# ── CP-05: Endpoint admin sin rol ADMIN → 403 ────────────────────────────────
+def test_cp05_acceso_admin_sin_rol(client, auth_header):
+    resp = client.get("/admin/stats", headers=auth_header)
+    assert resp.status_code == 403
+    assert resp.json()["detail"] == "Acceso restringido a administradores"
+
+
+# ── CP-28: Perfil /auth/me incluye RUT ────────────────────────────────────────
+def test_cp28_perfil_incluye_rut(client, auth_header):
+    resp = client.get("/auth/me", headers=auth_header)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "rut" in body
+    assert body["rut"] == "12345678-5"
+
+
+# ── CP-42: Endpoints de informes sin token → 401 ─────────────────────────────
+def test_cp42_informes_sin_token(client):
+    assert client.get("/informes").status_code == 401
+    assert client.post("/informes/generar", json={"ids_tratamientos": [1]}).status_code == 401

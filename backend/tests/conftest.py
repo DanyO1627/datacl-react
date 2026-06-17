@@ -15,6 +15,7 @@ SessionTest = sessionmaker(autocommit=False, autoflush=False, bind=engine_test)
 
 @pytest.fixture(autouse=True)
 def setup_db():
+    Base.metadata.drop_all(bind=engine_test)
     Base.metadata.create_all(bind=engine_test)
     yield
     Base.metadata.drop_all(bind=engine_test)
