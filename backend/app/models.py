@@ -186,12 +186,13 @@ class DetalleRatExtendido(Base):
 class Informe(Base):
     __tablename__ = "informes"
 
-    id                = Column(Integer, primary_key=True, index=True)
-    organizacion_id   = Column(Integer, ForeignKey("organizaciones.id", ondelete="CASCADE"), nullable=False)
-    contenido_ia      = Column(Text, nullable=True)
-    generado_en       = Column(DateTime, server_default=func.now(), nullable=False)
-    ruta_pdf          = Column(String(300), nullable=True)
-    num_tratamientos  = Column(Integer, default=0, nullable=False)
+    id                  = Column(Integer, primary_key=True, index=True)
+    organizacion_id     = Column(Integer, ForeignKey("organizaciones.id", ondelete="CASCADE"), nullable=False)
+    contenido_ia        = Column(Text, nullable=True)
+    generado_en         = Column(DateTime, server_default=func.now(), nullable=False)
+    ruta_pdf            = Column(String(300), nullable=True)
+    num_tratamientos    = Column(Integer, default=0, nullable=False)
+    versiones_snapshot  = Column(JSON, nullable=True)
 
     organizacion = relationship("Organizacion", back_populates="informes")
 
