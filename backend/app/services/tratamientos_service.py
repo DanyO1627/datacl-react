@@ -76,6 +76,13 @@ def crear_tratamiento(
 
         db.add(models.DetalleRat(tratamiento_id=nuevo.id, **detalle_campos))
 
+        # Crear detalle extendido solo si el frontend envió datos (opcional)
+        if datos.detalle_extendido:
+            db.add(models.DetalleRatExtendido(
+                tratamiento_id=nuevo.id,
+                **datos.detalle_extendido.model_dump(exclude_unset=True),
+            ))
+
         # Vincular a sesión de análisis si viene sesion_id
         if datos.sesion_id:
             db.add(models.SesionActividad(
@@ -117,6 +124,7 @@ def obtener_tratamiento_por_id(
         db.query(models.Tratamiento)
         .options(
             joinedload(models.Tratamiento.detalle),
+            joinedload(models.Tratamiento.detalle_extendido),  # campos RAT real
             joinedload(models.Tratamiento.sesiones_actividad)
             .joinedload(models.SesionActividad.sesion),
         )
@@ -144,6 +152,24 @@ _CAMPOS_SNAPSHOT_DETALLE = [
     "categorias_titulares", "universo_titulares", "origen_datos", "categoria_datos",
 ]
 
+# Campos de detalle_rat_extendido que entran en el snapshot de versiones.
+# Si un tratamiento no tiene detalle_extendido, todos quedan como none en el snapshot
+# y no generan diff falso (none == none)
+_CAMPOS_SNAPSHOT_EXTENDIDO = [
+    "descripcion_detallada", "subarea_responsable", "procesos_relacionados",
+    "finalidades_secundarias", "informa_titulares", "documento_respaldo_permiso",
+    "datos_navegacion", "incluye_nna", "nna_detalle",
+    "destinatarios_internos", "destinatarios_nacionales", "destinatarios_internacionales",
+    "terceros_son_encargados", "contratos_proteccion_datos",
+    "datos_transferidos_detalle", "metodo_transferencia",
+    "sistemas_origen", "sistemas_destino", "sistemas_tratamiento",
+    "tipos_tratamiento_sistema", "base_datos_nombre", "proveedor_tecnologico",
+    "criterio_plazo", "metodo_eliminacion", "documenta_destruccion", "excepciones_plazo",
+    "minimizacion_justificacion", "mecanismos_exactitud", "evaluacion_periodica",
+    "cumplimiento_demostrable", "incidentes_historicos", "cambios_futuros",
+    "requiere_dpia", "dpia_realizada", "dpia_detalle",
+]
+
 
 # nueva función: junta los campos de Tratamiento + DetalleRat en UN SOLO dict
 # plano (sin sub-dict "detalle"), para poder comparar snapshots campo por
@@ -153,6 +179,13 @@ def _serializar_tratamiento(tratamiento: models.Tratamiento) -> dict:
     detalle = tratamiento.detalle
     for campo in _CAMPOS_SNAPSHOT_DETALLE:
         snapshot[campo] = getattr(detalle, campo) if detalle else None
+        
+    # se incluyen campos extendidos del RAT real en el snapshot
+    # si el tratamiento no tiene detalle_extendido, quedan todos como none
+    # y no generan diff falso al comparar (none == none).
+    ext = tratamiento.detalle_extendido
+    for campo in _CAMPOS_SNAPSHOT_EXTENDIDO:
+        snapshot[campo] = getattr(ext, campo) if ext else None
     return snapshot
 
 
@@ -201,6 +234,43 @@ _ETIQUETAS_CAMPOS = {
     "responsable_tratamiento": "Responsable",
     "departamento": "Departamento",
     "es_responsable": "Rol del responsable",
+    
+    # Campos RAT real (detalle extendido)
+    "descripcion_detallada": "Descripción detallada",
+    "subarea_responsable": "Subárea responsable",
+    "procesos_relacionados": "Procesos relacionados",
+    "finalidades_secundarias": "Finalidades secundarias",
+    "informa_titulares": "Información a titulares",
+    "documento_respaldo_permiso": "Documento de respaldo",
+    "datos_navegacion": "Datos de navegación",
+    "incluye_nna": "Incluye datos de menores (NNA)",
+    "nna_detalle": "Detalle NNA",
+    "destinatarios_internos": "Destinatarios internos",
+    "destinatarios_nacionales": "Destinatarios nacionales",
+    "destinatarios_internacionales": "Destinatarios internacionales",
+    "terceros_son_encargados": "Terceros son encargados",
+    "contratos_proteccion_datos": "Contratos de protección de datos",
+    "datos_transferidos_detalle": "Datos transferidos (detalle)",
+    "metodo_transferencia": "Método de transferencia",
+    "sistemas_origen": "Sistemas de origen",
+    "sistemas_destino": "Sistemas de destino",
+    "sistemas_tratamiento": "Sistemas de tratamiento",
+    "tipos_tratamiento_sistema": "Tipos de tratamiento en sistema",
+    "base_datos_nombre": "Base de datos",
+    "proveedor_tecnologico": "Proveedor tecnológico",
+    "criterio_plazo": "Criterio del plazo",
+    "metodo_eliminacion": "Método de eliminación",
+    "documenta_destruccion": "Documenta destrucción",
+    "excepciones_plazo": "Excepciones al plazo",
+    "minimizacion_justificacion": "Justificación de minimización",
+    "mecanismos_exactitud": "Mecanismos de exactitud",
+    "evaluacion_periodica": "Evaluación periódica",
+    "cumplimiento_demostrable": "Cumplimiento demostrable",
+    "incidentes_historicos": "Incidentes históricos",
+    "cambios_futuros": "Cambios futuros",
+    "requiere_dpia": "Requiere DPIA",
+    "dpia_realizada": "DPIA realizada",
+    "dpia_detalle": "Detalle DPIA",
 }
 
 
@@ -225,7 +295,10 @@ def editar_tratamiento(
 ) -> models.Tratamiento | None:
     tratamiento = (
         db.query(models.Tratamiento)
-        .options(joinedload(models.Tratamiento.detalle))
+        .options(
+            joinedload(models.Tratamiento.detalle),
+            joinedload(models.Tratamiento.detalle_extendido),  # cargar para snapshot + upsert
+        )
         .filter(
             models.Tratamiento.id == tratamiento_id,
             models.Tratamiento.organizacion_id == organizacion_id,
@@ -269,6 +342,16 @@ def editar_tratamiento(
                 # Y solo se actualizan los campos que llegaron explícitamente
                 for campo, valor in datos.detalle.model_dump(exclude_unset=True).items():
                     setattr(tratamiento.detalle, campo, valor)
+
+        
+        if datos.detalle_extendido is not None:
+            if tratamiento.detalle_extendido is None:
+                tratamiento.detalle_extendido = models.DetalleRatExtendido(
+                    **datos.detalle_extendido.model_dump(exclude_unset=True)
+                )
+            else:
+                for campo, valor in datos.detalle_extendido.model_dump(exclude_unset=True).items():
+                    setattr(tratamiento.detalle_extendido, campo, valor)
 
         db.flush()  # aplica los cambios en memoria antes de tomar el snapshot "después"
 
