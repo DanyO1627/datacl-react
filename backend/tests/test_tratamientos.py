@@ -1,6 +1,6 @@
 """
 Tests de tratamientos, análisis e informes
-— CP-07, CP-11~18, CP-19~25, CP-41
+— CP-07, CP-11~18, CP-19~25, CP-41, CP-49~51
 """
 import io
 
@@ -209,3 +209,48 @@ def test_cp25_informe_sin_tratamientos(client, auth_header):
     }, headers=auth_header)
     assert resp.status_code == 400
     assert resp.json()["detail"] == "Selecciona al menos un tratamiento para generar el informe."
+
+
+# ── CP-49: incluye_nna=True → riesgo ALTO ───────────────────────────────────
+def test_cp49_nna_riesgo_alto(client, auth_header):
+    resp = _crear_tratamiento(client, auth_header, {
+        "datos_sensibles": False,
+        "detalle_extendido": {"incluye_nna": True},
+    })
+    assert resp.status_code == 201
+    assert resp.json()["nivel_riesgo"] == "ALTO"
+
+
+# ── CP-50: Sin medidas de seguridad → impacto sube ──────────────────────────
+def test_cp50_sin_medidas_sube_riesgo(client, auth_header):
+    con_medidas = _crear_tratamiento(client, auth_header, {
+        "datos_sensibles": False,
+        "medidas_seguridad": "cifrado",
+    })
+    sin_medidas = _crear_tratamiento(client, auth_header, {
+        "nombre": "Sin medidas",
+        "datos_sensibles": False,
+        "medidas_seguridad": None,
+    })
+    nivel_con = con_medidas.json()["nivel_riesgo"]
+    nivel_sin = sin_medidas.json()["nivel_riesgo"]
+    orden = {"BAJO": 0, "MEDIO": 1, "ALTO": 2}
+    assert orden[nivel_sin] >= orden[nivel_con]
+
+
+# ── CP-51: destinatarios_internacionales → probabilidad sube ─────────────────
+def test_cp51_destinatarios_internacionales_sube_riesgo(client, auth_header):
+    sin_int = _crear_tratamiento(client, auth_header, {
+        "datos_sensibles": False,
+        "sale_extranjero": False,
+    })
+    con_int = _crear_tratamiento(client, auth_header, {
+        "nombre": "Con internacionales",
+        "datos_sensibles": False,
+        "sale_extranjero": False,
+        "detalle_extendido": {"destinatarios_internacionales": "Google LLC, EE.UU."},
+    })
+    nivel_sin = sin_int.json()["nivel_riesgo"]
+    nivel_con = con_int.json()["nivel_riesgo"]
+    orden = {"BAJO": 0, "MEDIO": 1, "ALTO": 2}
+    assert orden[nivel_con] >= orden[nivel_sin]
