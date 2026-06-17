@@ -12,8 +12,10 @@ class Organizacion(Base):
     rut       = Column(String(20), unique=True, nullable=False)
     correo    = Column(String(200), unique=True, nullable=False)
     password  = Column(String(200), nullable=False)
-    rol       = Column(Enum("ORGANIZACION", "ADMIN"), default="ORGANIZACION", nullable=False)
-    creado_en = Column(DateTime, server_default=func.now(), nullable=False)
+    rol                 = Column(Enum("ORGANIZACION", "ADMIN"), default="ORGANIZACION", nullable=False)
+    creado_en           = Column(DateTime, server_default=func.now(), nullable=False)
+    color_institucional = Column(String(7), nullable=True)
+    logo_ruta           = Column(String(500), nullable=True)
 
     tratamientos = relationship("Tratamiento", back_populates="organizacion", cascade="all, delete-orphan")
     informes     = relationship("Informe", back_populates="organizacion", cascade="all, delete-orphan")

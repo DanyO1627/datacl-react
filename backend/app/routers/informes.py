@@ -47,6 +47,7 @@ def generar_informe(
         db.query(models.Tratamiento)
         .options(
             joinedload(models.Tratamiento.detalle),
+            joinedload(models.Tratamiento.detalle_extendido),
             joinedload(models.Tratamiento.campos),
         )
         .filter(

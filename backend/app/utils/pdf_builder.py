@@ -1,143 +1,489 @@
+# pdf_builder.py — Genera el PDF del RAT con estilo visual del RAT real de La Liga
+#
+# Estructura por tratamiento:
+#   - Header de sección con fondo de color + texto blanco
+#   - Tabla 2 columnas con bordes: etiqueta bold + sublabel gris | contenido
+#   - Secciones vacías se ocultan automáticamente
+#
+# Personalización por organización:
+#   - color_institucional: color hex para headers (default: #7030A0 morado)
+#   - logo_ruta: ruta al logo de la org para la portada
+
 from io import BytesIO
 from datetime import datetime
+from pathlib import Path
 
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, HRFlowable,
+    PageBreak, KeepTogether, Image,
 )
 
 
-# ── Mapas de valores internos a texto legible ──────────────────────────────
+# ── Colores por defecto ───────────────────────────────────────────────────
+COLOR_HEADER_DEFAULT = "#7030A0"
+COLOR_BLANCO  = colors.white
+COLOR_NEGRO   = colors.black
+COLOR_GRIS_BG = colors.HexColor("#F2F2F2")
+COLOR_BORDE   = colors.HexColor("#BFBFBF")
+
+# ── Mapas de valores internos → texto legible ─────────────────────────────
 
 _BASE_LEGAL = {
-    "consentimiento":           "Consentimiento<br/>(Art. 12)",
-    "datos_economicos":         "Obligaciones<br/>económicas o<br/>financieras<br/>(Art. 13 letra a)",
-    "obligacion_legal":         "Obligación legal<br/>(Art. 13 letra b)",
-    "contrato":                 "Ejecución de<br/>contrato<br/>(Art. 13 letra c)",
-    "interes_legitimo":         "Interés legítimo<br/>(Art. 13 letra d)",
-    "defensa_derechos":         "Defensa de<br/>derechos ante<br/>tribunales<br/>(Art. 13 letra e)",
-    "consentimiento_sensibles": "Consentimiento<br/>datos sensibles<br/>(Art. 16 inc. 1)",
-    "datos_biometricos":        "Datos<br/>biométricos<br/>(Art. 16 ter)",
+    "consentimiento":           "Consentimiento del titular (Art. 12)",
+    "datos_economicos":         "Obligaciones económicas o financieras (Art. 13 letra a)",
+    "obligacion_legal":         "Cumplimiento de obligación legal (Art. 13 letra b)",
+    "contrato":                 "Ejecución de contrato (Art. 13 letra c)",
+    "interes_legitimo":         "Interés legítimo (Art. 13 letra d)",
+    "defensa_derechos":         "Defensa de derechos ante tribunales (Art. 13 letra e)",
+    "consentimiento_sensibles": "Consentimiento datos sensibles (Art. 16 inc. 1)",
+    "datos_biometricos":        "Datos biométricos (Art. 16 ter)",
 }
 
 _PLAZO = {
-    "1_anio":           "1 año",
-    "2_anios":          "2 años",
-    "5_anios":          "5 años",
-    "10_anios":         "10 años",
-    "indefinido":       "Indefinido",
-    "duracion_relacion": "Mientras dure la relación contractual",
-    "otro":             "Otro",
+    "1_anio": "1 año", "2_anios": "2 años", "5_anios": "5 años",
+    "10_anios": "10 años", "indefinido": "Indefinido",
+    "duracion_relacion": "Mientras dure la relación contractual", "otro": "Otro",
 }
 
 _TITULARES = {
-    "empleados":   "Empleados y funcionarios",
-    "clientes":    "Clientes y consumidores",
-    "proveedores": "Proveedores y contratistas",
-    "usuarios":    "Usuarios de plataformas digitales",
-    "ciudadanos":  "Ciudadanos",
-    "estudiantes": "Estudiantes",
-    "pacientes":   "Pacientes",
+    "empleados": "Empleados y funcionarios", "clientes": "Clientes y consumidores",
+    "proveedores": "Proveedores y contratistas", "usuarios": "Usuarios de plataformas digitales",
+    "ciudadanos": "Ciudadanos", "estudiantes": "Estudiantes", "pacientes": "Pacientes",
 }
 
 _ORIGEN = {
-    "titular":          "Del propio\ntitular",
-    "terceros":         "De terceros",
-    "fuentes_publicas": "Fuentes\npúblicas",
+    "titular": "Del propio titular", "terceros": "De terceros",
+    "fuentes_publicas": "De fuentes públicas",
 }
 
-# ── Helpers internos ───────────────────────────────────────────────────────
+_CRITERIO_PLAZO = {
+    "legal": "Legal (normativa aplicable)", "contractual": "Contractual (duración del contrato)",
+    "operacional": "Operacional (necesidad del proceso)",
+}
 
-def _p(texto, estilo) -> Paragraph:
-    """Paragraph con wrap automático. Muestra '—' si el texto está vacío."""
-    return Paragraph(str(texto) if texto else "—", estilo)
+_METODO_ELIMINACION = {
+    "digital": "Eliminación segura digital", "fisica": "Destrucción física",
+    "anonimizacion": "Anonimización", "otro": "Otro",
+}
+
+_PERIODO_EVALUACION = {
+    "anual": "Anual", "bienal": "Bienal (cada 2 años)",
+    "ante_cambios": "Ante cambios importantes", "sin_definir": "Sin definir",
+}
+
+_RIESGO = {"BAJO": "Bajo", "MEDIO": "Medio", "ALTO": "Alto"}
+_PROBABILIDAD = {"BAJA": "Baja", "MEDIA": "Media", "ALTA": "Alta"}
+_ESTADO = {"PENDIENTE": "Pendiente", "COMPLETO": "Completo", "BORRADOR": "Borrador"}
+
+_MEDIDAS = {
+    "cifrado": "Cifrado de datos", "acceso_rol": "Control de acceso por rol",
+    "backups": "Backups periódicos", "contraseñas": "Política de contraseñas",
+    "auditoria": "Auditoría de accesos",
+}
 
 
-def _cat_datos(t) -> str | None:
-    """Nombres de campos detectados (máx. 4, luego +N)."""
-    if not t.campos:
+# ── Helpers ───────────────────────────────────────────────────────────────
+
+def _estilos():
+    """Crea todos los estilos de párrafo."""
+    return {
+        "titulo_doc": ParagraphStyle(
+            "titulo_doc", fontName="Helvetica-Bold", fontSize=14,
+            leading=18, alignment=TA_CENTER, spaceAfter=6,
+            textColor=colors.HexColor("#021024"),
+        ),
+        "subtitulo_doc": ParagraphStyle(
+            "subtitulo_doc", fontName="Helvetica", fontSize=11,
+            leading=14, alignment=TA_CENTER, spaceAfter=12,
+            textColor=colors.HexColor("#555555"),
+        ),
+        "dato_portada": ParagraphStyle(
+            "dato_portada", fontName="Helvetica", fontSize=10,
+            leading=14, textColor=colors.HexColor("#052659"), spaceAfter=4,
+        ),
+        "header_seccion": ParagraphStyle(
+            "header_seccion", fontName="Helvetica-Bold", fontSize=10,
+            leading=13, textColor=COLOR_BLANCO, alignment=TA_LEFT,
+        ),
+        "label_bold": ParagraphStyle(
+            "label_bold", fontName="Helvetica-Bold", fontSize=8.5,
+            leading=11, textColor=COLOR_NEGRO,
+        ),
+        "label_sub": ParagraphStyle(
+            "label_sub", fontName="Helvetica", fontSize=7,
+            leading=9, textColor=colors.HexColor("#595959"),
+        ),
+        "contenido": ParagraphStyle(
+            "contenido", fontName="Helvetica", fontSize=8.5,
+            leading=11, textColor=COLOR_NEGRO,
+        ),
+        "advertencia": ParagraphStyle(
+            "advertencia", fontName="Helvetica", fontSize=9,
+            leading=13, textColor=colors.HexColor("#92400e"), spaceAfter=4,
+        ),
+        "metodologia": ParagraphStyle(
+            "metodologia", fontName="Helvetica", fontSize=8,
+            leading=11, textColor=colors.HexColor("#888888"),
+        ),
+        "trat_titulo": ParagraphStyle(
+            "trat_titulo", fontName="Helvetica-Bold", fontSize=9,
+            leading=12, textColor=COLOR_BLANCO, alignment=TA_CENTER,
+        ),
+    }
+
+
+def _val(d, campo, mapa=None):
+    """Saca un valor del dict, traduce con mapa si existe. None si vacío."""
+    val = d.get(campo)
+    if val is None or val == "":
         return None
-    nombres = ", ".join(c.nombre_columna for c in t.campos[:4])
-    if len(t.campos) > 4:
-        nombres += f" (+{len(t.campos) - 4})"
-    return nombres
+    if mapa and isinstance(val, str):
+        return mapa.get(val, val)
+    if isinstance(val, bool):
+        return "Sí" if val else "No"
+    return str(val)
 
 
-def _fila_rat(t, s_celda) -> list:
-    """Construye la fila de la tabla RAT para un tratamiento."""
-    d = t.detalle  # DetalleRat — puede ser None en tratamientos anteriores
-    plazo  = _PLAZO.get(t.plazo_conservacion or "", t.plazo_conservacion)
-    origen = _ORIGEN.get(d.origen_datos or "", d.origen_datos) if d else None
+def _medidas_legibles(medidas_str):
+    if not medidas_str:
+        return None
+    idx = medidas_str.find("otras:")
+    if idx != -1:
+        antes = medidas_str[:idx].rstrip(",")
+        libre = medidas_str[idx + len("otras:"):]
+        items = [_MEDIDAS.get(m.strip(), m.strip()) for m in antes.split(",") if m.strip()] if antes else []
+        items.append(f"Otras: {libre}")
+        return ", ".join(items)
+    return ", ".join(_MEDIDAS.get(m.strip(), m.strip()) for m in medidas_str.split(",") if m.strip())
 
-    # "Nombre\n(Responsable)" o "Nombre\n(Encargado)"
-    if d and d.responsable_tratamiento:
-        rol        = "Responsable" if d.es_responsable else "Encargado"
-        resp_texto = f"{d.responsable_tratamiento}\n({rol})"
-    else:
-        resp_texto = None
 
-    # Categorías legibles + universo de titulares (texto libre)
-    cats_raw  = d.categorias_titulares if d and d.categorias_titulares else ""
-    cats      = ", ".join(
-        _TITULARES.get(c.strip(), c.strip())
-        for c in cats_raw.split(",") if c.strip()
-    )
-    universo_texto = d.universo_titulares if d and d.universo_titulares else None
-    universo  = "<br/>".join(filter(None, [cats, universo_texto])) or None
+def _titulares_legibles(cats_str):
+    if not cats_str:
+        return None
+    return ", ".join(_TITULARES.get(c.strip(), c.strip()) for c in cats_str.split(",") if c.strip())
 
-    cat_datos = (d.categoria_datos if (d and d.categoria_datos) else None) or _cat_datos(t)
 
-    return [
-        _p(t.nombre,                                           s_celda),
-        _p(resp_texto,                                         s_celda),
-        _p(cat_datos,                                          s_celda),
-        _p(universo,                                           s_celda),
-        _p(t.finalidad,                                        s_celda),
-        _p(_BASE_LEGAL.get(t.base_legal or "", t.base_legal), s_celda),
-        _p(t.destinatarios,                                    s_celda),
-        _p(plazo,                                              s_celda),
-        _p(origen,                                             s_celda),
+# ── Conversión ORM → dict plano ──────────────────────────────────────────
+
+def tratamiento_a_dict(t) -> dict:
+    """Convierte un objeto ORM Tratamiento a dict plano con todos los campos."""
+    d = t.detalle
+    ext = t.detalle_extendido
+
+    resultado = {
+        "nombre": t.nombre, "finalidad": t.finalidad, "base_legal": t.base_legal,
+        "datos_sensibles": t.datos_sensibles, "destinatarios": t.destinatarios,
+        "plazo_conservacion": t.plazo_conservacion,
+        "plazo_otro": getattr(t, "plazo_otro", None),
+        "medidas_seguridad": t.medidas_seguridad,
+        "sale_extranjero": t.sale_extranjero,
+        "decisiones_automatizadas": t.decisiones_automatizadas,
+        "estado": t.estado, "nivel_riesgo": t.nivel_riesgo,
+        "probabilidad": getattr(t, "probabilidad", None),
+        "impacto": getattr(t, "impacto", None),
+        "fecha_evaluacion": getattr(t, "fecha_evaluacion", None),
+        "responsable_tratamiento": d.responsable_tratamiento if d else None,
+        "es_responsable": d.es_responsable if d else None,
+        "departamento": d.departamento if d else None,
+        "categorias_titulares": d.categorias_titulares if d else None,
+        "universo_titulares": d.universo_titulares if d else None,
+        "origen_datos": d.origen_datos if d else None,
+        "categoria_datos": d.categoria_datos if d else None,
+        "campos_detectados_texto": ", ".join(
+            c.nombre_columna for c in (t.campos or [])[:6]
+        ) + (f" (+{len(t.campos) - 6})" if t.campos and len(t.campos) > 6 else "") if t.campos else None,
+    }
+
+    campos_ext = [
+        "descripcion_detallada", "subarea_responsable", "procesos_relacionados",
+        "finalidades_secundarias", "informa_titulares", "documento_respaldo_permiso",
+        "datos_navegacion", "incluye_nna", "nna_detalle",
+        "destinatarios_internos", "destinatarios_nacionales", "destinatarios_internacionales",
+        "terceros_son_encargados", "contratos_proteccion_datos",
+        "datos_transferidos_detalle", "metodo_transferencia",
+        "sistemas_origen", "sistemas_destino", "sistemas_tratamiento",
+        "tipos_tratamiento_sistema", "base_datos_nombre", "proveedor_tecnologico",
+        "criterio_plazo", "metodo_eliminacion", "documenta_destruccion", "excepciones_plazo",
+        "minimizacion_justificacion", "mecanismos_exactitud", "evaluacion_periodica",
+        "cumplimiento_demostrable", "incidentes_historicos", "cambios_futuros",
+        "requiere_dpia", "dpia_realizada", "dpia_detalle",
     ]
+    for campo in campos_ext:
+        resultado[campo] = getattr(ext, campo, None) if ext else None
+
+    return resultado
 
 
-def _pie(canvas, doc) -> None:
-    """Pie de página con metodología y número de página."""
-    canvas.saveState()
-    canvas.setFont("Helvetica", 7)
-    canvas.setFillColor(colors.HexColor("#888888"))
-    canvas.drawString(
-        doc.leftMargin,
-        0.75 * cm,
-        "Evaluado según metodología AEPD adaptada a Ley 21.719 de Protección de Datos Personales (Chile)",
-    )
-    canvas.drawRightString(
-        doc.pagesize[0] - doc.rightMargin,
-        0.75 * cm,
-        f"Página {canvas.getPageNumber()}",
-    )
-    canvas.restoreState()
+# ── Constructor de tabla-sección (estilo La Liga) ─────────────────────────
+
+def _tabla_seccion(titulo, filas, estilos_dict, ancho_total, color_header, col_izq_ratio=0.38):
+    """
+    Crea una tabla con header de color + filas etiqueta|valor.
+
+    filas: lista de tuplas (label, sublabel, clave_dict, mapa) o None si no hay valor.
+    Solo incluye filas que tengan valor.
+    """
+    col_izq = ancho_total * col_izq_ratio
+    col_der = ancho_total * (1 - col_izq_ratio)
+
+    # Header de sección (fila 0, fusionada)
+    data = [[Paragraph(titulo, estilos_dict["header_seccion"]), ""]]
+
+    for fila in filas:
+        if fila is None:
+            continue
+        label, sublabel, valor = fila
+
+        if valor is None:
+            continue
+
+        # Celda izquierda: label bold + sublabel gris
+        celda_izq = [Paragraph(label, estilos_dict["label_bold"])]
+        if sublabel:
+            celda_izq.append(Paragraph(sublabel, estilos_dict["label_sub"]))
+
+        # Celda derecha: valor con saltos de línea
+        valor_html = str(valor).replace("\n", "<br/>")
+        celda_der = [Paragraph(valor_html, estilos_dict["contenido"])]
+
+        data.append([celda_izq, celda_der])
+
+    # Si solo quedó el header (sin filas con datos), no mostrar la sección
+    if len(data) <= 1:
+        return []
+
+    tabla = Table(data, colWidths=[col_izq, col_der])
+    tabla.setStyle(TableStyle([
+        # Header con color
+        ("BACKGROUND",   (0, 0), (1, 0), color_header),
+        ("TEXTCOLOR",    (0, 0), (1, 0), COLOR_BLANCO),
+        ("SPAN",         (0, 0), (1, 0)),
+        ("TOPPADDING",   (0, 0), (1, 0), 5),
+        ("BOTTOMPADDING",(0, 0), (1, 0), 5),
+        ("LEFTPADDING",  (0, 0), (1, 0), 6),
+        # Bordes
+        ("BOX",      (0, 0), (-1, -1), 0.5, COLOR_BORDE),
+        ("INNERGRID",(0, 0), (-1, -1), 0.5, COLOR_BORDE),
+        # Padding celdas
+        ("TOPPADDING",    (0, 1), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 1), (-1, -1), 4),
+        ("LEFTPADDING",   (0, 1), (-1, -1), 5),
+        ("RIGHTPADDING",  (0, 1), (-1, -1), 5),
+        ("VALIGN",        (0, 0), (-1, -1), "TOP"),
+    ]))
+
+    return [KeepTogether(tabla), Spacer(1, 0.35 * cm)]
 
 
-# ── Función principal ──────────────────────────────────────────────────────
+# ── Ficha de un tratamiento (todas las secciones) ────────────────────────
+
+def _ficha_tratamiento(d, idx, total, estilos_dict, ancho, color_header):
+    """Genera todos los elementos PDF de un tratamiento."""
+    elementos = []
+
+    nombre = d.get("nombre") or "Sin nombre"
+    estado = _val(d, "estado", _ESTADO) or "—"
+    riesgo = _val(d, "nivel_riesgo", _RIESGO) or "—"
+
+    # Responsable con rol
+    resp = d.get("responsable_tratamiento")
+    resp_texto = None
+    if resp:
+        rol = "Responsable" if d.get("es_responsable") else "Encargado"
+        resp_texto = f"{resp} ({rol})"
+
+    # Preparar campos derivados
+    cats_tit = _titulares_legibles(d.get("categorias_titulares"))
+    cat_datos = d.get("categoria_datos") or d.get("campos_detectados_texto")
+    medidas = _medidas_legibles(d.get("medidas_seguridad"))
+
+    plazo = d.get("plazo_conservacion")
+    if plazo == "otro" and d.get("plazo_otro"):
+        plazo_texto = d["plazo_otro"]
+    elif plazo:
+        plazo_texto = _PLAZO.get(plazo, plazo)
+    else:
+        plazo_texto = None
+
+    prob = _val(d, "probabilidad", _PROBABILIDAD)
+    imp = _val(d, "impacto", _RIESGO)
+
+    fecha_eval = d.get("fecha_evaluacion")
+    fecha_texto = None
+    if fecha_eval:
+        try:
+            fecha_texto = fecha_eval.strftime("%d/%m/%Y") if hasattr(fecha_eval, "strftime") else str(fecha_eval)[:10]
+        except Exception:
+            fecha_texto = str(fecha_eval)
+
+    es_pendiente = d.get("estado") == "PENDIENTE"
+    badge = f"Estado: {estado}  ·  Riesgo: {riesgo}"
+    if es_pendiente:
+        badge += "  ·  ⚠ Campos pendientes"
+
+    # ── Header del tratamiento (barra con color) ──────────────────
+    header_data = [[Paragraph(
+        f"Tratamiento {idx}/{total} — {nombre}",
+        estilos_dict["trat_titulo"],
+    ), ""]]
+    header_tabla = Table(header_data, colWidths=[ancho])
+    header_tabla.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), color_header),
+        ("TEXTCOLOR",  (0, 0), (-1, -1), COLOR_BLANCO),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING",(0,0),(-1,-1), 6),
+        ("LEFTPADDING",(0, 0), (-1, -1), 8),
+        ("SPAN",       (0, 0), (1, 0)),
+    ]))
+    elementos.append(header_tabla)
+
+    # Badge de estado/riesgo
+    badge_data = [[Paragraph(badge, estilos_dict["contenido"])]]
+    badge_tabla = Table(badge_data, colWidths=[ancho])
+    badge_tabla.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), COLOR_GRIS_BG),
+        ("BOX",        (0, 0), (-1, -1), 0.5, COLOR_BORDE),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING",(0,0),(-1,-1), 3),
+        ("LEFTPADDING",(0, 0), (-1, -1), 6),
+    ]))
+    elementos.append(badge_tabla)
+    elementos.append(Spacer(1, 0.3 * cm))
+
+    # ── Sección 1: Identificación ─────────────────────────────────
+    elementos.extend(_tabla_seccion(
+        f"Identificación de actividades de tratamiento — {nombre}",
+        [
+            ("Responsable del tratamiento", "(persona o cargo a cargo del proceso)", resp_texto),
+            ("Departamento / Área", "(unidad dueña del tratamiento)", _val(d, "departamento")),
+            ("Subárea responsable", None, _val(d, "subarea_responsable")),
+            ("Descripción detallada", "(¿Qué datos se tratan?; ¿Para qué?; ¿Cómo?)", _val(d, "descripcion_detallada")),
+            ("Procesos relacionados", "(relación con otros procesos internos)", _val(d, "procesos_relacionados")),
+        ],
+        estilos_dict, ancho, color_header,
+    ))
+
+    # ── Sección 2: Finalidad y base legal ─────────────────────────
+    elementos.extend(_tabla_seccion(
+        "Licitud, finalidad y transparencia",
+        [
+            ("Finalidad del tratamiento", "(descripción específica, no genérica)", _val(d, "finalidad")),
+            ("Finalidades secundarias", None, _val(d, "finalidades_secundarias")),
+            ("Base legal", "(Consentimiento / Obligación legal / Interés legítimo / Contrato)", _val(d, "base_legal", _BASE_LEGAL)),
+            ("¿Se informa a los titulares?", "(sobre la finalidad y uso de sus datos)", _val(d, "informa_titulares")),
+            ("Documento de respaldo", "(contrato, consentimiento, mandato)", _val(d, "documento_respaldo_permiso")),
+        ],
+        estilos_dict, ancho, color_header,
+    ))
+
+    # ── Sección 3: Categoría de datos y titulares ─────────────────
+    elementos.extend(_tabla_seccion(
+        "Tipo de categoría de datos personales tratados",
+        [
+            ("Categoría de datos personales", "(Pacientes / Clientes / Empleados / Otros)", cat_datos),
+            ("Categorías de titulares", None, cats_tit),
+            ("Universo de titulares", "(alcance: todos los clientes, solo empleados, etc.)", _val(d, "universo_titulares")),
+            ("Origen de los datos", "(Titular / Terceros / Fuente pública / Generación interna)", _val(d, "origen_datos", _ORIGEN)),
+            ("¿Incluye datos sensibles?", "(Salud / Biometría / Religión / Identidad de género)", _val(d, "datos_sensibles")),
+            ("Datos de navegación", "(IP, cookies, ID dispositivo, geolocalización)", _val(d, "datos_navegacion")),
+            ("Datos de NNA", "(Niños, niñas y adolescentes — menores de 18 años)", _val(d, "incluye_nna")),
+            ("Detalle NNA", "(qué datos de menores se tratan y con qué justificación)", _val(d, "nna_detalle")),
+        ],
+        estilos_dict, ancho, color_header,
+    ))
+
+    # ── Sección 4: Transferencias ─────────────────────────────────
+    elementos.extend(_tabla_seccion(
+        "Transferencias y comunicaciones a terceros",
+        [
+            ("Destinatarios", "(quién recibe los datos)", _val(d, "destinatarios")),
+            ("Destinatarios internos", "(áreas que acceden o utilizan los datos)", _val(d, "destinatarios_internos")),
+            ("Destinatarios nacionales", "(terceros nacionales que reciben datos)", _val(d, "destinatarios_nacionales")),
+            ("Destinatarios internacionales", "(tercero, país y base legal)", _val(d, "destinatarios_internacionales")),
+            ("¿Los datos salen al extranjero?", None, _val(d, "sale_extranjero")),
+            ("¿Los terceros actúan como encargados?", None, _val(d, "terceros_son_encargados")),
+            ("¿Existen contratos de protección de datos?", "(con terceros que reciben datos)", _val(d, "contratos_proteccion_datos")),
+            ("Datos transferidos (detalle)", None, _val(d, "datos_transferidos_detalle")),
+            ("Método de transferencia", "(digital / verbal / físico)", _val(d, "metodo_transferencia")),
+        ],
+        estilos_dict, ancho, color_header,
+    ))
+
+    # ── Sección 5: Conservación y principios ──────────────────────
+    elementos.extend(_tabla_seccion(
+        "Conservación, seguridad y principios Ley 21.719",
+        [
+            ("Plazo de conservación", "(¿por cuánto tiempo se almacenan los datos?)", plazo_texto),
+            ("Criterio del plazo", "(legal, contractual u operacional)", _val(d, "criterio_plazo", _CRITERIO_PLAZO)),
+            ("Método de eliminación", "(eliminación digital / destrucción física / anonimización)", _val(d, "metodo_eliminacion", _METODO_ELIMINACION)),
+            ("¿Se documenta la destrucción?", None, _val(d, "documenta_destruccion")),
+            ("Excepciones al plazo", "(archivo histórico / obligación legal)", _val(d, "excepciones_plazo")),
+            ("Medidas de seguridad", "(cifrado, control acceso, backups, auditoría, etc.)", medidas),
+            ("¿Decisiones automatizadas?", "(algoritmos o IA que deciden sobre personas)", _val(d, "decisiones_automatizadas")),
+            ("Justificación de minimización", "(¿por qué estos datos y no más?)", _val(d, "minimizacion_justificacion")),
+            ("Mecanismos de exactitud", "(¿cómo se mantienen actualizados?)", _val(d, "mecanismos_exactitud")),
+            ("Evaluación periódica", None, _val(d, "evaluacion_periodica", _PERIODO_EVALUACION)),
+            ("Cumplimiento demostrable", "(registros, auditorías, capacitaciones)", _val(d, "cumplimiento_demostrable")),
+            ("Incidentes históricos", None, _val(d, "incidentes_historicos")),
+            ("Cambios futuros previstos", None, _val(d, "cambios_futuros")),
+        ],
+        estilos_dict, ancho, color_header, col_izq_ratio=0.42,
+    ))
+
+    # ── Sección 6: Sistemas ───────────────────────────────────────
+    elementos.extend(_tabla_seccion(
+        "Sistemas o aplicaciones, soportes y ubicación",
+        [
+            ("Sistemas de origen", "(donde nacen o se capturan los datos)", _val(d, "sistemas_origen")),
+            ("Sistemas de destino", "(donde los datos se replican o consultan)", _val(d, "sistemas_destino")),
+            ("Sistemas de tratamiento", "(donde se procesa o transforma el dato)", _val(d, "sistemas_tratamiento")),
+            ("Tipo de tratamiento por sistema", "(captura, consulta, modificación, etc.)", _val(d, "tipos_tratamiento_sistema")),
+            ("Base de datos", "(repositorio concreto)", _val(d, "base_datos_nombre")),
+            ("Proveedor tecnológico", "(si aplica)", _val(d, "proveedor_tecnologico")),
+        ],
+        estilos_dict, ancho, color_header, col_izq_ratio=0.42,
+    ))
+
+    # ── Sección 7: Evaluación de riesgo ───────────────────────────
+    filas_riesgo = [
+        ("Nivel de riesgo", "(Bajo / Medio / Alto)", _val(d, "nivel_riesgo", _RIESGO)),
+        ("Probabilidad", None, prob),
+        ("Impacto", None, imp),
+        ("Fecha de evaluación", None, fecha_texto),
+    ]
+    if d.get("requiere_dpia"):
+        filas_riesgo.extend([
+            ("¿Requiere DPIA?", "(Evaluación de Impacto en Protección de Datos)", _val(d, "requiere_dpia")),
+            ("¿DPIA realizada?", None, _val(d, "dpia_realizada")),
+            ("Detalle DPIA", "(fecha, responsable, conclusiones, medidas)", _val(d, "dpia_detalle")),
+        ])
+    elementos.extend(_tabla_seccion(
+        "Evaluaciones de impacto y riesgos",
+        filas_riesgo,
+        estilos_dict, ancho, color_header, col_izq_ratio=0.42,
+    ))
+
+    return elementos
+
+
+# ── Función principal ─────────────────────────────────────────────────────
 
 def construir_pdf(org, tratamientos: list) -> bytes:
-    """
-    Genera el PDF RAT en formato tabla oficial y devuelve los bytes.
-    No escribe nada en disco — el llamador decide qué hacer con los bytes.
+    """Genera el PDF RAT estilo La Liga y devuelve los bytes.
 
-    Estructura:
-      Página 1:   Portada con org, RUT, fecha y metodología.
-      Página 2+:  Tabla RAT con 9 columnas, una fila por tratamiento.
+    tratamientos: lista de objetos ORM o dicts planos.
+    org: objeto Organizacion (ORM) con nombre, rut, correo, color_institucional, logo_ruta.
     """
     buffer = BytesIO()
 
     doc = SimpleDocTemplate(
         buffer,
-        pagesize=landscape(A4),
+        pagesize=A4,
         rightMargin=1.5 * cm,
         leftMargin=1.5 * cm,
         topMargin=1.5 * cm,
@@ -148,142 +494,101 @@ def construir_pdf(org, tratamientos: list) -> bytes:
         creator="DataCL",
     )
 
-    base = getSampleStyleSheet()
+    ancho = A4[0] - 3 * cm
 
-    s_celda = ParagraphStyle(
-        "celda", parent=base["Normal"], fontSize=7.5, leading=10,
-    )
-    s_cabecera = ParagraphStyle(
-        "cabecera", parent=base["Normal"],
-        fontSize=7.5, leading=10, textColor=colors.white, fontName="Helvetica-Bold",
-    )
-    s_titulo = ParagraphStyle(
-        "titulo_portada", parent=base["Title"],
-        fontSize=26, textColor=colors.HexColor("#021024"), spaceAfter=6,
-    )
-    s_subtitulo = ParagraphStyle(
-        "subtitulo_portada", parent=base["Normal"],
-        fontSize=14, textColor=colors.HexColor("#5483B3"), spaceAfter=20,
-    )
-    s_dato = ParagraphStyle(
-        "dato_portada", parent=base["Normal"],
-        fontSize=11, textColor=colors.HexColor("#052659"), spaceAfter=6,
-    )
-    s_metodologia = ParagraphStyle(
-        "metodologia", parent=base["Normal"],
-        fontSize=9, textColor=colors.HexColor("#888888"),
-    )
-    s_advertencia = ParagraphStyle(
-        "advertencia", parent=base["Normal"],
-        fontSize=9.5, textColor=colors.HexColor("#92400e"),
-        leading=14, spaceAfter=4,
-    )
-    s_leyenda = ParagraphStyle(
-        "leyenda", parent=base["Normal"],
-        fontSize=7.5, textColor=colors.HexColor("#92400e"),
-        leading=10,
-    )
+    # Color personalizable por org (default: morado La Liga)
+    color_hex = getattr(org, "color_institucional", None) or COLOR_HEADER_DEFAULT
+    color_header = colors.HexColor(color_hex)
 
+    # Convertir ORM a dicts
+    dicts = []
+    for t in tratamientos:
+        dicts.append(t if isinstance(t, dict) else tratamiento_a_dict(t))
+
+    estilos_dict = _estilos()
     elementos = []
 
-    # ── PÁGINA 1: PORTADA ─────────────────────────────────────────
-    elementos.append(Spacer(1, 2.5 * cm))
-    elementos.append(Paragraph("DataCL", s_titulo))
-    elementos.append(Paragraph("Registro de Actividades de Tratamiento", s_subtitulo))
-    elementos.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#021024")))
+    # ── PORTADA ───────────────────────────────────────────────────
+    elementos.append(Spacer(1, 1.5 * cm))
+
+    # Logo de la org (si tiene)
+    logo_ruta = getattr(org, "logo_ruta", None)
+    if logo_ruta and Path(logo_ruta).exists():
+        try:
+            logo = Image(logo_ruta, width=4 * cm, height=4 * cm)
+            logo.hAlign = "CENTER"
+            elementos.append(logo)
+            elementos.append(Spacer(1, 0.5 * cm))
+        except Exception:
+            pass
+
+    # Título con barra de color
+    titulo_data = [[Paragraph(
+        "Levantamiento de Actividades de Tratamiento de Datos Personales — Ley 21.719",
+        estilos_dict["trat_titulo"],
+    )]]
+    titulo_tabla = Table(titulo_data, colWidths=[ancho])
+    titulo_tabla.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), color_header),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("LEFTPADDING", (0, 0), (-1, -1), 10),
+    ]))
+    elementos.append(titulo_tabla)
     elementos.append(Spacer(1, 0.8 * cm))
-    elementos.append(Paragraph(f"<b>Organización:</b> {org.nombre}", s_dato))
-    elementos.append(Paragraph(f"<b>RUT:</b> {org.rut}", s_dato))
-    elementos.append(Paragraph(f"<b>Correo:</b> {org.correo}", s_dato))
+
+    elementos.append(Paragraph(f"<b>Organización:</b> {org.nombre}", estilos_dict["dato_portada"]))
+    elementos.append(Paragraph(f"<b>RUT:</b> {org.rut}", estilos_dict["dato_portada"]))
+    elementos.append(Paragraph(f"<b>Correo:</b> {org.correo}", estilos_dict["dato_portada"]))
     elementos.append(Paragraph(
         f"<b>Fecha de generación:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}",
-        s_dato,
+        estilos_dict["dato_portada"],
     ))
-    elementos.append(Spacer(1, 0.6 * cm))
+    elementos.append(Spacer(1, 0.4 * cm))
     elementos.append(Paragraph(
-        f"<b>Total de tratamientos incluidos:</b> {len(tratamientos)}",
-        s_dato,
+        f"<b>Total de tratamientos incluidos:</b> {len(dicts)}",
+        estilos_dict["dato_portada"],
     ))
-    pendientes_portada = [t for t in tratamientos if t.estado == "PENDIENTE"]
-    if pendientes_portada:
-        nombres_pend = ", ".join(f'"{t.nombre}"' for t in pendientes_portada[:3])
-        if len(pendientes_portada) > 3:
-            nombres_pend += f" y {len(pendientes_portada) - 3} más"
+
+    pendientes = [d for d in dicts if d.get("estado") == "PENDIENTE"]
+    if pendientes:
+        nombres = ", ".join(f'"{d.get("nombre", "?")}"' for d in pendientes[:3])
+        if len(pendientes) > 3:
+            nombres += f" y {len(pendientes) - 3} más"
         elementos.append(Spacer(1, 0.3 * cm))
         elementos.append(Paragraph(
-            f"<b>Aviso: {len(pendientes_portada)} tratamiento(s) incompleto(s):</b> "
-            f"{nombres_pend}. Las filas marcadas en amarillo en la tabla RAT tienen "
-            "campos clave sin completar. Complete esta información antes de usar este "
-            "registro para fines de cumplimiento.",
-            s_advertencia,
+            f"<b>⚠ {len(pendientes)} tratamiento(s) incompleto(s):</b> {nombres}. "
+            "Estos tratamientos tienen campos clave sin completar.",
+            estilos_dict["advertencia"],
         ))
-    elementos.append(Spacer(1, 1.5 * cm))
+
+    elementos.append(Spacer(1, 1 * cm))
     elementos.append(Paragraph(
         "Elaborado bajo la metodología AEPD adaptada a la Ley 21.719 "
         "de Protección de Datos Personales de Chile.",
-        s_metodologia,
+        estilos_dict["metodologia"],
     ))
-    elementos.append(PageBreak())
 
-    # ── PÁGINAS 2+: TABLA RAT ─────────────────────────────────────
-    # landscape A4 (~29.7cm) - márgenes (1.5cm × 2) = 26.7cm útiles
-    anchos = [
-        3.6 * cm,  # Actividad de tratamiento
-        2.8 * cm,  # Responsable o encargado
-        2.8 * cm,  # Categoría de datos
-        2.2 * cm,  # Universo de titulares
-        4.2 * cm,  # Finalidad
-        3.0 * cm,  # Base de legitimidad
-        3.2 * cm,  # Destinatarios previstos
-        2.2 * cm,  # Período de conservación
-        2.7 * cm,  # Fuente de los datos
-    ]  # total = 26.7cm
+    # ── FICHAS ────────────────────────────────────────────────────
+    total = len(dicts)
+    for idx, d in enumerate(dicts, 1):
+        elementos.append(PageBreak())
+        elementos.extend(_ficha_tratamiento(d, idx, total, estilos_dict, ancho, color_header))
 
-    encabezados = [
-        _p("Actividad de\ntratamiento", s_cabecera),
-        _p("Responsable o\nencargado",  s_cabecera),
-        _p("Categoría\nde datos",       s_cabecera),
-        _p("Universo de\ntitulares",    s_cabecera),
-        _p("Finalidad",                 s_cabecera),
-        _p("Base de\nlegitimidad",      s_cabecera),
-        _p("Destinatarios previstos\n(incl. transf. internacional)", s_cabecera),
-        _p("Período de\nconservación",  s_cabecera),
-        _p("Fuente de\nlos datos",      s_cabecera),
-    ]
+    # ── Pie de página ─────────────────────────────────────────────
+    def pie(canvas, doc):
+        canvas.saveState()
+        canvas.setFont("Helvetica", 7)
+        canvas.setFillColor(colors.HexColor("#888888"))
+        canvas.drawString(
+            doc.leftMargin, 0.75 * cm,
+            "Metodología AEPD adaptada a Ley 21.719 — Protección de Datos Personales (Chile)",
+        )
+        canvas.drawRightString(
+            A4[0] - doc.rightMargin, 0.75 * cm,
+            f"Página {canvas.getPageNumber()}",
+        )
+        canvas.restoreState()
 
-    filas = [encabezados] + [_fila_rat(t, s_celda) for t in tratamientos]
-
-    filas_pendiente = [
-        ("BACKGROUND", (0, i + 1), (-1, i + 1), colors.HexColor("#fffbeb"))
-        for i, t in enumerate(tratamientos)
-        if t.estado == "PENDIENTE"
-    ]
-
-    estilo = TableStyle([
-        ("BACKGROUND",    (0, 0), (-1, 0),  colors.HexColor("#021024")),
-        ("TEXTCOLOR",     (0, 0), (-1, 0),  colors.white),
-        ("GRID",          (0, 0), (-1, -1), 0.4, colors.HexColor("#b8cfe0")),
-        ("VALIGN",        (0, 0), (-1, -1), "TOP"),
-        ("TOPPADDING",    (0, 0), (-1, -1), 5),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-        ("LEFTPADDING",   (0, 0), (-1, -1), 4),
-        ("RIGHTPADDING",  (0, 0), (-1, -1), 4),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1),
-         [colors.white, colors.HexColor("#f0f6ff")]),
-        *filas_pendiente,
-    ])
-
-    tabla = Table(filas, colWidths=anchos, repeatRows=1)
-    tabla.setStyle(estilo)
-    elementos.append(tabla)
-
-    if filas_pendiente:
-        elementos.append(Spacer(1, 0.4 * cm))
-        elementos.append(Paragraph(
-            "Fila en amarillo = tratamiento con campos clave pendientes de completar "
-            "(finalidad, base legal, destinatarios, plazo de conservacion o medidas de seguridad).",
-            s_leyenda,
-        ))
-
-    doc.build(elementos, onFirstPage=_pie, onLaterPages=_pie)
+    doc.build(elementos, onFirstPage=pie, onLaterPages=pie)
     return buffer.getvalue()
