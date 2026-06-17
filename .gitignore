@@ -6,4 +6,5 @@ node_modules/
 dist/
 .claude
 informes_generados/
+test.db
 Sprint7_Tarjetas_Trello_v2.md
