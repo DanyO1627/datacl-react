@@ -176,6 +176,20 @@ def test_cp41_analisis_ia_inexistente(client, auth_header, org_registrada):
     assert resp.json()["detail"] == "Este informe no tiene análisis de IA."
 
 
+# ── CP-10: Editar tratamiento recalcula riesgo ───────────────────────────────
+def test_cp10_editar_recalcula_riesgo(client, auth_header):
+    resp = _crear_tratamiento(client, auth_header, {"datos_sensibles": False})
+    assert resp.status_code == 201
+    tid = resp.json()["id"]
+    assert resp.json()["nivel_riesgo"] != "ALTO"
+
+    resp2 = client.put(f"/tratamientos/{tid}", json={
+        "datos_sensibles": True,
+    }, headers=auth_header)
+    assert resp2.status_code == 200
+    assert resp2.json()["nivel_riesgo"] == "ALTO"
+
+
 # ── CP-19: Archivo formato no soportado → mensaje exacto ─────────────────────
 def test_cp19_formato_no_soportado(client, auth_header):
     file = io.BytesIO(b"contenido falso")

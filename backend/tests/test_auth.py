@@ -129,6 +129,29 @@ def test_cp28_perfil_incluye_rut(client, auth_header):
     assert body["rut"] == "12345678-5"
 
 
+# ── CP-29: Editar perfil (nombre) → nombre actualizado ───────────────────────
+def test_cp29_editar_perfil_nombre(client, auth_header):
+    resp = client.put("/organizaciones/perfil", json={
+        "nombre": "Org Renombrada",
+    }, headers=auth_header)
+    assert resp.status_code == 200
+    assert resp.json()["nombre"] == "Org Renombrada"
+
+    resp2 = client.get("/auth/me", headers=auth_header)
+    assert resp2.json()["nombre"] == "Org Renombrada"
+
+
+# ── CP-30: Cambiar password con password actual errónea → 400 ────────────────
+def test_cp30_cambiar_password_erronea(client, auth_header):
+    resp = client.put("/organizaciones/password", json={
+        "password_actual": "incorrecta999",
+        "password_nueva": "nueva123456",
+        "confirmar_password": "nueva123456",
+    }, headers=auth_header)
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "La contraseña actual es incorrecta"
+
+
 # ── CP-42: Endpoints de informes sin token → 401 ─────────────────────────────
 def test_cp42_informes_sin_token(client):
     assert client.get("/informes").status_code == 401
