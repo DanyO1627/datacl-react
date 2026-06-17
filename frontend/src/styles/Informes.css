@@ -276,3 +276,62 @@
 .modal-ia-texto li { margin-bottom: 4px; }
 .modal-ia-texto strong { font-weight: 600; color: #1a1a2e; }
 
+/* Tooltip versiones de RAT */
+.inf-ver-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.inf-ver-icono {
+  font-size: 20px;
+  color: #7c5cbf;
+  cursor: default;
+  user-select: none;
+}
+
+.inf-ver-caja {
+  display: none;
+  position: absolute;
+  left: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #fff;
+  border: 1px solid #e0ddf5;
+  border-radius: 10px;
+  padding: 14px 18px;
+  min-width: 220px;
+  z-index: 999;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.14);
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inf-ver-wrap:hover .inf-ver-caja {
+  display: flex;
+}
+
+.inf-ver-titulo {
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+  margin: 0 0 6px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
+
+.inf-ver-link {
+  font-size: 13px;
+  color: #7c5cbf;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.inf-ver-link:hover {
+  text-decoration: underline;
+}
+
+.inf-versiones-vacio {
+  color: #bbb;
+}
+

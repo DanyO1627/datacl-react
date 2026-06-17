@@ -410,6 +410,151 @@
   text-decoration: none;
 }
 
+/* ─── Modal detalle de versión ───────────────────────────────── */
+.hv-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+
+.hv-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.hv-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+
+.hv-modal-etiqueta {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--dark);
+  border-radius: 20px;
+  padding: 3px 12px;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.hv-modal-titulo {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 4px;
+}
+
+.hv-modal-meta {
+  font-size: 12px;
+  color: #888;
+  margin: 0;
+}
+
+.hv-modal-cerrar {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #999;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.hv-modal-cerrar:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.hv-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+}
+
+.hv-modal-seccion {
+  font-size: 11px;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 14px;
+}
+
+.hv-modal-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.hv-modal-tabla th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 12px;
+  border-bottom: 2px solid #f0f0f5;
+}
+
+.hv-modal-tabla td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f5f5fa;
+  vertical-align: top;
+  line-height: 1.4;
+}
+
+.hv-modal-tabla tr:last-child td {
+  border-bottom: none;
+}
+
+.hv-modal-campo {
+  font-weight: 600;
+  color: var(--navy);
+  white-space: nowrap;
+  width: 180px;
+}
+
+.hv-modal-antes {
+  color: #c53030;
+  background: #fff5f5;
+  border-radius: 4px;
+}
+
+.hv-modal-despues {
+  color: #276749;
+  background: #f0fff4;
+  border-radius: 4px;
+}
+
+.hv-modal-vacio {
+  font-size: 14px;
+  color: #888;
+  text-align: center;
+  padding: 20px 0;
+  font-style: italic;
+}
+
 /* ─── Badges genéricos (riesgo, estado, internacional) ───────── */
 .hv-badge {
   display: inline-block;

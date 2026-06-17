@@ -14,6 +14,13 @@ const FORM_VACIO = {
   // ── Paso 3 ───────────────────────────────────────────────
   plazo_conservacion: "", plazo_otro: "", otras_medidas: "",
   medidas_seguridad: [], decisiones_automatizadas: false,
+  // ── Paso 3 — Principios Ley 21.719 ───────────────────────
+  criterio_plazo: "", metodo_eliminacion: "", documenta_destruccion: false,
+  excepciones_plazo: "", minimizacion_justificacion: "", mecanismos_exactitud: "",
+  evaluacion_periodica: "", cumplimiento_demostrable: "",
+  incidentes_historicos: "", cambios_futuros: "",
+  // ── Paso 3 — DPIA ────────────────────────────────────────
+  requiere_dpia: false, dpia_realizada: null, dpia_detalle: "",
   // ── Análisis ─────────────────────────────────────────────
   campos_detectados: [], campos_pendientes: [],
   // ── Sesión / actividades ─────────────────────────────────

@@ -23,6 +23,7 @@ const COLOR_ESTADO = {
 
 // Etiquetas legibles para los nombres técnicos de campos_modificados
 const ETIQUETAS_CAMPOS = {
+  // Campos principales del tratamiento
   nombre: 'Nombre',
   finalidad: 'Finalidad',
   base_legal: 'Base legal',
@@ -35,6 +36,7 @@ const ETIQUETAS_CAMPOS = {
   decisiones_automatizadas: 'Decisiones automatizadas',
   nivel_riesgo: 'Nivel de riesgo',
   estado: 'Estado',
+  // Detalle RAT
   categoria_datos: 'Categoría de datos',
   categorias_titulares: 'Categorías de titulares',
   universo_titulares: 'Universo de titulares',
@@ -42,6 +44,46 @@ const ETIQUETAS_CAMPOS = {
   responsable_tratamiento: 'Responsable',
   departamento: 'Departamento',
   es_responsable: 'Rol del responsable',
+  // Detalle extendido — Identificación
+  descripcion_detallada: 'Descripción detallada',
+  subarea_responsable: 'Subárea responsable',
+  procesos_relacionados: 'Procesos relacionados',
+  finalidades_secundarias: 'Finalidades secundarias',
+  informa_titulares: 'Información a titulares',
+  documento_respaldo_permiso: 'Documento de respaldo',
+  // Detalle extendido — Datos y transferencias
+  datos_navegacion: 'Datos de navegación',
+  incluye_nna: 'Incluye datos de menores (NNA)',
+  nna_detalle: 'Detalle NNA',
+  destinatarios_internos: 'Destinatarios internos',
+  destinatarios_nacionales: 'Destinatarios nacionales',
+  destinatarios_internacionales: 'Destinatarios internacionales',
+  terceros_son_encargados: 'Terceros son encargados',
+  contratos_proteccion_datos: 'Contratos de protección de datos',
+  datos_transferidos_detalle: 'Datos transferidos (detalle)',
+  metodo_transferencia: 'Método de transferencia',
+  // Detalle extendido — Sistemas
+  sistemas_origen: 'Sistemas de origen',
+  sistemas_destino: 'Sistemas de destino',
+  sistemas_tratamiento: 'Sistemas de tratamiento',
+  tipos_tratamiento_sistema: 'Tipos de tratamiento en sistema',
+  base_datos_nombre: 'Base de datos',
+  proveedor_tecnologico: 'Proveedor tecnológico',
+  // Detalle extendido — Principios Ley 21.719
+  criterio_plazo: 'Criterio del plazo',
+  metodo_eliminacion: 'Método de eliminación',
+  documenta_destruccion: 'Documenta destrucción',
+  excepciones_plazo: 'Excepciones al plazo',
+  minimizacion_justificacion: 'Justificación de minimización',
+  mecanismos_exactitud: 'Mecanismos de exactitud',
+  evaluacion_periodica: 'Evaluación periódica',
+  cumplimiento_demostrable: 'Cumplimiento demostrable',
+  incidentes_historicos: 'Incidentes históricos',
+  cambios_futuros: 'Cambios futuros',
+  // Detalle extendido — DPIA
+  requiere_dpia: 'Requiere DPIA',
+  dpia_realizada: 'DPIA realizada',
+  dpia_detalle: 'Detalle DPIA',
 }
 
 function etiquetaCampo(campo) {
@@ -83,6 +125,7 @@ export default function HistorialVersiones() {
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroPersona, setFiltroPersona] = useState('TODOS')
+  const [versionDetalle, setVersionDetalle] = useState(null)
 
   // Cada "Ver" trae el snapshot completo de esa versión a demanda
   const [cargandoVersion, setCargandoVersion] = useState(null)
@@ -163,11 +206,7 @@ export default function HistorialVersiones() {
       })
       if (!res.ok) throw new Error()
       const detalle = await res.json()
-      console.log(`Snapshot versión ${numero}:`, detalle.datos_snapshot)
-      alert(
-        `Versión ${numero}\n\n${detalle.descripcion_cambio || 'Sin descripción.'}\n\n` +
-        `(Detalle completo del snapshot disponible en la consola del navegador)`
-      )
+      setVersionDetalle(detalle)
     } catch {
       alert('No se pudo cargar el detalle de esta versión.')
     } finally {
@@ -202,6 +241,7 @@ export default function HistorialVersiones() {
   const estadoVigente = COLOR_ESTADO[tratamiento.estado] || COLOR_ESTADO.PENDIENTE
 
   return (
+    <>
     <div className="hv-layout">
       <BarraLateral />
 
@@ -399,5 +439,51 @@ export default function HistorialVersiones() {
         </section>
       </main>
     </div>
+
+    {versionDetalle && (
+      <div className="hv-modal-overlay" onClick={() => setVersionDetalle(null)}>
+        <div className="hv-modal" onClick={e => e.stopPropagation()}>
+          <div className="hv-modal-header">
+            <div>
+              <span className="hv-modal-etiqueta">V{versionDetalle.numero_version}</span>
+              <h2 className="hv-modal-titulo">{versionDetalle.descripcion_cambio || 'Sin descripción'}</h2>
+              {versionDetalle.modificado_por && (
+                <p className="hv-modal-meta">Por {versionDetalle.modificado_por} · {formatearFecha(versionDetalle.creado_en)}</p>
+              )}
+            </div>
+            <button className="hv-modal-cerrar" onClick={() => setVersionDetalle(null)}>✕</button>
+          </div>
+
+          {versionDetalle.campos_modificados?.length > 0 ? (
+            <div className="hv-modal-body">
+              <p className="hv-modal-seccion">Campos modificados</p>
+              <table className="hv-modal-tabla">
+                <thead>
+                  <tr>
+                    <th>Campo</th>
+                    <th>Antes</th>
+                    <th>Después</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {versionDetalle.campos_modificados.map((c, i) => (
+                    <tr key={i}>
+                      <td className="hv-modal-campo">{etiquetaCampo(c.campo)}</td>
+                      <td className="hv-modal-antes">{c.antes ?? '—'}</td>
+                      <td className="hv-modal-despues">{c.despues ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="hv-modal-body">
+              <p className="hv-modal-vacio">Esta es la versión inicial del RAT, sin cambios previos registrados.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+    </>
   )
 }

@@ -55,6 +55,10 @@ const MEDIDAS = {
   auditoria:   "Auditoría de accesos",
 }
 
+const CRITERIO_PLAZO = { legal: "Legal", contractual: "Contractual", operacional: "Operacional" }
+const METODO_ELIMINACION = { digital: "Eliminación segura digital", fisica: "Destrucción física", anonimizacion: "Anonimización", otro: "Otro" }
+const PERIODO_EVALUACION = { anual: "Anual", bienal: "Bienal (cada 2 años)", ante_cambios: "Ante cambios importantes", sin_definir: "Sin definir" }
+
 const COLOR_RIESGO = {
   BAJO:  { clase: 'riesgo-bajo',  etiqueta: 'Riesgo bajo' },
   MEDIO: { clase: 'riesgo-medio', etiqueta: 'Riesgo medio' },
@@ -194,7 +198,8 @@ export default function DetalleTratamiento() {
 
   const riesgo = COLOR_RIESGO[tratamiento.nivel_riesgo] || COLOR_RIESGO.BAJO
   const estado = COLOR_ESTADO[tratamiento.estado]   || COLOR_ESTADO.PENDIENTE
-  const d      = tratamiento.detalle  // puede ser null en tratamientos anteriores
+  const d      = tratamiento.detalle           // puede ser null en tratamientos anteriores
+  const de     = tratamiento.detalle_extendido // principios Ley 21.719 + DPIA
   const fechaFormato = new Date(tratamiento.creado_en).toLocaleDateString('es-CL', {
     year: 'numeric', month: 'long', day: 'numeric',
   })
@@ -338,7 +343,90 @@ export default function DetalleTratamiento() {
           </div>
         </div>
 
-        {/* ── Sección 4: Evaluación de riesgo ── */}
+        {/* ── Sección 4: Principios Ley 21.719 y DPIA ── */}
+        {de && (de.criterio_plazo || de.metodo_eliminacion || de.minimizacion_justificacion ||
+          de.mecanismos_exactitud || de.evaluacion_periodica || de.cumplimiento_demostrable ||
+          de.incidentes_historicos || de.cambios_futuros || de.requiere_dpia) && (
+          <div className="detalle-seccion">
+            <h2 className="detalle-columna-titulo">Principios Ley 21.719 y DPIA</h2>
+
+            <div className="detalle-seccion-campos">
+              {de.criterio_plazo && (
+                <Campo label="Criterio de plazo">
+                  <Valor v={de.criterio_plazo} mapa={CRITERIO_PLAZO} />
+                </Campo>
+              )}
+              {de.evaluacion_periodica && (
+                <Campo label="Evaluación periódica">
+                  <Valor v={de.evaluacion_periodica} mapa={PERIODO_EVALUACION} />
+                </Campo>
+              )}
+              {de.metodo_eliminacion && (
+                <Campo label="Método de eliminación">
+                  <Valor v={de.metodo_eliminacion} mapa={METODO_ELIMINACION} />
+                </Campo>
+              )}
+              {de.documenta_destruccion !== null && de.documenta_destruccion !== undefined && (
+                <Campo label="Documenta destrucción">
+                  <span className="detalle-campo-valor">{de.documenta_destruccion ? 'Sí' : 'No'}</span>
+                </Campo>
+              )}
+            </div>
+
+            {de.excepciones_plazo && (
+              <div className="detalle-campo detalle-campo-ancho">
+                <span className="detalle-campo-label">Excepciones al plazo</span>
+                <ValorMultilinea v={de.excepciones_plazo} />
+              </div>
+            )}
+            {de.minimizacion_justificacion && (
+              <div className="detalle-campo detalle-campo-ancho">
+                <span className="detalle-campo-label">Justificación de minimización</span>
+                <ValorMultilinea v={de.minimizacion_justificacion} />
+              </div>
+            )}
+            {de.mecanismos_exactitud && (
+              <div className="detalle-campo detalle-campo-ancho">
+                <span className="detalle-campo-label">Mecanismos de exactitud</span>
+                <ValorMultilinea v={de.mecanismos_exactitud} />
+              </div>
+            )}
+            {de.cumplimiento_demostrable && (
+              <div className="detalle-campo detalle-campo-ancho">
+                <span className="detalle-campo-label">Cumplimiento demostrable</span>
+                <ValorMultilinea v={de.cumplimiento_demostrable} />
+              </div>
+            )}
+            {de.incidentes_historicos && (
+              <div className="detalle-campo detalle-campo-ancho">
+                <span className="detalle-campo-label">Incidentes históricos</span>
+                <ValorMultilinea v={de.incidentes_historicos} />
+              </div>
+            )}
+            {de.cambios_futuros && (
+              <div className="detalle-campo detalle-campo-ancho">
+                <span className="detalle-campo-label">Cambios futuros previstos</span>
+                <ValorMultilinea v={de.cambios_futuros} />
+              </div>
+            )}
+
+            {de.requiere_dpia && (
+              <div className="detalle-dpia">
+                <div className="detalle-dpia-header">
+                  <span className="detalle-dpia-titulo">Evaluación de Impacto (DPIA)</span>
+                  <span className={`detalle-dpia-badge ${de.dpia_realizada ? 'detalle-dpia-badge--si' : 'detalle-dpia-badge--no'}`}>
+                    {de.dpia_realizada === true ? 'Realizada' : de.dpia_realizada === false ? 'Pendiente' : 'Sin estado'}
+                  </span>
+                </div>
+                {de.dpia_detalle && (
+                  <p className="detalle-dpia-detalle">{de.dpia_detalle}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Sección 5: Evaluación de riesgo ── */}
         <div className="detalle-evaluacion">
           <h2 className="detalle-columna-titulo">Evaluación de riesgo</h2>
           <div className="detalle-evaluacion-grid">

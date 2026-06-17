@@ -3,6 +3,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 from dotenv import load_dotenv
 
@@ -75,11 +76,34 @@ def generar_informe(
     # Si Groq falla, contenido_ia queda None y el PDF se guarda igual.
     contenido_ia = pedir_analisis_ia(tratamientos)
 
+    # Snapshot de versiones: guarda el numero_version vigente de cada tratamiento
+    # al momento exacto de generar el informe, para trazabilidad futura.
+    ids = [t.id for t in tratamientos]
+    filas_version = (
+        db.query(
+            models.VersionTratamiento.tratamiento_id,
+            func.max(models.VersionTratamiento.numero_version).label("max_version"),
+        )
+        .filter(models.VersionTratamiento.tratamiento_id.in_(ids))
+        .group_by(models.VersionTratamiento.tratamiento_id)
+        .all()
+    )
+    nombre_por_id = {t.id: t.nombre for t in tratamientos}
+    versiones_snapshot = {
+        str(fila.tratamiento_id): {
+            "version": fila.max_version,
+            "nombre": nombre_por_id.get(fila.tratamiento_id, str(fila.tratamiento_id)),
+        }
+        for fila in filas_version
+    }
+
     nuevo_informe = models.Informe(
         organizacion_id=usuario.id,
+        generado_en=ahora,
         contenido_ia=contenido_ia,
         ruta_pdf=str(ruta_pdf),
         num_tratamientos=len(tratamientos),
+        versiones_snapshot=versiones_snapshot,
     )
     db.add(nuevo_informe)
     db.commit()
@@ -164,10 +188,11 @@ def listar_informes(
     return [
         {
             "id":               inf.id,
-            "generado_en":      inf.generado_en,
-            "tiene_ia":         inf.contenido_ia is not None,
-            "ruta_pdf":         inf.ruta_pdf,
-            "num_tratamientos": inf.num_tratamientos,
+            "generado_en":        inf.generado_en,
+            "tiene_ia":           inf.contenido_ia is not None,
+            "ruta_pdf":           inf.ruta_pdf,
+            "num_tratamientos":   inf.num_tratamientos or 0,
+            "versiones_snapshot": inf.versiones_snapshot,
         }
         for inf in informes
     ]
