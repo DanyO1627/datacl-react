@@ -4,10 +4,31 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import BarraLateral from '../components/BarraLateral'
 import '../styles/editarTratamiento.css'
+import '../styles/formularioCss/paso3.css'
 
 const API = 'http://localhost:8000'
 
-const PASOS = ['Información básica', 'Datos tratados', 'Nivel de riesgo']
+const PASOS = ['Información básica', 'Datos tratados', 'Nivel de riesgo', 'Principios y DPIA']
+
+const CRITERIOS_PLAZO = [
+  { valor: 'legal',        etiqueta: 'Legal (normativa aplicable)' },
+  { valor: 'contractual',  etiqueta: 'Contractual (duración del contrato)' },
+  { valor: 'operacional',  etiqueta: 'Operacional (necesidad del proceso)' },
+]
+
+const METODOS_ELIMINACION = [
+  { valor: 'digital',       etiqueta: 'Eliminación segura digital' },
+  { valor: 'fisica',        etiqueta: 'Destrucción física' },
+  { valor: 'anonimizacion', etiqueta: 'Anonimización' },
+  { valor: 'otro',          etiqueta: 'Otro' },
+]
+
+const PERIODOS_EVALUACION = [
+  { valor: 'anual',        etiqueta: 'Anual' },
+  { valor: 'bienal',       etiqueta: 'Bienal (cada 2 años)' },
+  { valor: 'ante_cambios', etiqueta: 'Ante cambios importantes' },
+  { valor: 'sin_definir',  etiqueta: 'Sin definir' },
+]
 
 const BASES_LEGALES = [
   'Consentimiento del titular',
@@ -55,6 +76,8 @@ export default function EditarTratamiento() {
   const [guardando, setGuardando] = useState(false)
   const [recalculando, setRecalculando] = useState(false)
   const [error, setError] = useState('')
+  const [principiosAbierto, setPrincipiosAbierto] = useState(false)
+  const [dpiaAbierto, setDpiaAbierto] = useState(false)
 
   // ── Resultado visual del recálculo (solo visual, no guardado aún) ──
   const [resultadoRiesgo, setResultadoRiesgo] = useState(null)
@@ -77,6 +100,21 @@ export default function EditarTratamiento() {
     categorias_titulares: '',
     categoria_datos: '',
     modificado_por: '',
+    // Principios Ley 21.719
+    criterio_plazo: '',
+    metodo_eliminacion: '',
+    documenta_destruccion: false,
+    excepciones_plazo: '',
+    minimizacion_justificacion: '',
+    mecanismos_exactitud: '',
+    evaluacion_periodica: '',
+    cumplimiento_demostrable: '',
+    incidentes_historicos: '',
+    cambios_futuros: '',
+    // DPIA
+    requiere_dpia: false,
+    dpia_realizada: null,
+    dpia_detalle: '',
   })
 
   // ── Cargar tratamiento existente ───────────────────────────────
@@ -103,6 +141,21 @@ export default function EditarTratamiento() {
           universo_titulares: data.detalle?.universo_titulares || '',
           categorias_titulares: data.detalle?.categorias_titulares || '',
           categoria_datos: data.detalle?.categoria_datos || '',
+          // Principios Ley 21.719
+          criterio_plazo:             data.detalle_extendido?.criterio_plazo             || '',
+          metodo_eliminacion:         data.detalle_extendido?.metodo_eliminacion         || '',
+          documenta_destruccion:      data.detalle_extendido?.documenta_destruccion      ?? false,
+          excepciones_plazo:          data.detalle_extendido?.excepciones_plazo          || '',
+          minimizacion_justificacion: data.detalle_extendido?.minimizacion_justificacion || '',
+          mecanismos_exactitud:       data.detalle_extendido?.mecanismos_exactitud       || '',
+          evaluacion_periodica:       data.detalle_extendido?.evaluacion_periodica       || '',
+          cumplimiento_demostrable:   data.detalle_extendido?.cumplimiento_demostrable   || '',
+          incidentes_historicos:      data.detalle_extendido?.incidentes_historicos      || '',
+          cambios_futuros:            data.detalle_extendido?.cambios_futuros            || '',
+          // DPIA
+          requiere_dpia:  data.detalle_extendido?.requiere_dpia  ?? false,
+          dpia_realizada: data.detalle_extendido?.dpia_realizada ?? null,
+          dpia_detalle:   data.detalle_extendido?.dpia_detalle   || '',
         })
         // Mostrar el riesgo actual como resultado inicial
         if (data.nivel_riesgo) {
@@ -167,13 +220,35 @@ export default function EditarTratamiento() {
     setGuardando(true)
     setError('')
     try {
-      const { universo_titulares, categorias_titulares, categoria_datos, nivel_riesgo, ...camposPrincipales } = form
+      const {
+        universo_titulares, categorias_titulares, categoria_datos, nivel_riesgo,
+        criterio_plazo, metodo_eliminacion, documenta_destruccion, excepciones_plazo,
+        minimizacion_justificacion, mecanismos_exactitud, evaluacion_periodica,
+        cumplimiento_demostrable, incidentes_historicos, cambios_futuros,
+        requiere_dpia, dpia_realizada, dpia_detalle,
+        ...camposPrincipales
+      } = form
       const payload = {
         ...camposPrincipales,
         detalle: {
-          universo_titulares: universo_titulares || null,
+          universo_titulares:   universo_titulares   || null,
           categorias_titulares: categorias_titulares || null,
-          categoria_datos: categoria_datos || null,
+          categoria_datos:      categoria_datos      || null,
+        },
+        detalle_extendido: {
+          criterio_plazo:              criterio_plazo              || null,
+          metodo_eliminacion:          metodo_eliminacion          || null,
+          documenta_destruccion:       documenta_destruccion       ?? false,
+          excepciones_plazo:           excepciones_plazo           || null,
+          minimizacion_justificacion:  minimizacion_justificacion  || null,
+          mecanismos_exactitud:        mecanismos_exactitud        || null,
+          evaluacion_periodica:        evaluacion_periodica        || null,
+          cumplimiento_demostrable:    cumplimiento_demostrable    || null,
+          incidentes_historicos:       incidentes_historicos       || null,
+          cambios_futuros:             cambios_futuros             || null,
+          requiere_dpia:               requiere_dpia               ?? false,
+          dpia_realizada:              requiere_dpia ? (dpia_realizada ?? null) : null,
+          dpia_detalle:                requiere_dpia ? (dpia_detalle || null) : null,
         },
       }
       const res = await fetch(`${API}/tratamientos/${id}`, {
@@ -420,6 +495,232 @@ export default function EditarTratamiento() {
             </div>
           )}
 
+          {/* ── Paso 4 — Principios y DPIA ──────────────────────── */}
+          {paso === 4 && (
+            <div className="editar-seccion">
+              <h2 className="editar-subtitulo">Principios Ley 21.719 y DPIA</h2>
+              <p className="editar-descripcion">
+                Campos opcionales para documentar los principios de tratamiento y la evaluación de impacto.
+              </p>
+
+              {/* Panel Principios */}
+              <div className={`p3-panel ${principiosAbierto ? 'p3-panel--abierto' : ''}`} style={{ marginTop: '8px' }}>
+                <button
+                  type="button"
+                  className="p3-panel-header"
+                  onClick={() => setPrincipiosAbierto(v => !v)}
+                >
+                  <span className="p3-panel-icono">▼</span>
+                  <div className="p3-panel-textos">
+                    <span className="p3-panel-titulo">Principios de la Ley 21.719 <span className="p3-opcional">(opcional)</span></span>
+                    <span className="p3-panel-desc">Limitación del plazo, minimización, exactitud y cumplimiento demostrable</span>
+                  </div>
+                </button>
+
+                {principiosAbierto && (
+                  <div className="p3-panel-body">
+                    <div className="p3-panel-grid">
+                      <div className="p3-campo-grupo">
+                        <label className="p3-campo-label">Criterio para definir el plazo</label>
+                        <select
+                          className="p3-select-campo"
+                          value={form.criterio_plazo}
+                          onChange={e => setForm(f => ({ ...f, criterio_plazo: e.target.value }))}
+                        >
+                          <option value="">Seleccionar...</option>
+                          {CRITERIOS_PLAZO.map(o => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
+                        </select>
+                      </div>
+                      <div className="p3-campo-grupo">
+                        <label className="p3-campo-label">Evaluación periódica del tratamiento</label>
+                        <select
+                          className="p3-select-campo"
+                          value={form.evaluacion_periodica}
+                          onChange={e => setForm(f => ({ ...f, evaluacion_periodica: e.target.value }))}
+                        >
+                          <option value="">Seleccionar...</option>
+                          {PERIODOS_EVALUACION.map(o => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="p3-panel-grid">
+                      <div className="p3-campo-grupo">
+                        <label className="p3-campo-label">Método de eliminación de datos</label>
+                        <select
+                          className="p3-select-campo"
+                          value={form.metodo_eliminacion}
+                          onChange={e => setForm(f => ({ ...f, metodo_eliminacion: e.target.value }))}
+                        >
+                          <option value="">Seleccionar...</option>
+                          {METODOS_ELIMINACION.map(o => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
+                        </select>
+                      </div>
+                      <div className="p3-campo-grupo p3-campo-grupo--centrado">
+                        <label className={`p3-check-item ${form.documenta_destruccion ? 'p3-check-item--marcado' : ''}`}>
+                          <input
+                            type="checkbox"
+                            className="p3-check-input"
+                            checked={form.documenta_destruccion}
+                            onChange={e => setForm(f => ({ ...f, documenta_destruccion: e.target.checked }))}
+                          />
+                          <span className="p3-check-texto">¿Se documenta la destrucción/eliminación de datos?</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="p3-campo-grupo">
+                      <label className="p3-campo-label">Excepciones al plazo de conservación</label>
+                      <textarea
+                        className="p3-textarea-campo"
+                        rows={2}
+                        placeholder="Ej: datos retenidos por obligación legal más allá del plazo estándar..."
+                        value={form.excepciones_plazo}
+                        onChange={e => setForm(f => ({ ...f, excepciones_plazo: e.target.value }))}
+                        maxLength={500}
+                      />
+                    </div>
+
+                    <div className="p3-panel-grid">
+                      <div className="p3-campo-grupo">
+                        <label className="p3-campo-label">Justificación de minimización</label>
+                        <textarea
+                          className="p3-textarea-campo"
+                          rows={3}
+                          placeholder="¿Por qué son necesarios exactamente estos datos y no más?"
+                          value={form.minimizacion_justificacion}
+                          onChange={e => setForm(f => ({ ...f, minimizacion_justificacion: e.target.value }))}
+                          maxLength={500}
+                        />
+                      </div>
+                      <div className="p3-campo-grupo">
+                        <label className="p3-campo-label">Mecanismos para garantizar exactitud</label>
+                        <textarea
+                          className="p3-textarea-campo"
+                          rows={3}
+                          placeholder="Ej: validación automática, actualización periódica..."
+                          value={form.mecanismos_exactitud}
+                          onChange={e => setForm(f => ({ ...f, mecanismos_exactitud: e.target.value }))}
+                          maxLength={500}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="p3-panel-grid">
+                      <div className="p3-campo-grupo">
+                        <label className="p3-campo-label">Medidas de cumplimiento demostrable</label>
+                        <textarea
+                          className="p3-textarea-campo"
+                          rows={3}
+                          placeholder="Documentos, registros o procedimientos que evidencian el cumplimiento..."
+                          value={form.cumplimiento_demostrable}
+                          onChange={e => setForm(f => ({ ...f, cumplimiento_demostrable: e.target.value }))}
+                          maxLength={500}
+                        />
+                      </div>
+                      <div className="p3-campo-grupo">
+                        <label className="p3-campo-label">Incidentes históricos <span className="p3-opcional">(opcional)</span></label>
+                        <textarea
+                          className="p3-textarea-campo"
+                          rows={3}
+                          placeholder="Registros de brechas de seguridad anteriores relevantes..."
+                          value={form.incidentes_historicos}
+                          onChange={e => setForm(f => ({ ...f, incidentes_historicos: e.target.value }))}
+                          maxLength={500}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="p3-campo-grupo">
+                      <label className="p3-campo-label">Cambios futuros previstos <span className="p3-opcional">(opcional)</span></label>
+                      <textarea
+                        className="p3-textarea-campo"
+                        rows={2}
+                        placeholder="Cambios planificados en el tratamiento que podrían afectar el riesgo..."
+                        value={form.cambios_futuros}
+                        onChange={e => setForm(f => ({ ...f, cambios_futuros: e.target.value }))}
+                        maxLength={500}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Panel DPIA */}
+              <div className={`p3-panel ${dpiaAbierto ? 'p3-panel--abierto' : ''}`} style={{ marginTop: '12px' }}>
+                <button
+                  type="button"
+                  className="p3-panel-header"
+                  onClick={() => setDpiaAbierto(v => !v)}
+                >
+                  <span className="p3-panel-icono">▼</span>
+                  <div className="p3-panel-textos">
+                    <span className="p3-panel-titulo">Evaluación de Impacto (DPIA) <span className="p3-opcional">(opcional)</span></span>
+                    <span className="p3-panel-desc">Art. 68 Ley 21.719 — obligatoria en tratamientos de alto riesgo</span>
+                  </div>
+                </button>
+
+                {dpiaAbierto && (
+                  <div className="p3-panel-body">
+                    <label className={`p3-check-item ${form.requiere_dpia ? 'p3-check-item--marcado' : ''}`} style={{ alignSelf: 'flex-start' }}>
+                      <input
+                        type="checkbox"
+                        className="p3-check-input"
+                        checked={form.requiere_dpia}
+                        onChange={e => setForm(f => ({
+                          ...f,
+                          requiere_dpia: e.target.checked,
+                          dpia_realizada: null,
+                          dpia_detalle: '',
+                        }))}
+                      />
+                      <span className="p3-check-texto">Este tratamiento requiere una DPIA</span>
+                    </label>
+
+                    {form.requiere_dpia && (
+                      <>
+                        <div className="p3-campo-grupo" style={{ marginTop: '12px' }}>
+                          <label className="p3-campo-label">¿Se ha realizado la DPIA?</label>
+                          <div className="p3-radio-grupo">
+                            <label className="p3-radio-item">
+                              <input
+                                type="radio"
+                                name="dpia_realizada_editar"
+                                checked={form.dpia_realizada === true}
+                                onChange={() => setForm(f => ({ ...f, dpia_realizada: true }))}
+                              />
+                              <span>Sí</span>
+                            </label>
+                            <label className="p3-radio-item">
+                              <input
+                                type="radio"
+                                name="dpia_realizada_editar"
+                                checked={form.dpia_realizada === false}
+                                onChange={() => setForm(f => ({ ...f, dpia_realizada: false }))}
+                              />
+                              <span>No</span>
+                            </label>
+                          </div>
+                        </div>
+                        <div className="p3-campo-grupo">
+                          <label className="p3-campo-label">Detalles de la DPIA</label>
+                          <textarea
+                            className="p3-textarea-campo"
+                            rows={4}
+                            placeholder="Fecha, responsable, conclusiones principales, medidas adoptadas..."
+                            value={form.dpia_detalle}
+                            onChange={e => setForm(f => ({ ...f, dpia_detalle: e.target.value }))}
+                            maxLength={1000}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {error && <p className="editar-error">{error}</p>}
 
           {/* Navegación */}
@@ -429,7 +730,7 @@ export default function EditarTratamiento() {
                 ← Anterior
               </button>
             )}
-            {paso < 3 ? (
+            {paso < 4 ? (
               <button
                 className="btn-siguiente"
                 onClick={() => setPaso(paso + 1)}
