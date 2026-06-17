@@ -46,6 +46,7 @@ class Tratamiento(Base):
     organizacion = relationship("Organizacion", back_populates="tratamientos")
     campos             = relationship("CampoRat", back_populates="tratamiento", cascade="all, delete-orphan")
     detalle            = relationship("DetalleRat", back_populates="tratamiento", uselist=False, cascade="all, delete-orphan")
+    detalle_extendido  = relationship("DetalleRatExtendido", back_populates="tratamiento", uselist=False, cascade="all, delete-orphan")
     sesiones_actividad = relationship("SesionActividad", back_populates="tratamiento", cascade="all, delete-orphan")
     versiones          = relationship("VersionTratamiento", back_populates="tratamiento", cascade="all, delete-orphan")
 
@@ -106,6 +107,66 @@ class DetalleRat(Base):
     actualizado_en          = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
     tratamiento = relationship("Tratamiento", back_populates="detalle")
+
+
+# Campos extendidos del RAT real (relación 1:1 con Tratamiento, mismo patrón que DetalleRat).
+# Tabla separada para no inflar detalle_rat con ~30 columnas.
+# Todos los campos son nullable: son opcionales para organizaciones pequeñas.
+class DetalleRatExtendido(Base):
+    __tablename__ = "detalle_rat_extendido"
+
+    id             = Column(Integer, primary_key=True, index=True)
+    tratamiento_id = Column(Integer, ForeignKey("tratamientos.id", ondelete="CASCADE"), nullable=False, unique=True)
+
+    # ── Identificación ──
+    descripcion_detallada      = Column(Text, nullable=True)
+    subarea_responsable        = Column(String(200), nullable=True)
+    procesos_relacionados      = Column(Text, nullable=True)
+    finalidades_secundarias    = Column(Text, nullable=True)
+    informa_titulares          = Column(Text, nullable=True)
+    documento_respaldo_permiso = Column(Text, nullable=True)
+
+    # ── Datos y transferencias ──
+    datos_navegacion                = Column(Text, nullable=True)
+    incluye_nna                     = Column(Boolean, default=False, nullable=True)
+    nna_detalle                     = Column(Text, nullable=True)
+    destinatarios_internos          = Column(Text, nullable=True)
+    destinatarios_nacionales        = Column(Text, nullable=True)
+    destinatarios_internacionales   = Column(Text, nullable=True)
+    terceros_son_encargados         = Column(Boolean, nullable=True)
+    contratos_proteccion_datos      = Column(Boolean, nullable=True)
+    datos_transferidos_detalle      = Column(Text, nullable=True)
+    metodo_transferencia            = Column(Text, nullable=True)
+
+    # ── Sistemas ──
+    sistemas_origen            = Column(Text, nullable=True)
+    sistemas_destino           = Column(Text, nullable=True)
+    sistemas_tratamiento       = Column(Text, nullable=True)
+    tipos_tratamiento_sistema  = Column(Text, nullable=True)
+    base_datos_nombre          = Column(String(200), nullable=True)
+    proveedor_tecnologico      = Column(String(200), nullable=True)
+
+    # ── Principios (Ley 21.719) ──
+    criterio_plazo              = Column(String(50), nullable=True)
+    metodo_eliminacion          = Column(String(100), nullable=True)
+    documenta_destruccion       = Column(Boolean, nullable=True)
+    excepciones_plazo           = Column(Text, nullable=True)
+    minimizacion_justificacion  = Column(Text, nullable=True)
+    mecanismos_exactitud        = Column(Text, nullable=True)
+    evaluacion_periodica        = Column(String(50), nullable=True)
+    cumplimiento_demostrable    = Column(Text, nullable=True)
+    incidentes_historicos       = Column(Text, nullable=True)
+    cambios_futuros             = Column(Text, nullable=True)
+
+    # ── DPIA ──
+    requiere_dpia  = Column(Boolean, default=False, nullable=True)
+    dpia_realizada = Column(Boolean, default=False, nullable=True)
+    dpia_detalle   = Column(Text, nullable=True)
+
+    creado_en      = Column(DateTime, server_default=func.now(), nullable=False)
+    actualizado_en = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+
+    tratamiento = relationship("Tratamiento", back_populates="detalle_extendido")
 
 
 class Informe(Base):
