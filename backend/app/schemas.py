@@ -350,11 +350,12 @@ class InformeRespuesta(BaseModel):
     - num_tratamientos no está en la tabla informes, se calcula en el endpoint
     - tiene_ia indica si Groq respondió al generar
     """
-    id:                 int
-    generado_en:        Optional[datetime] = None
-    tiene_ia:           bool = False
-    ruta_pdf:           Optional[str] = None
-    num_tratamientos:   int = 0          # cuántos tratamientos tenía la org al generar
+    id:                  int
+    generado_en:         Optional[datetime] = None
+    tiene_ia:            bool = False
+    ruta_pdf:            Optional[str] = None
+    num_tratamientos:    int = 0
+    versiones_snapshot:  Optional[dict] = None
 
     model_config = {"from_attributes": True}
 

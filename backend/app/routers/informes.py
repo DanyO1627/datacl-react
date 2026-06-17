@@ -88,10 +88,18 @@ def generar_informe(
         .group_by(models.VersionTratamiento.tratamiento_id)
         .all()
     )
-    versiones_snapshot = {str(fila.tratamiento_id): fila.max_version for fila in filas_version}
+    nombre_por_id = {t.id: t.nombre for t in tratamientos}
+    versiones_snapshot = {
+        str(fila.tratamiento_id): {
+            "version": fila.max_version,
+            "nombre": nombre_por_id.get(fila.tratamiento_id, str(fila.tratamiento_id)),
+        }
+        for fila in filas_version
+    }
 
     nuevo_informe = models.Informe(
         organizacion_id=usuario.id,
+        generado_en=ahora,
         contenido_ia=contenido_ia,
         ruta_pdf=str(ruta_pdf),
         num_tratamientos=len(tratamientos),
@@ -180,10 +188,11 @@ def listar_informes(
     return [
         {
             "id":               inf.id,
-            "generado_en":      inf.generado_en,
-            "tiene_ia":         inf.contenido_ia is not None,
-            "ruta_pdf":         inf.ruta_pdf,
-            "num_tratamientos": inf.num_tratamientos,
+            "generado_en":        inf.generado_en,
+            "tiene_ia":           inf.contenido_ia is not None,
+            "ruta_pdf":           inf.ruta_pdf,
+            "num_tratamientos":   inf.num_tratamientos or 0,
+            "versiones_snapshot": inf.versiones_snapshot,
         }
         for inf in informes
     ]
