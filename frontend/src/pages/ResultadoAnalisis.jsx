@@ -50,7 +50,7 @@ export default function AsignacionCampos() {
     [actividades],
   );
   const sinAsignar  = detectados.filter((c) => !asignadas.has(c.nombre_columna)).length;
-  const puedeAvanzar = sinAsignar === 0 && actividades.length > 0;
+  const puedeAvanzar = actividades.length > 0 && actividades.some((a) => a.campos.length > 0);
 
   const tieneMultiTabla = useMemo(
     () => [...detectados, ...pendientes].some((c) => c.tabla_origen),
@@ -123,6 +123,17 @@ export default function AsignacionCampos() {
     setActividades((prev) =>
       prev.map((a) =>
         a.id === actividadActiva ? { ...a, campos: [...a.campos, campo] } : a,
+      ),
+    );
+  }
+
+  function asignarTodos() {
+    if (!actividadActiva) return;
+    const libres = detectados.filter((c) => !asignadas.has(c.nombre_columna));
+    if (libres.length === 0) return;
+    setActividades((prev) =>
+      prev.map((a) =>
+        a.id === actividadActiva ? { ...a, campos: [...a.campos, ...libres] } : a,
       ),
     );
   }
@@ -237,11 +248,18 @@ export default function AsignacionCampos() {
             <h1>Asignación de campos a actividades</h1>
             <p>Crea actividades y asigna cada campo detectado a la que corresponda</p>
           </div>
-          <span className={`ac-badge-contador ${sinAsignar === 0 && detectados.length > 0 ? "ac-badge-contador--ok" : ""}`}>
-            {sinAsignar === 0 && detectados.length > 0
-              ? "✓ Todos asignados"
-              : `${sinAsignar} campo${sinAsignar !== 1 ? "s" : ""} sin asignar`}
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {sinAsignar > 0 && actividadActiva && (
+              <button className="ac-btn-marcar-todos" onClick={asignarTodos}>
+                Marcar todos
+              </button>
+            )}
+            <span className={`ac-badge-contador ${sinAsignar === 0 && detectados.length > 0 ? "ac-badge-contador--ok" : ""}`}>
+              {sinAsignar === 0 && detectados.length > 0
+                ? "✓ Todos asignados"
+                : `${sinAsignar} campo${sinAsignar !== 1 ? "s" : ""} sin asignar`}
+            </span>
+          </div>
         </div>
 
         {/* ── Instrucción ── */}
@@ -479,7 +497,7 @@ export default function AsignacionCampos() {
             className="ac-btn-continuar"
             onClick={handleContinuar}
             disabled={!puedeAvanzar}
-            title={!puedeAvanzar ? "Asigna todos los campos antes de continuar" : ""}
+            title={!puedeAvanzar ? "Crea al menos una actividad con campos asignados para continuar" : ""}
           >
             Continuar →
           </button>

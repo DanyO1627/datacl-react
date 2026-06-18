@@ -173,7 +173,7 @@ export default function MisTratamientos() {
                     </td>
                     <td>
                       <span className={`mt-badge ${BADGE_ESTADO[t.estado] || 'badge-estado-pendiente'}`}>
-                        {LABEL_ESTADO[t.estado] || t.estado}
+                        {LABEL_ESTADO[t.estado] || t.estado || 'Pendiente'}
                       </span>
                     </td>
                     <td className="mt-celda-fecha">{formatearFecha(t.creado_en)}</td>

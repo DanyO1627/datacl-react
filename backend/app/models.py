@@ -125,9 +125,8 @@ class DetalleRat(Base):
     tratamiento = relationship("Tratamiento", back_populates="detalle")
 
 
-# Campos extendidos del RAT real (relación 1:1 con Tratamiento, mismo patrón que DetalleRat).
-# Tabla separada para no inflar detalle_rat con ~30 columnas.
-# Todos los campos son nullable: son opcionales para organizaciones pequeñas.
+
+
 class DetalleRatExtendido(Base):
     __tablename__ = "detalle_rat_extendido"
 
@@ -143,14 +142,16 @@ class DetalleRatExtendido(Base):
     documento_respaldo_permiso = Column(Text, nullable=True)
 
     # ── Datos y transferencias ──
-    datos_navegacion                = Column(Text, nullable=True)
     incluye_nna                     = Column(Boolean, default=False, nullable=True)
     nna_detalle                     = Column(Text, nullable=True)
+    datos_navegacion                = Column(Boolean, nullable=True)
+    datos_navegacion_detalle        = Column(Text, nullable=True)
     destinatarios_internos          = Column(Text, nullable=True)
     destinatarios_nacionales        = Column(Text, nullable=True)
     destinatarios_internacionales   = Column(Text, nullable=True)
     terceros_son_encargados         = Column(Boolean, nullable=True)
     contratos_proteccion_datos      = Column(Boolean, nullable=True)
+    contratos_proteccion_datos_detalle = Column(Text, nullable=True)
     datos_transferidos_detalle      = Column(Text, nullable=True)
     metodo_transferencia            = Column(Text, nullable=True)
 

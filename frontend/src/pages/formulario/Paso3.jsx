@@ -120,6 +120,15 @@ const ETIQ_MEDIDAS = {
   otras: "Otras",
 };
 
+const ETIQ_SENSIBLES = {
+  datos_salud:         "Datos de salud",
+  datos_biometricos:   "Datos biométricos",
+  origen_etnico:       "Origen étnico",
+  religion_creencias:  "Religión o creencias",
+  orientacion_sexual:  "Orientación sexual",
+  opiniones_politicas: "Opiniones políticas",
+};
+
 const ETIQ_CATEGORIAS = {
   nombre_apellido: "Nombre y apellido",
   rut_dni: "RUT / DNI",
@@ -128,31 +137,6 @@ const ETIQ_CATEGORIAS = {
   direccion: "Dirección",
   fecha_nacimiento: "Fecha de nacimiento",
 };
-
-/* ─── Principios Ley 21.719 ─────────────────────────────────────── */
-const CRITERIOS_PLAZO = [
-  { valor: "legal",        etiqueta: "Legal (normativa aplicable)" },
-  { valor: "contractual",  etiqueta: "Contractual (duración del contrato)" },
-  { valor: "operacional",  etiqueta: "Operacional (necesidad del proceso)" },
-];
-
-const METODOS_ELIMINACION = [
-  { valor: "digital",         etiqueta: "Eliminación segura digital" },
-  { valor: "fisica",          etiqueta: "Destrucción física" },
-  { valor: "anonimizacion",   etiqueta: "Anonimización" },
-  { valor: "otro",            etiqueta: "Otro" },
-];
-
-const PERIODOS_EVALUACION = [
-  { valor: "anual",         etiqueta: "Anual" },
-  { valor: "bienal",        etiqueta: "Bienal (cada 2 años)" },
-  { valor: "ante_cambios",  etiqueta: "Ante cambios importantes" },
-  { valor: "sin_definir",   etiqueta: "Sin definir" },
-];
-
-const ETIQ_CRITERIO_PLAZO    = { legal: "Legal", contractual: "Contractual", operacional: "Operacional" };
-const ETIQ_METODO_ELIMINACION = { digital: "Eliminación segura digital", fisica: "Destrucción física", anonimizacion: "Anonimización", otro: "Otro" };
-const ETIQ_PERIODO_EVALUACION = { anual: "Anual", bienal: "Bienal (cada 2 años)", ante_cambios: "Ante cambios importantes", sin_definir: "Sin definir" };
 
 /* ─── Barra de progreso ──────────────────────────────────────── */
 function BarraProgreso({ pasoActual }) {
@@ -193,28 +177,10 @@ export default function Paso3() {
     medidas_seguridad: form.medidas_seguridad || [],
     otras_medidas: form.otras_medidas || "",
     decisiones_automatizadas: form.decisiones_automatizadas ?? false,
-    // Principios Ley 21.719
-    criterio_plazo:             form.criterio_plazo             || "",
-    metodo_eliminacion:         form.metodo_eliminacion         || "",
-    documenta_destruccion:      form.documenta_destruccion      ?? false,
-    excepciones_plazo:          form.excepciones_plazo          || "",
-    minimizacion_justificacion: form.minimizacion_justificacion || "",
-    mecanismos_exactitud:       form.mecanismos_exactitud       || "",
-    evaluacion_periodica:       form.evaluacion_periodica       || "",
-    cumplimiento_demostrable:   form.cumplimiento_demostrable   || "",
-    incidentes_historicos:      form.incidentes_historicos      || "",
-    cambios_futuros:            form.cambios_futuros            || "",
-    // DPIA
-    requiere_dpia:  form.requiere_dpia  ?? false,
-    dpia_realizada: form.dpia_realizada ?? null,
-    dpia_detalle:   form.dpia_detalle   || "",
   });
 
   /* Acordeón de revisión — por defecto cerrado */
   const [acordeonAbierto, setAcordeonAbierto] = useState(false);
-  /* Paneles colapsables de principios y DPIA */
-  const [principiosAbierto, setPrincipiosAbierto] = useState(false);
-  const [dpiaAbierto, setDpiaAbierto] = useState(false);
 
   const [guardando, setGuardando] = useState(false);
   const [guardandoBorrador, setGuardandoBorrador] = useState(false);
@@ -246,7 +212,11 @@ export default function Paso3() {
       finalidad:                formularioCompleto.finalidad    || null,
       base_legal:               formularioCompleto.base_legal   || null,
       datos_sensibles:          formularioCompleto.datos_sensibles      ?? false,
-      destinatarios:            formularioCompleto.destinatarios        || null,
+      destinatarios: [
+        formularioCompleto.destinatarios_internos,
+        formularioCompleto.destinatarios_nacionales,
+        formularioCompleto.destinatarios_internacionales,
+      ].filter(Boolean).join("; ") || formularioCompleto.destinatarios || null,
       sale_extranjero:          formularioCompleto.sale_extranjero      ?? false,
       plazo_conservacion:       formularioCompleto.plazo_conservacion   || null,
       plazo_otro:               formularioCompleto.plazo_otro           || null,
@@ -273,23 +243,42 @@ export default function Paso3() {
         origen_datos:         formularioCompleto.origen_datos || null,
         categoria_datos:      formularioCompleto.categoria_datos || null,
       },
-      // Principios Ley 21.719 + DPIA
-      detalle_extendido: {
-        criterio_plazo:              formularioCompleto.criterio_plazo              || null,
-        metodo_eliminacion:          formularioCompleto.metodo_eliminacion          || null,
-        documenta_destruccion:       formularioCompleto.documenta_destruccion       ?? false,
-        excepciones_plazo:           formularioCompleto.excepciones_plazo           || null,
-        minimizacion_justificacion:  formularioCompleto.minimizacion_justificacion  || null,
-        mecanismos_exactitud:        formularioCompleto.mecanismos_exactitud        || null,
-        evaluacion_periodica:        formularioCompleto.evaluacion_periodica        || null,
-        cumplimiento_demostrable:    formularioCompleto.cumplimiento_demostrable    || null,
-        incidentes_historicos:       formularioCompleto.incidentes_historicos       || null,
-        cambios_futuros:             formularioCompleto.cambios_futuros             || null,
-        requiere_dpia:               formularioCompleto.requiere_dpia               ?? false,
-        dpia_realizada:              formularioCompleto.requiere_dpia ? (formularioCompleto.dpia_realizada ?? null) : null,
-        dpia_detalle:                formularioCompleto.requiere_dpia ? (formularioCompleto.dpia_detalle || null) : null,
-      },
+
     };
+
+    // Solo incluir detalle_extendido si tiene al menos un campo con valor
+    const _ext = {
+      descripcion_detallada:       formularioCompleto.descripcion_detallada       || null,
+      subarea_responsable:         formularioCompleto.subarea_responsable         || null,
+      procesos_relacionados:       formularioCompleto.procesos_relacionados       || null,
+      finalidades_secundarias:     formularioCompleto.finalidades_secundarias     || null,
+      informa_titulares:           (formularioCompleto.informa_titulares || []).join(",") || null,
+      documento_respaldo_permiso:  formularioCompleto.documento_respaldo_tiene === true
+        ? (formularioCompleto.documento_respaldo_descripcion || "Sí")
+        : null,
+      // B2-05
+      incluye_nna:                        formularioCompleto.incluye_nna ? true : null,
+      nna_detalle:                        formularioCompleto.nna_detalle || null,
+      datos_navegacion:                   formularioCompleto.datos_navegacion ? true : null,
+      datos_navegacion_detalle:           formularioCompleto.datos_navegacion_detalle || null,
+      destinatarios_internos:             formularioCompleto.destinatarios_internos || null,
+      destinatarios_nacionales:           formularioCompleto.destinatarios_nacionales || null,
+      destinatarios_internacionales:      formularioCompleto.destinatarios_internacionales || null,
+      terceros_son_encargados:            formularioCompleto.terceros_son_encargados ? true : null,
+      contratos_proteccion_datos:         formularioCompleto.contratos_proteccion_datos ? true : null,
+      contratos_proteccion_datos_detalle: formularioCompleto.contratos_proteccion_datos_detalle || null,
+      datos_transferidos_detalle:         formularioCompleto.datos_transferidos_detalle || null,
+      metodo_transferencia:               (formularioCompleto.metodo_transferencia || []).join(",") || null,
+      sistemas_origen:                    formularioCompleto.sistemas_origen || null,
+      sistemas_destino:                   formularioCompleto.sistemas_destino || null,
+      sistemas_tratamiento:               formularioCompleto.sistemas_tratamiento || null,
+      tipos_tratamiento_sistema:          (formularioCompleto.tipos_tratamiento_sistema || []).join(",") || null,
+      base_datos_nombre:                  formularioCompleto.base_datos_nombre || null,
+      proveedor_tecnologico:              formularioCompleto.proveedor_tecnologico || null,
+    };
+    if (Object.values(_ext).some((v) => v !== null)) {
+      payload.detalle_extendido = _ext;
+    }
 
     try {
       const idx = form.actividadActual ?? 0;
@@ -336,7 +325,8 @@ export default function Paso3() {
         navigate("/login");
         return;
       }
-      setError(e.message);
+      console.error("ERROR GUARDAR:", e.message, e.errores);
+      setError(e.message || "Error al guardar el tratamiento. Intenta nuevamente.");
     } finally {
       setGuardando(false);
     }
@@ -378,7 +368,11 @@ export default function Paso3() {
         finalidad: datos.finalidad || null,
         base_legal: datos.base_legal || null,
         datos_sensibles: datos.datos_sensibles ?? false,
-        destinatarios: datos.destinatarios || null,
+        destinatarios: [
+          datos.destinatarios_internos,
+          datos.destinatarios_nacionales,
+          datos.destinatarios_internacionales,
+        ].filter(Boolean).join("; ") || datos.destinatarios || null,
         sale_extranjero: datos.sale_extranjero ?? false,
         plazo_conservacion: local.plazo_conservacion || null,
         medidas_seguridad: medStr,
@@ -395,19 +389,32 @@ export default function Paso3() {
           categoria_datos: datos.categoria_datos || null,
         },
         detalle_extendido: {
-          criterio_plazo:              local.criterio_plazo              || null,
-          metodo_eliminacion:          local.metodo_eliminacion          || null,
-          documenta_destruccion:       local.documenta_destruccion       ?? false,
-          excepciones_plazo:           local.excepciones_plazo           || null,
-          minimizacion_justificacion:  local.minimizacion_justificacion  || null,
-          mecanismos_exactitud:        local.mecanismos_exactitud        || null,
-          evaluacion_periodica:        local.evaluacion_periodica        || null,
-          cumplimiento_demostrable:    local.cumplimiento_demostrable    || null,
-          incidentes_historicos:       local.incidentes_historicos       || null,
-          cambios_futuros:             local.cambios_futuros             || null,
-          requiere_dpia:               local.requiere_dpia               ?? false,
-          dpia_realizada:              local.requiere_dpia ? (local.dpia_realizada ?? null) : null,
-          dpia_detalle:                local.requiere_dpia ? (local.dpia_detalle || null) : null,
+          descripcion_detallada:      datos.descripcion_detallada       || null,
+          subarea_responsable:        datos.subarea_responsable         || null,
+          procesos_relacionados:      datos.procesos_relacionados       || null,
+          finalidades_secundarias:    datos.finalidades_secundarias     || null,
+          informa_titulares:          (datos.informa_titulares || []).join(",") || null,
+          documento_respaldo_permiso: datos.documento_respaldo_tiene === true
+            ? (datos.documento_respaldo_descripcion || "Sí")
+            : null,
+          incluye_nna:                        datos.incluye_nna ? true : null,
+          nna_detalle:                        datos.nna_detalle || null,
+          datos_navegacion:                   datos.datos_navegacion ? true : null,
+          datos_navegacion_detalle:           datos.datos_navegacion_detalle || null,
+          destinatarios_internos:             datos.destinatarios_internos || null,
+          destinatarios_nacionales:           datos.destinatarios_nacionales || null,
+          destinatarios_internacionales:      datos.destinatarios_internacionales || null,
+          terceros_son_encargados:            datos.terceros_son_encargados ? true : null,
+          contratos_proteccion_datos:         datos.contratos_proteccion_datos ? true : null,
+          contratos_proteccion_datos_detalle: datos.contratos_proteccion_datos_detalle || null,
+          datos_transferidos_detalle:         datos.datos_transferidos_detalle || null,
+          metodo_transferencia:               (datos.metodo_transferencia || []).join(",") || null,
+          sistemas_origen:                    datos.sistemas_origen || null,
+          sistemas_destino:                   datos.sistemas_destino || null,
+          sistemas_tratamiento:               datos.sistemas_tratamiento || null,
+          tipos_tratamiento_sistema:          (datos.tipos_tratamiento_sistema || []).join(",") || null,
+          base_datos_nombre:                  datos.base_datos_nombre || null,
+          proveedor_tecnologico:              datos.proveedor_tecnologico || null,
         },
       };
 
@@ -590,222 +597,6 @@ export default function Paso3() {
 
           </div>{/* fin grid */}
 
-          {/* ── Panel: Principios Ley 21.719 ─────────────────── */}
-          <div className={`p3-panel ${principiosAbierto ? "p3-panel--abierto" : ""}`}>
-            <button
-              type="button"
-              className="p3-panel-header"
-              onClick={() => setPrincipiosAbierto((v) => !v)}
-            >
-              <span className="p3-panel-icono">▼</span>
-              <div className="p3-panel-textos">
-                <span className="p3-panel-titulo">Principios de la Ley 21.719 <span className="p3-opcional">(opcional)</span></span>
-                <span className="p3-panel-desc">Limitación del plazo, minimización, exactitud y cumplimiento demostrable</span>
-              </div>
-            </button>
-
-            {principiosAbierto && (
-              <div className="p3-panel-body">
-                <div className="p3-panel-grid">
-                  <div className="p3-campo-grupo">
-                    <label className="p3-campo-label">Criterio para definir el plazo</label>
-                    <select
-                      className="p3-select-campo"
-                      value={local.criterio_plazo}
-                      onChange={(e) => setLocal((prev) => ({ ...prev, criterio_plazo: e.target.value }))}
-                    >
-                      <option value="">Seleccionar...</option>
-                      {CRITERIOS_PLAZO.map((o) => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
-                    </select>
-                  </div>
-                  <div className="p3-campo-grupo">
-                    <label className="p3-campo-label">Evaluación periódica del tratamiento</label>
-                    <select
-                      className="p3-select-campo"
-                      value={local.evaluacion_periodica}
-                      onChange={(e) => setLocal((prev) => ({ ...prev, evaluacion_periodica: e.target.value }))}
-                    >
-                      <option value="">Seleccionar...</option>
-                      {PERIODOS_EVALUACION.map((o) => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="p3-panel-grid">
-                  <div className="p3-campo-grupo">
-                    <label className="p3-campo-label">Método de eliminación de datos</label>
-                    <select
-                      className="p3-select-campo"
-                      value={local.metodo_eliminacion}
-                      onChange={(e) => setLocal((prev) => ({ ...prev, metodo_eliminacion: e.target.value }))}
-                    >
-                      <option value="">Seleccionar...</option>
-                      {METODOS_ELIMINACION.map((o) => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
-                    </select>
-                  </div>
-                  <div className="p3-campo-grupo p3-campo-grupo--centrado">
-                    <label className={`p3-check-item ${local.documenta_destruccion ? "p3-check-item--marcado" : ""}`}>
-                      <input
-                        type="checkbox"
-                        className="p3-check-input"
-                        checked={local.documenta_destruccion}
-                        onChange={(e) => setLocal((prev) => ({ ...prev, documenta_destruccion: e.target.checked }))}
-                      />
-                      <span className="p3-check-texto">¿Se documenta la destrucción/eliminación de datos?</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="p3-campo-grupo">
-                  <label className="p3-campo-label">Excepciones al plazo de conservación</label>
-                  <textarea
-                    className="p3-textarea-campo"
-                    rows={2}
-                    placeholder="Ej: datos retenidos por obligación legal más allá del plazo estándar..."
-                    value={local.excepciones_plazo}
-                    onChange={(e) => setLocal((prev) => ({ ...prev, excepciones_plazo: e.target.value }))}
-                    maxLength={500}
-                  />
-                </div>
-
-                <div className="p3-panel-grid">
-                  <div className="p3-campo-grupo">
-                    <label className="p3-campo-label">Justificación de minimización</label>
-                    <textarea
-                      className="p3-textarea-campo"
-                      rows={3}
-                      placeholder="¿Por qué son necesarios exactamente estos datos y no más?"
-                      value={local.minimizacion_justificacion}
-                      onChange={(e) => setLocal((prev) => ({ ...prev, minimizacion_justificacion: e.target.value }))}
-                      maxLength={500}
-                    />
-                  </div>
-                  <div className="p3-campo-grupo">
-                    <label className="p3-campo-label">Mecanismos para garantizar exactitud</label>
-                    <textarea
-                      className="p3-textarea-campo"
-                      rows={3}
-                      placeholder="Ej: validación automática, actualización periódica, revisión anual..."
-                      value={local.mecanismos_exactitud}
-                      onChange={(e) => setLocal((prev) => ({ ...prev, mecanismos_exactitud: e.target.value }))}
-                      maxLength={500}
-                    />
-                  </div>
-                </div>
-
-                <div className="p3-panel-grid">
-                  <div className="p3-campo-grupo">
-                    <label className="p3-campo-label">Medidas de cumplimiento demostrable</label>
-                    <textarea
-                      className="p3-textarea-campo"
-                      rows={3}
-                      placeholder="Documentos, registros o procedimientos que evidencian el cumplimiento..."
-                      value={local.cumplimiento_demostrable}
-                      onChange={(e) => setLocal((prev) => ({ ...prev, cumplimiento_demostrable: e.target.value }))}
-                      maxLength={500}
-                    />
-                  </div>
-                  <div className="p3-campo-grupo">
-                    <label className="p3-campo-label">Incidentes de seguridad históricos <span className="p3-opcional">(opcional)</span></label>
-                    <textarea
-                      className="p3-textarea-campo"
-                      rows={3}
-                      placeholder="Registros de brechas de seguridad anteriores relevantes..."
-                      value={local.incidentes_historicos}
-                      onChange={(e) => setLocal((prev) => ({ ...prev, incidentes_historicos: e.target.value }))}
-                      maxLength={500}
-                    />
-                  </div>
-                </div>
-
-                <div className="p3-campo-grupo">
-                  <label className="p3-campo-label">Cambios futuros previstos <span className="p3-opcional">(opcional)</span></label>
-                  <textarea
-                    className="p3-textarea-campo"
-                    rows={2}
-                    placeholder="Cambios planificados en el tratamiento que podrían afectar el riesgo..."
-                    value={local.cambios_futuros}
-                    onChange={(e) => setLocal((prev) => ({ ...prev, cambios_futuros: e.target.value }))}
-                    maxLength={500}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ── Panel: DPIA ──────────────────────────────────── */}
-          <div className={`p3-panel ${dpiaAbierto ? "p3-panel--abierto" : ""}`}>
-            <button
-              type="button"
-              className="p3-panel-header"
-              onClick={() => setDpiaAbierto((v) => !v)}
-            >
-              <span className="p3-panel-icono">▼</span>
-              <div className="p3-panel-textos">
-                <span className="p3-panel-titulo">Evaluación de Impacto (DPIA) <span className="p3-opcional">(opcional)</span></span>
-                <span className="p3-panel-desc">Art. 68 Ley 21.719 — obligatoria en tratamientos de alto riesgo</span>
-              </div>
-            </button>
-
-            {dpiaAbierto && (
-              <div className="p3-panel-body">
-                <label className={`p3-check-item ${local.requiere_dpia ? "p3-check-item--marcado" : ""}`} style={{ alignSelf: "flex-start" }}>
-                  <input
-                    type="checkbox"
-                    className="p3-check-input"
-                    checked={local.requiere_dpia}
-                    onChange={(e) => setLocal((prev) => ({
-                      ...prev,
-                      requiere_dpia: e.target.checked,
-                      dpia_realizada: null,
-                      dpia_detalle: "",
-                    }))}
-                  />
-                  <span className="p3-check-texto">Este tratamiento requiere una DPIA</span>
-                </label>
-
-                {local.requiere_dpia && (
-                  <>
-                    <div className="p3-campo-grupo" style={{ marginTop: "12px" }}>
-                      <label className="p3-campo-label">¿Se ha realizado la DPIA?</label>
-                      <div className="p3-radio-grupo">
-                        <label className="p3-radio-item">
-                          <input
-                            type="radio"
-                            name="dpia_realizada"
-                            checked={local.dpia_realizada === true}
-                            onChange={() => setLocal((prev) => ({ ...prev, dpia_realizada: true }))}
-                          />
-                          <span>Sí</span>
-                        </label>
-                        <label className="p3-radio-item">
-                          <input
-                            type="radio"
-                            name="dpia_realizada"
-                            checked={local.dpia_realizada === false}
-                            onChange={() => setLocal((prev) => ({ ...prev, dpia_realizada: false }))}
-                          />
-                          <span>No</span>
-                        </label>
-                      </div>
-                    </div>
-                    <div className="p3-campo-grupo">
-                      <label className="p3-campo-label">Detalles de la DPIA</label>
-                      <textarea
-                        className="p3-textarea-campo"
-                        rows={4}
-                        placeholder="Fecha, responsable, conclusiones principales, medidas adoptadas..."
-                        value={local.dpia_detalle}
-                        onChange={(e) => setLocal((prev) => ({ ...prev, dpia_detalle: e.target.value }))}
-                        maxLength={1000}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
           {/* ── Acordeón de revisión ─────────────────────────── */}
           <div className={`p3-acordeon ${acordeonAbierto ? "p3-acordeon--abierto" : ""}`}>
             <button
@@ -848,7 +639,7 @@ export default function Paso3() {
                   {form.datos_sensibles && categoriasSensibles.length > 0 && (
                     <FilaRevision
                       label="Tipos sensibles"
-                      valor={categoriasSensibles.join(", ")}
+                      valor={categoriasSensibles.map((id) => ETIQ_SENSIBLES[id] || id).join(", ")}
                     />
                   )}
                   <FilaRevision label="Destinatarios" valor={form.destinatarios} />
@@ -872,34 +663,6 @@ export default function Paso3() {
                   )}
                   <FilaRevision label="Decisiones automatizadas" valor={local.decisiones_automatizadas ? "Sí" : "No"} />
                 </div>
-
-                {(local.criterio_plazo || local.metodo_eliminacion || local.minimizacion_justificacion ||
-                  local.mecanismos_exactitud || local.evaluacion_periodica || local.cumplimiento_demostrable ||
-                  local.incidentes_historicos || local.cambios_futuros || local.requiere_dpia) && (
-                  <div className="p3-revision-seccion">
-                    <h4 className="p3-revision-titulo">Paso 3 — Principios Ley 21.719 y DPIA</h4>
-                    {local.criterio_plazo && <FilaRevision label="Criterio de plazo" valor={ETIQ_CRITERIO_PLAZO[local.criterio_plazo] || local.criterio_plazo} />}
-                    {local.metodo_eliminacion && <FilaRevision label="Método de eliminación" valor={ETIQ_METODO_ELIMINACION[local.metodo_eliminacion] || local.metodo_eliminacion} />}
-                    {local.documenta_destruccion && <FilaRevision label="Documenta destrucción" valor="Sí" />}
-                    {local.excepciones_plazo && <FilaRevision label="Excepciones al plazo" valor={local.excepciones_plazo} />}
-                    {local.minimizacion_justificacion && <FilaRevision label="Justificación minimización" valor={local.minimizacion_justificacion} />}
-                    {local.mecanismos_exactitud && <FilaRevision label="Mecanismos de exactitud" valor={local.mecanismos_exactitud} />}
-                    {local.evaluacion_periodica && <FilaRevision label="Evaluación periódica" valor={ETIQ_PERIODO_EVALUACION[local.evaluacion_periodica] || local.evaluacion_periodica} />}
-                    {local.cumplimiento_demostrable && <FilaRevision label="Cumplimiento demostrable" valor={local.cumplimiento_demostrable} />}
-                    {local.incidentes_historicos && <FilaRevision label="Incidentes históricos" valor={local.incidentes_historicos} />}
-                    {local.cambios_futuros && <FilaRevision label="Cambios futuros" valor={local.cambios_futuros} />}
-                    <FilaRevision label="Requiere DPIA" valor={local.requiere_dpia ? "Sí" : "No"} />
-                    {local.requiere_dpia && (
-                      <>
-                        <FilaRevision
-                          label="DPIA realizada"
-                          valor={local.dpia_realizada === true ? "Sí" : local.dpia_realizada === false ? "No" : "No especificado"}
-                        />
-                        {local.dpia_detalle && <FilaRevision label="Detalle DPIA" valor={local.dpia_detalle} />}
-                      </>
-                    )}
-                  </div>
-                )}
 
                 {camposDetectados.length > 0 && (
                   <div className="p3-revision-seccion">

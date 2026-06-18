@@ -6,7 +6,6 @@ import "../../styles/formularioCss/paso2.css";
 
 const API = "http://localhost:8000";
 
-/* ─── Categorías de titulares ────────────────────────────────── */
 const CATEGORIAS_TITULARES = [
   { id: "empleados",   etiqueta: "Empleados y funcionarios" },
   { id: "clientes",    etiqueta: "Clientes y consumidores" },
@@ -17,17 +16,12 @@ const CATEGORIAS_TITULARES = [
   { id: "pacientes",   etiqueta: "Pacientes" },
 ];
 
-/* ─── Origen de los datos ────────────────────────────────────── */
 const ORIGENES_DATOS = [
-  { valor: "titular",         etiqueta: "Del propio titular" },
-  { valor: "terceros",        etiqueta: "De terceros" },
+  { valor: "titular",          etiqueta: "Del propio titular" },
+  { valor: "terceros",         etiqueta: "De terceros" },
   { valor: "fuentes_publicas", etiqueta: "De fuentes públicas" },
 ];
 
-/* ─── Categorías de datos personales ────────────────────────────
- * keywords: palabras clave para detectar si Python ya encontró esta categoría
- * en los campos del archivo subido.
- */
 const CATEGORIAS_DATOS = [
   { id: "nombre_apellido",    etiqueta: "Nombre y apellido",   keywords: ["nombre", "apellido", "name", "lastname", "first_name", "last_name"] },
   { id: "rut_dni",            etiqueta: "RUT / DNI",           keywords: ["rut", "dni", "documento", "cedula", "id_number"] },
@@ -37,36 +31,37 @@ const CATEGORIAS_DATOS = [
   { id: "fecha_nacimiento",   etiqueta: "Fecha de nacimiento", keywords: ["fecha_nacimiento", "birthdate", "birth_date", "nacimiento"] },
 ];
 
-/* ─── Categorías de datos sensibles ───────────────────────────── */
 const CATEGORIAS_SENSIBLES = [
-  { id: "datos_salud",        etiqueta: "Datos de salud",       tooltip: "Diagnósticos, medicamentos, fichas médicas.",          keywords: ["salud", "health", "medico", "diagnostico", "enfermedad"] },
-  { id: "datos_biometricos",  etiqueta: "Datos biométricos",    tooltip: "Huella dactilar, reconocimiento facial, iris.",         keywords: ["biometrico", "biometric", "huella", "facial"] },
-  { id: "origen_etnico",      etiqueta: "Origen étnico",        tooltip: "Raza, etnia, pueblo indígena u origen nacional.",       keywords: ["etnico", "raza", "race", "etnia", "indigena"] },
-  { id: "religion_creencias", etiqueta: "Religión o creencias", tooltip: "Creencias religiosas, filosóficas o morales.",          keywords: ["religion", "creencia", "faith"] },
-  { id: "orientacion_sexual", etiqueta: "Orientación sexual",   tooltip: "Orientación o identidad sexual o de género.",           keywords: ["sexual", "orientacion", "genero", "lgbtq"] },
-  { id: "opiniones_politicas", etiqueta: "Opiniones políticas", tooltip: "Afiliación o posturas políticas.",                      keywords: ["politico", "politica", "partido", "ideologia"] },
+  { id: "datos_salud",         etiqueta: "Datos de salud",       tooltip: "Diagnósticos, medicamentos, fichas médicas.",          keywords: ["salud", "health", "medico", "diagnostico", "enfermedad"] },
+  { id: "datos_biometricos",   etiqueta: "Datos biométricos",    tooltip: "Huella dactilar, reconocimiento facial, iris.",         keywords: ["biometrico", "biometric", "huella", "facial"] },
+  { id: "origen_etnico",       etiqueta: "Origen étnico",        tooltip: "Raza, etnia, pueblo indígena u origen nacional.",       keywords: ["etnico", "raza", "race", "etnia", "indigena"] },
+  { id: "religion_creencias",  etiqueta: "Religión o creencias", tooltip: "Creencias religiosas, filosóficas o morales.",          keywords: ["religion", "creencia", "faith"] },
+  { id: "orientacion_sexual",  etiqueta: "Orientación sexual",   tooltip: "Orientación o identidad sexual o de género.",           keywords: ["sexual", "orientacion", "genero", "lgbtq"] },
+  { id: "opiniones_politicas", etiqueta: "Opiniones políticas",  tooltip: "Afiliación o posturas políticas.",                      keywords: ["politico", "politica", "partido", "ideologia"] },
 ];
 
-/* ─── Orden de categorías temáticas para el texto RAT ────────────
- * DEBE coincidir con el orden de CATEGORIAS_TEMATICAS en
- * backend/app/utils/analisis.py (+ "Otros" al final). Si se reordena
- * allá, reordenar también aquí.
- */
+const TIPOS_TRATAMIENTO_SISTEMA = [
+  { id: "captura",                  etiqueta: "Captura" },
+  { id: "consulta",                 etiqueta: "Consulta / visualización" },
+  { id: "modificacion",             etiqueta: "Modificación" },
+  { id: "perfilamiento",            etiqueta: "Perfilamiento" },
+  { id: "reportes",                 etiqueta: "Generación de reportes" },
+  { id: "decisiones_automatizadas", etiqueta: "Decisiones automatizadas" },
+  { id: "comunicacion_terceros",    etiqueta: "Comunicación a terceros" },
+];
+
+const METODOS_TRANSFERENCIA = [
+  { id: "digital", etiqueta: "Digital" },
+  { id: "verbal",  etiqueta: "Verbal" },
+  { id: "fisico",  etiqueta: "Físico" },
+];
+
 const ORDEN_CATEGORIAS_TEMATICAS = [
-  "Datos identificatorios",
-  "Datos de contacto",
-  "Datos de salud",
-  "Datos financieros",
-  "Datos laborales",
-  "Datos académicos",
-  "Datos biométricos",
-  "Otros",
+  "Datos identificatorios", "Datos de contacto", "Datos de salud",
+  "Datos financieros", "Datos laborales", "Datos académicos",
+  "Datos biométricos", "Otros",
 ];
 
-/* ─── Genera el texto "Categoría de datos" en formato RAT ────────
- * Agrupa los campos detectados por categoría temática y produce líneas
- * "Categoría — Campo1, Campo2." Es solo una sugerencia de partida editable.
- */
 function generarTextoCategoria(campos) {
   const grupos = {};
   campos.forEach((campo) => {
@@ -74,34 +69,23 @@ function generarTextoCategoria(campos) {
     const nombre = campo.nombre_columna
       .replace(/_/g, " ")
       .split(" ")
-      .map((palabra) => palabra.charAt(0).toUpperCase() + palabra.slice(1).toLowerCase())
+      .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
       .join(" ");
     (grupos[categoria] ??= []).push(nombre);
   });
-
   return ORDEN_CATEGORIAS_TEMATICAS
-    .filter((categoria) => grupos[categoria])
-    .map((categoria) => `${categoria} — ${grupos[categoria].join(", ")}.`)
+    .filter((c) => grupos[c])
+    .map((c) => `${c} — ${grupos[c].join(", ")}.`)
     .join("\n");
 }
 
-/* ─── Genera el texto "Categoría de datos" para ingreso manual ───
- * Sin análisis de archivo no hay categoría temática por campo;
- * se listan las etiquetas de los checkboxes marcados.
- */
 function generarTextoCategoriaManual(idsDatos, idsSensibles) {
-  const partes = [
+  return [
     ...idsDatos.map((id) => CATEGORIAS_DATOS.find((c) => c.id === id)?.etiqueta || id),
     ...idsSensibles.map((id) => CATEGORIAS_SENSIBLES.find((c) => c.id === id)?.etiqueta || id),
-  ];
-  return partes.join(", ");
+  ].join(", ");
 }
 
-/* ─── Sincroniza el campo libre "Otros" dentro del texto RAT ─────
- * "otros_datos" no tiene columna propia en el backend, así que su
- * contenido se mantiene como una línea "Otros — ..." al final de
- * categoria_datos (que sí se persiste). Reemplaza esa línea si ya existía.
- */
 function sincronizarOtrosEnCategoria(categoriaActual, textoOtros) {
   const base = (categoriaActual || "").replace(/\n?Otros — .*\.?$/, "").replace(/\s+$/, "");
   const otros = (textoOtros || "").trim();
@@ -109,7 +93,6 @@ function sincronizarOtrosEnCategoria(categoriaActual, textoOtros) {
   return base ? `${base}\nOtros — ${otros}.` : `Otros — ${otros}.`;
 }
 
-/* ─── Barra de progreso ──────────────────────────────────────── */
 function BarraProgreso({ pasoActual }) {
   const pasos = ["Identificación", "Datos y titulares", "Seguridad y conservación"];
   return (
@@ -132,7 +115,6 @@ function BarraProgreso({ pasoActual }) {
   );
 }
 
-/* ─── Modal confirmación al desmarcar campo verde ────────────── */
 function ModalDesmarcar({ categoria, onConfirmar, onCancelar }) {
   return (
     <div className="p2-modal-overlay" onClick={onCancelar}>
@@ -152,7 +134,6 @@ function ModalDesmarcar({ categoria, onConfirmar, onCancelar }) {
   );
 }
 
-/* ─── Tooltip ────────────────────────────────────────────────── */
 function Tooltip({ texto }) {
   const [visible, setVisible] = useState(false);
   return (
@@ -173,16 +154,10 @@ function Tooltip({ texto }) {
   );
 }
 
-/* ─── Componente principal ───────────────────────────────────── */
 export default function Paso2() {
   const navigate = useNavigate();
   const { form, actualizarForm } = useFormulario();
 
-  /*
-   * Construimos el set de IDs detectados por Python comparando los
-   * nombres de columna del análisis contra las keywords de cada categoría.
-   * Esto determina qué checkboxes se muestran en verde con el 🐍.
-   */
   const detectadas = new Set();
   form.campos_detectados.forEach((campo) => {
     const col  = campo.nombre_columna.toLowerCase();
@@ -201,13 +176,8 @@ export default function Paso2() {
     CATEGORIAS_SENSIBLES.some((c) => c.id === id)
   );
 
-  // Set de IDs que el usuario desmarcó manualmente (eran verdes)
   const [desmarcadas, setDesmarcadas] = useState(new Set());
 
-  /*
-   * Estado local — pre-carga desde el contexto si ya había datos.
-   * Si no había datos (primera vez), pre-marcamos los detectados.
-   */
   const primeraVezEnPaso2 = form.categorias_datos.length === 0 && form.categorias_sensibles.length === 0;
 
   const categoriasDatosIniciales = primeraVezEnPaso2
@@ -217,7 +187,6 @@ export default function Paso2() {
     ? [...detectadas].filter((id) => CATEGORIAS_SENSIBLES.some((c) => c.id === id))
     : form.categorias_sensibles;
 
-  // Texto RAT pre-generado — solo si el usuario aún no lo había editado/guardado
   const categoriaDatosInicial = form.categoria_datos || (
     form.campos_detectados.length > 0
       ? generarTextoCategoria(form.campos_detectados)
@@ -225,26 +194,43 @@ export default function Paso2() {
   );
 
   const [local, setLocal] = useState({
+    // Campos existentes
     categorias_titulares: form.categorias_titulares || [],
     universo_titulares:   form.universo_titulares || "",
     origen_datos:         form.origen_datos || "",
     categorias_datos:     categoriasDatosIniciales,
-    datos_sensibles: primeraVezEnPaso2 ? haySensiblesDetectados : form.datos_sensibles,
+    datos_sensibles:      primeraVezEnPaso2 ? haySensiblesDetectados : form.datos_sensibles,
     categorias_sensibles: categoriasSensiblesIniciales,
     categoria_datos:      categoriaDatosInicial,
-    destinatarios:   form.destinatarios || "",
-    sale_extranjero: form.sale_extranjero ?? false,
-    pais_destino:    form.pais_destino || "",
-    otros_datos:     form.otros_datos || "",
+    destinatarios:        form.destinatarios || "",
+    sale_extranjero:      form.sale_extranjero ?? false,
+    pais_destino:         form.pais_destino || "",
+    otros_datos:          form.otros_datos || "",
+    // B2-05: nuevos campos
+    incluye_nna:                        form.incluye_nna                        ?? false,
+    nna_detalle:                        form.nna_detalle                        || "",
+    datos_navegacion:                   form.datos_navegacion                   ?? false,
+    datos_navegacion_detalle:           form.datos_navegacion_detalle           || "",
+    destinatarios_internos:             form.destinatarios_internos             || "",
+    destinatarios_nacionales:           form.destinatarios_nacionales           || "",
+    destinatarios_internacionales:      form.destinatarios_internacionales      || "",
+    terceros_son_encargados:            form.terceros_son_encargados            ?? false,
+    contratos_proteccion_datos:         form.contratos_proteccion_datos         ?? false,
+    contratos_proteccion_datos_detalle: form.contratos_proteccion_datos_detalle || "",
+    datos_transferidos_detalle:         form.datos_transferidos_detalle         || "",
+    metodo_transferencia:               form.metodo_transferencia               || [],
+    sistemas_origen:                    form.sistemas_origen                    || "",
+    sistemas_destino:                   form.sistemas_destino                   || "",
+    sistemas_tratamiento:               form.sistemas_tratamiento               || "",
+    tipos_tratamiento_sistema:          form.tipos_tratamiento_sistema          || [],
+    base_datos_nombre:                  form.base_datos_nombre                  || "",
+    proveedor_tecnologico:              form.proveedor_tecnologico              || "",
   });
 
-  // Qué categoría está esperando confirmar desmarque
   const [pendiente, setPendiente] = useState(null);
 
-  /* ── Toggle de checkbox con lógica de modal ─────────────────── */
   function toggleCategoria(cat, campo) {
     const marcado = local[campo].includes(cat.id);
-    // Si estaba detectado y está marcado → pedir confirmación
     if (detectadas.has(cat.id) && marcado) {
       setPendiente({ ...cat, campo });
       return;
@@ -265,7 +251,6 @@ export default function Paso2() {
     setPendiente(null);
   }
 
-  /* ── Helpers ────────────────────────────────────────────────── */
   function toggleSensibles(valor) {
     setLocal((prev) => ({
       ...prev,
@@ -278,10 +263,31 @@ export default function Paso2() {
     setLocal((prev) => ({ ...prev, sale_extranjero: valor, pais_destino: valor ? prev.pais_destino : "" }));
   }
 
+  function toggleMetodoTransferencia(id) {
+    setLocal((prev) => {
+      const lista = prev.metodo_transferencia;
+      return { ...prev, metodo_transferencia: lista.includes(id) ? lista.filter((x) => x !== id) : [...lista, id] };
+    });
+  }
+
+  function toggleTiposTratamiento(id) {
+    setLocal((prev) => {
+      const lista = prev.tipos_tratamiento_sistema;
+      return { ...prev, tipos_tratamiento_sistema: lista.includes(id) ? lista.filter((x) => x !== id) : [...lista, id] };
+    });
+  }
+
+  function handleInternacionales(texto) {
+    setLocal((prev) => ({
+      ...prev,
+      destinatarios_internacionales: texto,
+      sale_extranjero: texto.trim() !== "" ? true : prev.sale_extranjero,
+    }));
+  }
+
   const [guardandoBorrador, setGuardandoBorrador] = useState(false);
   const [borradorOk, setBorradorOk] = useState(false);
 
-  /* ── Navegación ─────────────────────────────────────────────── */
   function handleSiguiente() { actualizarForm(local); navigate("/nuevo-tratamiento/paso3"); }
   function handleAnterior()  { actualizarForm(local); navigate("/nuevo-tratamiento"); }
   function handleCancelar()  { navigate("/dashboard"); }
@@ -316,12 +322,19 @@ export default function Paso2() {
 
       const idx = datos.actividadActual ?? 0;
       const tratId = datos.tratamientosGuardados?.[idx];
+
+      const destinatariosGenerado = [
+        datos.destinatarios_internos,
+        datos.destinatarios_nacionales,
+        datos.destinatarios_internacionales,
+      ].filter(Boolean).join("; ") || datos.destinatarios || null;
+
       const payload = {
         nombre: datos.nombre.trim() || "Sin nombre",
         finalidad: datos.finalidad || null,
         base_legal: datos.base_legal || null,
         datos_sensibles: datos.datos_sensibles ?? false,
-        destinatarios: datos.destinatarios || null,
+        destinatarios: destinatariosGenerado,
         sale_extranjero: datos.sale_extranjero ?? false,
         campos_detectados: datos.campos_detectados || [],
         campos_usados: datos.campos_detectados || [],
@@ -394,7 +407,7 @@ export default function Paso2() {
           {/* ── Grid 3 columnas ───────────────────────────────── */}
           <div className="p2-grid">
 
-            {/* ── Columna 1: Titulares + Volumen + Origen ────── */}
+            {/* ── Columna 1: Titulares ─────────────────────────── */}
             <div className="p2-columna">
               <h3 className="p2-col-titulo">Categoría de titulares</h3>
               <p className="p2-col-desc">¿Qué tipo de personas son los titulares de estos datos?</p>
@@ -424,21 +437,18 @@ export default function Paso2() {
               <div className="p2-campo-grupo">
                 <label className="p2-campo-label">Universo de titulares</label>
                 <p className="p2-campo-ayuda">Describe quiénes son las personas cuyos datos trata esta actividad</p>
-                <textarea
-                  className="p2-textarea"
+                <textarea className="p2-textarea"
                   placeholder="Ej: Alumnos y apoderados del establecimiento educacional"
                   value={local.universo_titulares}
                   onChange={(e) => setLocal((prev) => ({ ...prev, universo_titulares: e.target.value }))}
-                  rows={3}
-                  maxLength={500}
+                  rows={3} maxLength={500}
                 />
                 <span className="p2-campo-contador">{local.universo_titulares.length}/500</span>
               </div>
 
               <div className="p2-campo-grupo">
                 <label className="p2-campo-label">Origen de los datos</label>
-                <select
-                  className="p2-select"
+                <select className="p2-select"
                   value={local.origen_datos}
                   onChange={(e) => setLocal((prev) => ({ ...prev, origen_datos: e.target.value }))}
                 >
@@ -450,7 +460,7 @@ export default function Paso2() {
               </div>
             </div>
 
-            {/* ── Columna 2: Categorías de datos ─────────────── */}
+            {/* ── Columna 2: Categorías de datos ──────────────── */}
             <div className="p2-columna">
               <h3 className="p2-col-titulo">Categoría de datos personales</h3>
               <div className="p2-checkboxes">
@@ -475,11 +485,9 @@ export default function Paso2() {
                     </label>
                   );
                 })}
-                {/* Campo "otros" */}
                 <div className="p2-otros-wrap">
                   <label className="p2-otros-label">Otros</label>
-                  <textarea
-                    className="p2-otros-textarea"
+                  <textarea className="p2-otros-textarea"
                     placeholder="Especifica otros tipos de datos personales..."
                     value={local.otros_datos}
                     onChange={(e) => {
@@ -490,8 +498,7 @@ export default function Paso2() {
                         categoria_datos: sincronizarOtrosEnCategoria(prev.categoria_datos, texto),
                       }));
                     }}
-                    rows={2}
-                    maxLength={300}
+                    rows={2} maxLength={300}
                   />
                   <span className="p2-campo-contador">{local.otros_datos.length}/300</span>
                 </div>
@@ -500,13 +507,11 @@ export default function Paso2() {
               <div className="p2-campo-grupo">
                 <label className="p2-campo-label">Categoría de datos (formato RAT)</label>
                 <p className="p2-campo-ayuda">Generado automáticamente. Puedes editarlo.</p>
-                <textarea
-                  className="p2-textarea"
+                <textarea className="p2-textarea"
                   placeholder="Ej: Datos identificatorios — Rut Alumno, Nombre Apoderado."
                   value={local.categoria_datos}
                   onChange={(e) => setLocal((prev) => ({ ...prev, categoria_datos: e.target.value }))}
-                  rows={5}
-                  maxLength={1500}
+                  rows={5} maxLength={1500}
                 />
                 <span className="p2-campo-contador">{local.categoria_datos.length}/1500</span>
               </div>
@@ -560,15 +565,39 @@ export default function Paso2() {
               <div className="p2-separador" />
 
               <h3 className="p2-col-titulo">Destinatarios de los datos</h3>
-              <textarea
-                className="p2-textarea"
-                placeholder="Ej: AFP Provida, SII, proveedor de nómina externo..."
-                value={local.destinatarios}
-                onChange={(e) => setLocal((prev) => ({ ...prev, destinatarios: e.target.value }))}
-                rows={4}
-                maxLength={500}
-              />
-              <span className="p2-campo-contador">{local.destinatarios.length}/500</span>
+
+              <div className="p2-campo-grupo">
+                <label className="p2-campo-label">Internos</label>
+                <p className="p2-campo-ayuda">Áreas o unidades internas que acceden a los datos</p>
+                <textarea className="p2-textarea"
+                  placeholder="Ej: RRHH, Contabilidad, TI..."
+                  value={local.destinatarios_internos}
+                  onChange={(e) => setLocal((p) => ({ ...p, destinatarios_internos: e.target.value }))}
+                  rows={2} maxLength={300}
+                />
+              </div>
+
+              <div className="p2-campo-grupo">
+                <label className="p2-campo-label">Nacionales</label>
+                <p className="p2-campo-ayuda">Empresas o entidades externas en Chile</p>
+                <textarea className="p2-textarea"
+                  placeholder="Ej: AFP Provida, SII, proveedor de nómina..."
+                  value={local.destinatarios_nacionales}
+                  onChange={(e) => setLocal((p) => ({ ...p, destinatarios_nacionales: e.target.value }))}
+                  rows={2} maxLength={300}
+                />
+              </div>
+
+              <div className="p2-campo-grupo">
+                <label className="p2-campo-label">Internacionales</label>
+                <p className="p2-campo-ayuda">Terceros fuera de Chile — activa «sale al extranjero» automáticamente</p>
+                <textarea className="p2-textarea"
+                  placeholder="Ej: Salesforce EE.UU., Google Ireland..."
+                  value={local.destinatarios_internacionales}
+                  onChange={(e) => handleInternacionales(e.target.value)}
+                  rows={2} maxLength={300}
+                />
+              </div>
 
               <div className="p2-extranjero">
                 <div className="p2-extranjero-row">
@@ -581,9 +610,7 @@ export default function Paso2() {
                   </button>
                 </div>
                 {local.sale_extranjero && (
-                  <input
-                    type="text"
-                    className="p2-input-pais"
+                  <input type="text" className="p2-input-pais"
                     placeholder="¿A qué país o región?"
                     value={local.pais_destino}
                     onChange={(e) => setLocal((prev) => ({ ...prev, pais_destino: e.target.value }))}
@@ -594,6 +621,202 @@ export default function Paso2() {
             </div>
 
           </div>{/* fin grid */}
+
+          {/* ── Secciones adicionales ─────────────────────────── */}
+          <div className="p2-secciones-extra">
+
+            {/* Datos especiales: NNA + navegación */}
+            <div className="p2-seccion-extra">
+              <h3 className="p2-seccion-extra-titulo">Datos especiales</h3>
+              <div className="p2-toggles-fila">
+
+                <div className="p2-toggle-item">
+                  <label className="p2-check-item">
+                    <input type="checkbox" className="p2-check-input"
+                      checked={local.incluye_nna}
+                      onChange={(e) => setLocal((p) => ({
+                        ...p,
+                        incluye_nna: e.target.checked,
+                        nna_detalle: e.target.checked ? p.nna_detalle : "",
+                      }))}
+                    />
+                    <span className="p2-check-texto">¿El tratamiento incluye datos de menores de edad (NNA)?</span>
+                  </label>
+                  {local.incluye_nna && (
+                    <textarea className="p2-textarea" rows={2} maxLength={400}
+                      placeholder="Ej: Fichas de alumnos, datos médicos de menores de 18 años..."
+                      value={local.nna_detalle}
+                      onChange={(e) => setLocal((p) => ({ ...p, nna_detalle: e.target.value }))}
+                      style={{ marginTop: 6 }}
+                    />
+                  )}
+                </div>
+
+                <div className="p2-toggle-item">
+                  <label className="p2-check-item">
+                    <input type="checkbox" className="p2-check-input"
+                      checked={local.datos_navegacion}
+                      onChange={(e) => setLocal((p) => ({
+                        ...p,
+                        datos_navegacion: e.target.checked,
+                        datos_navegacion_detalle: e.target.checked ? p.datos_navegacion_detalle : "",
+                      }))}
+                    />
+                    <span className="p2-check-texto">¿Se tratan datos de navegación o identificadores digitales?</span>
+                  </label>
+                  {local.datos_navegacion && (
+                    <textarea className="p2-textarea" rows={2} maxLength={400}
+                      placeholder="Ej: IP, cookies de sesión, ID de dispositivo, geolocalización..."
+                      value={local.datos_navegacion_detalle}
+                      onChange={(e) => setLocal((p) => ({ ...p, datos_navegacion_detalle: e.target.value }))}
+                      style={{ marginTop: 6 }}
+                    />
+                  )}
+                </div>
+
+              </div>
+            </div>
+
+            {/* Terceros y transferencias */}
+            <div className="p2-seccion-extra">
+              <h3 className="p2-seccion-extra-titulo">Terceros y transferencias</h3>
+              <div className="p2-extra-grid">
+
+                <div className="p2-extra-checks">
+                  <label className="p2-check-item">
+                    <input type="checkbox" className="p2-check-input"
+                      checked={local.terceros_son_encargados}
+                      onChange={(e) => setLocal((p) => ({ ...p, terceros_son_encargados: e.target.checked }))}
+                    />
+                    <span className="p2-check-texto">¿Los terceros actúan como encargados del tratamiento?</span>
+                  </label>
+
+                  <div>
+                    <label className="p2-check-item">
+                      <input type="checkbox" className="p2-check-input"
+                        checked={local.contratos_proteccion_datos}
+                        onChange={(e) => setLocal((p) => ({
+                          ...p,
+                          contratos_proteccion_datos: e.target.checked,
+                          contratos_proteccion_datos_detalle: e.target.checked ? p.contratos_proteccion_datos_detalle : "",
+                        }))}
+                      />
+                      <span className="p2-check-texto">¿Existen contratos de protección de datos firmados con terceros?</span>
+                    </label>
+                    {local.contratos_proteccion_datos && (
+                      <textarea className="p2-textarea" rows={2} maxLength={400}
+                        placeholder="Describe los contratos existentes..."
+                        value={local.contratos_proteccion_datos_detalle}
+                        onChange={(e) => setLocal((p) => ({ ...p, contratos_proteccion_datos_detalle: e.target.value }))}
+                        style={{ marginTop: 6 }}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="p2-campo-grupo">
+                    <label className="p2-campo-label">¿Qué datos se transfieren a terceros?</label>
+                    <textarea className="p2-textarea" rows={3} maxLength={500}
+                      placeholder="Ej: Nombre, RUT, correo y sueldo base..."
+                      value={local.datos_transferidos_detalle}
+                      onChange={(e) => setLocal((p) => ({ ...p, datos_transferidos_detalle: e.target.value }))}
+                    />
+                  </div>
+                  <div className="p2-campo-grupo">
+                    <label className="p2-campo-label">¿Cómo se transfieren?</label>
+                    <div className="p2-checkboxes">
+                      {METODOS_TRANSFERENCIA.map((m) => (
+                        <label key={m.id} className={`p2-check-item ${local.metodo_transferencia.includes(m.id) ? "p2-check-item--marcado" : ""}`}>
+                          <input type="checkbox" className="p2-check-input"
+                            checked={local.metodo_transferencia.includes(m.id)}
+                            onChange={() => toggleMetodoTransferencia(m.id)}
+                          />
+                          <span className="p2-check-texto">{m.etiqueta}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Sistemas y tecnología */}
+            <div className="p2-seccion-extra">
+              <h3 className="p2-seccion-extra-titulo">Sistemas y tecnología</h3>
+              <div className="p2-extra-grid">
+
+                <div className="p2-campo-grupo">
+                  <label className="p2-campo-label">Sistemas origen</label>
+                  <p className="p2-campo-ayuda">Sistemas donde se originan o capturan los datos</p>
+                  <textarea className="p2-textarea" rows={2} maxLength={400}
+                    placeholder="Ej: CRM Salesforce, formulario web..."
+                    value={local.sistemas_origen}
+                    onChange={(e) => setLocal((p) => ({ ...p, sistemas_origen: e.target.value }))}
+                  />
+                </div>
+
+                <div className="p2-campo-grupo">
+                  <label className="p2-campo-label">Sistemas destino</label>
+                  <p className="p2-campo-ayuda">Sistemas donde se almacenan o envían los datos</p>
+                  <textarea className="p2-textarea" rows={2} maxLength={400}
+                    placeholder="Ej: ERP SAP, servidor propio, nube AWS..."
+                    value={local.sistemas_destino}
+                    onChange={(e) => setLocal((p) => ({ ...p, sistemas_destino: e.target.value }))}
+                  />
+                </div>
+
+                <div className="p2-campo-grupo">
+                  <label className="p2-campo-label">Sistemas de tratamiento</label>
+                  <p className="p2-campo-ayuda">Sistemas que procesan activamente los datos</p>
+                  <textarea className="p2-textarea" rows={2} maxLength={400}
+                    placeholder="Ej: Software de RRHH, plataforma e-commerce..."
+                    value={local.sistemas_tratamiento}
+                    onChange={(e) => setLocal((p) => ({ ...p, sistemas_tratamiento: e.target.value }))}
+                  />
+                </div>
+
+                <div className="p2-campo-grupo">
+                  <label className="p2-campo-label">Tipos de tratamiento en los sistemas</label>
+                  <div className="p2-checkboxes p2-checkboxes--horizontal">
+                    {TIPOS_TRATAMIENTO_SISTEMA.map((t) => (
+                      <label key={t.id} className={`p2-check-item ${local.tipos_tratamiento_sistema.includes(t.id) ? "p2-check-item--marcado" : ""}`}>
+                        <input type="checkbox" className="p2-check-input"
+                          checked={local.tipos_tratamiento_sistema.includes(t.id)}
+                          onChange={() => toggleTiposTratamiento(t.id)}
+                        />
+                        <span className="p2-check-texto">{t.etiqueta}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p2-fila-dos-items">
+                  <div className="p2-campo-grupo">
+                    <label className="p2-campo-label">Nombre de la base de datos</label>
+                    <input type="text" className="p2-input-bd"
+                      placeholder="Ej: BD_CLIENTES_PRODUCCION"
+                      value={local.base_datos_nombre}
+                      onChange={(e) => setLocal((p) => ({ ...p, base_datos_nombre: e.target.value }))}
+                      maxLength={200}
+                    />
+                  </div>
+                  <div className="p2-campo-grupo">
+                    <label className="p2-campo-label">Proveedor tecnológico</label>
+                    <input type="text" className="p2-input-bd"
+                      placeholder="Ej: Microsoft Azure, Amazon AWS..."
+                      value={local.proveedor_tecnologico}
+                      onChange={(e) => setLocal((p) => ({ ...p, proveedor_tecnologico: e.target.value }))}
+                      maxLength={200}
+                    />
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>{/* fin secciones-extra */}
 
           {/* ── Toast borrador guardado ── */}
           {borradorOk && (
@@ -613,14 +836,8 @@ export default function Paso2() {
           {/* ── Navegación ───────────────────────────────────── */}
           <div className="p2-navegacion">
             <div className="p2-nav-izquierda">
-              <button className="p2-btn p2-btn--cancelar" onClick={handleCancelar}>
-                Cancelar
-              </button>
-              <button
-                className="p2-btn p2-btn--borrador"
-                onClick={handleGuardarBorrador}
-                disabled={guardandoBorrador}
-              >
+              <button className="p2-btn p2-btn--cancelar" onClick={handleCancelar}>Cancelar</button>
+              <button className="p2-btn p2-btn--borrador" onClick={handleGuardarBorrador} disabled={guardandoBorrador}>
                 {guardandoBorrador ? "Guardando..." : "Guardar borrador"}
               </button>
             </div>

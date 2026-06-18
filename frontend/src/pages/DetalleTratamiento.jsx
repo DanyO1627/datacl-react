@@ -55,10 +55,6 @@ const MEDIDAS = {
   auditoria:   "Auditoría de accesos",
 }
 
-const CRITERIO_PLAZO = { legal: "Legal", contractual: "Contractual", operacional: "Operacional" }
-const METODO_ELIMINACION = { digital: "Eliminación segura digital", fisica: "Destrucción física", anonimizacion: "Anonimización", otro: "Otro" }
-const PERIODO_EVALUACION = { anual: "Anual", bienal: "Bienal (cada 2 años)", ante_cambios: "Ante cambios importantes", sin_definir: "Sin definir" }
-
 const COLOR_RIESGO = {
   BAJO:  { clase: 'riesgo-bajo',  etiqueta: 'Riesgo bajo' },
   MEDIO: { clase: 'riesgo-medio', etiqueta: 'Riesgo medio' },
@@ -198,8 +194,13 @@ export default function DetalleTratamiento() {
 
   const riesgo = COLOR_RIESGO[tratamiento.nivel_riesgo] || COLOR_RIESGO.BAJO
   const estado = COLOR_ESTADO[tratamiento.estado]   || COLOR_ESTADO.PENDIENTE
-  const d      = tratamiento.detalle           // puede ser null en tratamientos anteriores
-  const de     = tratamiento.detalle_extendido // principios Ley 21.719 + DPIA
+  const d      = tratamiento.detalle     // puede ser null en tratamientos anteriores
+  const ext    = tratamiento.detalle_extendido   // null si la tabla aún no tiene fila para este tratamiento
+
+  // Oculta una sección extendida si todos sus campos son null/vacío/undefined
+  function seccionExtendidaTieneData(...campos) {
+    return campos.some(v => v !== null && v !== undefined && v !== '')
+  }
   const fechaFormato = new Date(tratamiento.creado_en).toLocaleDateString('es-CL', {
     year: 'numeric', month: 'long', day: 'numeric',
   })
@@ -343,90 +344,7 @@ export default function DetalleTratamiento() {
           </div>
         </div>
 
-        {/* ── Sección 4: Principios Ley 21.719 y DPIA ── */}
-        {de && (de.criterio_plazo || de.metodo_eliminacion || de.minimizacion_justificacion ||
-          de.mecanismos_exactitud || de.evaluacion_periodica || de.cumplimiento_demostrable ||
-          de.incidentes_historicos || de.cambios_futuros || de.requiere_dpia) && (
-          <div className="detalle-seccion">
-            <h2 className="detalle-columna-titulo">Principios Ley 21.719 y DPIA</h2>
-
-            <div className="detalle-seccion-campos">
-              {de.criterio_plazo && (
-                <Campo label="Criterio de plazo">
-                  <Valor v={de.criterio_plazo} mapa={CRITERIO_PLAZO} />
-                </Campo>
-              )}
-              {de.evaluacion_periodica && (
-                <Campo label="Evaluación periódica">
-                  <Valor v={de.evaluacion_periodica} mapa={PERIODO_EVALUACION} />
-                </Campo>
-              )}
-              {de.metodo_eliminacion && (
-                <Campo label="Método de eliminación">
-                  <Valor v={de.metodo_eliminacion} mapa={METODO_ELIMINACION} />
-                </Campo>
-              )}
-              {de.documenta_destruccion !== null && de.documenta_destruccion !== undefined && (
-                <Campo label="Documenta destrucción">
-                  <span className="detalle-campo-valor">{de.documenta_destruccion ? 'Sí' : 'No'}</span>
-                </Campo>
-              )}
-            </div>
-
-            {de.excepciones_plazo && (
-              <div className="detalle-campo detalle-campo-ancho">
-                <span className="detalle-campo-label">Excepciones al plazo</span>
-                <ValorMultilinea v={de.excepciones_plazo} />
-              </div>
-            )}
-            {de.minimizacion_justificacion && (
-              <div className="detalle-campo detalle-campo-ancho">
-                <span className="detalle-campo-label">Justificación de minimización</span>
-                <ValorMultilinea v={de.minimizacion_justificacion} />
-              </div>
-            )}
-            {de.mecanismos_exactitud && (
-              <div className="detalle-campo detalle-campo-ancho">
-                <span className="detalle-campo-label">Mecanismos de exactitud</span>
-                <ValorMultilinea v={de.mecanismos_exactitud} />
-              </div>
-            )}
-            {de.cumplimiento_demostrable && (
-              <div className="detalle-campo detalle-campo-ancho">
-                <span className="detalle-campo-label">Cumplimiento demostrable</span>
-                <ValorMultilinea v={de.cumplimiento_demostrable} />
-              </div>
-            )}
-            {de.incidentes_historicos && (
-              <div className="detalle-campo detalle-campo-ancho">
-                <span className="detalle-campo-label">Incidentes históricos</span>
-                <ValorMultilinea v={de.incidentes_historicos} />
-              </div>
-            )}
-            {de.cambios_futuros && (
-              <div className="detalle-campo detalle-campo-ancho">
-                <span className="detalle-campo-label">Cambios futuros previstos</span>
-                <ValorMultilinea v={de.cambios_futuros} />
-              </div>
-            )}
-
-            {de.requiere_dpia && (
-              <div className="detalle-dpia">
-                <div className="detalle-dpia-header">
-                  <span className="detalle-dpia-titulo">Evaluación de Impacto (DPIA)</span>
-                  <span className={`detalle-dpia-badge ${de.dpia_realizada ? 'detalle-dpia-badge--si' : 'detalle-dpia-badge--no'}`}>
-                    {de.dpia_realizada === true ? 'Realizada' : de.dpia_realizada === false ? 'Pendiente' : 'Sin estado'}
-                  </span>
-                </div>
-                {de.dpia_detalle && (
-                  <p className="detalle-dpia-detalle">{de.dpia_detalle}</p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Sección 5: Evaluación de riesgo ── */}
+        {/* ── Sección 4: Evaluación de riesgo ── */}
         <div className="detalle-evaluacion">
           <h2 className="detalle-columna-titulo">Evaluación de riesgo</h2>
           <div className="detalle-evaluacion-grid">
@@ -442,6 +360,185 @@ export default function DetalleTratamiento() {
             }
           </p>
         </div>
+
+        {/* ── Secciones extendidas B2 (visibles solo si hay datos) ── */}
+
+        {ext && seccionExtendidaTieneData(ext.descripcion_detallada, ext.subarea_responsable, ext.procesos_relacionados) && (
+          <div className="detalle-seccion">
+            <h2 className="detalle-columna-titulo">Identificación detallada</h2>
+            <div className="detalle-seccion-campos">
+              <Campo label="Descripción detallada">
+                <ValorMultilinea v={ext.descripcion_detallada} />
+              </Campo>
+              <Campo label="Subárea responsable">
+                <Valor v={ext.subarea_responsable} vacio="—" />
+              </Campo>
+              <Campo label="Procesos relacionados">
+                <ValorMultilinea v={ext.procesos_relacionados} />
+              </Campo>
+            </div>
+          </div>
+        )}
+
+        {ext && seccionExtendidaTieneData(ext.finalidades_secundarias, ext.informa_titulares, ext.documento_respaldo_permiso) && (
+          <div className="detalle-seccion">
+            <h2 className="detalle-columna-titulo">Finalidad y transparencia</h2>
+            <div className="detalle-seccion-campos">
+              <Campo label="Finalidades secundarias">
+                <ValorMultilinea v={ext.finalidades_secundarias} />
+              </Campo>
+              <Campo label="¿Se informa a los titulares?">
+                {ext.informa_titulares === null || ext.informa_titulares === undefined
+                  ? <span className="detalle-campo-pendiente">—</span>
+                  : <span className="detalle-campo-valor">{ext.informa_titulares ? 'Sí' : 'No'}</span>
+                }
+              </Campo>
+              <Campo label="Documento de respaldo / permiso">
+                <ValorMultilinea v={ext.documento_respaldo_permiso} />
+              </Campo>
+            </div>
+          </div>
+        )}
+
+        {ext && seccionExtendidaTieneData(
+          ext.destinatarios_internos, ext.destinatarios_nacionales, ext.destinatarios_internacionales,
+          ext.terceros_son_encargados, ext.contratos_proteccion_datos,
+          ext.datos_transferidos_detalle, ext.metodo_transferencia
+        ) && (
+          <div className="detalle-seccion">
+            <h2 className="detalle-columna-titulo">Transferencias y terceros</h2>
+            <div className="detalle-seccion-campos">
+              <Campo label="Destinatarios internos">
+                <ValorMultilinea v={ext.destinatarios_internos} />
+              </Campo>
+              <Campo label="Destinatarios nacionales">
+                <ValorMultilinea v={ext.destinatarios_nacionales} />
+              </Campo>
+              <Campo label="Destinatarios internacionales">
+                <ValorMultilinea v={ext.destinatarios_internacionales} />
+              </Campo>
+              <Campo label="¿Los terceros son encargados?">
+                {ext.terceros_son_encargados === null || ext.terceros_son_encargados === undefined
+                  ? <span className="detalle-campo-pendiente">—</span>
+                  : <span className="detalle-campo-valor">{ext.terceros_son_encargados ? 'Sí' : 'No'}</span>
+                }
+              </Campo>
+              <Campo label="¿Contratos de protección de datos?">
+                {ext.contratos_proteccion_datos === null || ext.contratos_proteccion_datos === undefined
+                  ? <span className="detalle-campo-pendiente">—</span>
+                  : <span className="detalle-campo-valor">{ext.contratos_proteccion_datos ? 'Sí' : 'No'}</span>
+                }
+              </Campo>
+              <Campo label="Detalle datos transferidos">
+                <ValorMultilinea v={ext.datos_transferidos_detalle} />
+              </Campo>
+              <Campo label="Método de transferencia">
+                <Valor v={ext.metodo_transferencia} vacio="—" />
+              </Campo>
+            </div>
+          </div>
+        )}
+
+        {ext && seccionExtendidaTieneData(
+          ext.sistemas_origen, ext.sistemas_destino, ext.sistemas_tratamiento,
+          ext.tipos_tratamiento_sistema, ext.base_datos_nombre, ext.proveedor_tecnologico
+        ) && (
+          <div className="detalle-seccion">
+            <h2 className="detalle-columna-titulo">Sistemas y tecnología</h2>
+            <div className="detalle-seccion-campos">
+              <Campo label="Sistemas de origen">
+                <ValorMultilinea v={ext.sistemas_origen} />
+              </Campo>
+              <Campo label="Sistemas de destino">
+                <ValorMultilinea v={ext.sistemas_destino} />
+              </Campo>
+              <Campo label="Sistemas de tratamiento">
+                <ValorMultilinea v={ext.sistemas_tratamiento} />
+              </Campo>
+              <Campo label="Tipos de tratamiento en el sistema">
+                <ValorMultilinea v={ext.tipos_tratamiento_sistema} />
+              </Campo>
+              <Campo label="Nombre base de datos">
+                <Valor v={ext.base_datos_nombre} vacio="—" />
+              </Campo>
+              <Campo label="Proveedor tecnológico">
+                <Valor v={ext.proveedor_tecnologico} vacio="—" />
+              </Campo>
+            </div>
+          </div>
+        )}
+
+        {ext && seccionExtendidaTieneData(
+          ext.criterio_plazo, ext.metodo_eliminacion, ext.documenta_destruccion,
+          ext.minimizacion_justificacion, ext.mecanismos_exactitud,
+          ext.evaluacion_periodica, ext.cumplimiento_demostrable,
+          ext.incidentes_historicos, ext.cambios_futuros
+        ) && (
+          <div className="detalle-seccion">
+            <h2 className="detalle-columna-titulo">Principios legales</h2>
+            <div className="detalle-seccion-campos">
+              <Campo label="Criterio de plazo">
+                <Valor v={ext.criterio_plazo} vacio="—" />
+              </Campo>
+              <Campo label="Método de eliminación">
+                <Valor v={ext.metodo_eliminacion} vacio="—" />
+              </Campo>
+              <Campo label="¿Se documenta la destrucción?">
+                {ext.documenta_destruccion === null || ext.documenta_destruccion === undefined
+                  ? <span className="detalle-campo-pendiente">—</span>
+                  : <span className="detalle-campo-valor">{ext.documenta_destruccion ? 'Sí' : 'No'}</span>
+                }
+              </Campo>
+              <Campo label="Justificación de minimización">
+                <ValorMultilinea v={ext.minimizacion_justificacion} />
+              </Campo>
+              <Campo label="Mecanismos de exactitud">
+                <ValorMultilinea v={ext.mecanismos_exactitud} />
+              </Campo>
+              <Campo label="¿Evaluación periódica?">
+                {ext.evaluacion_periodica === null || ext.evaluacion_periodica === undefined
+                  ? <span className="detalle-campo-pendiente">—</span>
+                  : <span className="detalle-campo-valor">{ext.evaluacion_periodica ? 'Sí' : 'No'}</span>
+                }
+              </Campo>
+              <Campo label="¿Cumplimiento demostrable?">
+                {ext.cumplimiento_demostrable === null || ext.cumplimiento_demostrable === undefined
+                  ? <span className="detalle-campo-pendiente">—</span>
+                  : <span className="detalle-campo-valor">{ext.cumplimiento_demostrable ? 'Sí' : 'No'}</span>
+                }
+              </Campo>
+              <Campo label="Incidentes históricos">
+                <ValorMultilinea v={ext.incidentes_historicos} />
+              </Campo>
+              <Campo label="Cambios futuros previstos">
+                <ValorMultilinea v={ext.cambios_futuros} />
+              </Campo>
+            </div>
+          </div>
+        )}
+
+        {ext && seccionExtendidaTieneData(ext.requiere_dpia, ext.dpia_realizada, ext.dpia_detalle) && (
+          <div className="detalle-seccion">
+            <h2 className="detalle-columna-titulo">Evaluación de impacto (DPIA)</h2>
+            <div className="detalle-seccion-campos">
+              <Campo label="¿Requiere DPIA?">
+                {ext.requiere_dpia === null || ext.requiere_dpia === undefined
+                  ? <span className="detalle-campo-pendiente">—</span>
+                  : <span className="detalle-campo-valor">{ext.requiere_dpia ? 'Sí' : 'No'}</span>
+                }
+              </Campo>
+              <Campo label="¿DPIA realizada?">
+                {ext.dpia_realizada === null || ext.dpia_realizada === undefined
+                  ? <span className="detalle-campo-pendiente">—</span>
+                  : <span className="detalle-campo-valor">{ext.dpia_realizada ? 'Sí' : 'No'}</span>
+                }
+              </Campo>
+              <Campo label="Detalle DPIA">
+                <ValorMultilinea v={ext.dpia_detalle} />
+              </Campo>
+            </div>
+          </div>
+        )}
 
         {error && <p className="detalle-error">{error}</p>}
       </main>

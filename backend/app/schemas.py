@@ -122,56 +122,91 @@ class DetalleRatRespuesta(DetalleRatBase):
     model_config = {"from_attributes": True}
 
 
-# Schemas de detalle RAT extendido aprox 30 campos del RAT real de la ligacontra alzahimer
-# Usa el mismo patrón que DetalleRatBase: todos Optional porque son opcionales
-# para organizaciones pequeñas que no necesitan el RAT completo
-
-class DetalleRatExtendidoBase(BaseModel):
-    # Identificación
+class DetalleRatExtendidoEntrada(BaseModel):
     descripcion_detallada:      Optional[str] = None
     subarea_responsable:        Optional[str] = None
     procesos_relacionados:      Optional[str] = None
     finalidades_secundarias:    Optional[str] = None
     informa_titulares:          Optional[str] = None
     documento_respaldo_permiso: Optional[str] = None
-    # Datos y transferencias
-    datos_navegacion:                Optional[str] = None
-    incluye_nna:                     Optional[bool] = None
-    nna_detalle:                     Optional[str] = None
-    destinatarios_internos:          Optional[str] = None
-    destinatarios_nacionales:        Optional[str] = None
-    destinatarios_internacionales:   Optional[str] = None
-    terceros_son_encargados:         Optional[bool] = None
-    contratos_proteccion_datos:      Optional[bool] = None
-    datos_transferidos_detalle:      Optional[str] = None
-    metodo_transferencia:            Optional[str] = None
-    # Sistemas
+    incluye_nna:                    Optional[bool] = None
+    nna_detalle:                    Optional[str] = None
+    datos_navegacion:               Optional[bool] = None
+    datos_navegacion_detalle:       Optional[str] = None
+    destinatarios_internos:         Optional[str] = None
+    destinatarios_nacionales:       Optional[str] = None
+    destinatarios_internacionales:  Optional[str] = None
+    terceros_son_encargados:        Optional[bool] = None
+    contratos_proteccion_datos:     Optional[bool] = None
+    contratos_proteccion_datos_detalle: Optional[str] = None
+    datos_transferidos_detalle:     Optional[str] = None
+    metodo_transferencia:           Optional[str] = None
     sistemas_origen:           Optional[str] = None
     sistemas_destino:          Optional[str] = None
     sistemas_tratamiento:      Optional[str] = None
     tipos_tratamiento_sistema: Optional[str] = None
     base_datos_nombre:         Optional[str] = None
     proveedor_tecnologico:     Optional[str] = None
-    # Principios (Ley 21.719)
-    criterio_plazo:             Optional[str] = None
-    metodo_eliminacion:         Optional[str] = None
-    documenta_destruccion:      Optional[bool] = None
-    excepciones_plazo:          Optional[str] = None
+    criterio_plazo:            Optional[str] = None
+    metodo_eliminacion:        Optional[str] = None
+    documenta_destruccion:     Optional[bool] = None
     minimizacion_justificacion: Optional[str] = None
-    mecanismos_exactitud:       Optional[str] = None
-    evaluacion_periodica:       Optional[str] = None
-    cumplimiento_demostrable:   Optional[str] = None
-    incidentes_historicos:      Optional[str] = None
-    cambios_futuros:            Optional[str] = None
-    # DPIA
+    mecanismos_exactitud:      Optional[str] = None
+    evaluacion_periodica:      Optional[bool] = None
+    cumplimiento_demostrable:  Optional[bool] = None
+    incidentes_historicos:     Optional[str] = None
+    cambios_futuros:           Optional[str] = None
     requiere_dpia:  Optional[bool] = None
     dpia_realizada: Optional[bool] = None
     dpia_detalle:   Optional[str] = None
 
 
-class DetalleRatExtendidoRespuesta(DetalleRatExtendidoBase):
+class DetalleRatExtendidoRespuesta(BaseModel):
     id:             int
     tratamiento_id: int
+    # Identificación detallada
+    descripcion_detallada:      Optional[str] = None
+    subarea_responsable:        Optional[str] = None
+    procesos_relacionados:      Optional[str] = None
+    # Finalidad y transparencia
+    finalidades_secundarias:     Optional[str] = None
+    informa_titulares:           Optional[str] = None
+    documento_respaldo_permiso:  Optional[str] = None
+    # Datos especiales
+    incluye_nna:                    Optional[bool] = None
+    nna_detalle:                    Optional[str] = None
+    datos_navegacion:               Optional[bool] = None
+    datos_navegacion_detalle:       Optional[str] = None
+    # Transferencias y terceros
+    destinatarios_internos:         Optional[str] = None
+    destinatarios_nacionales:       Optional[str] = None
+    destinatarios_internacionales:  Optional[str] = None
+    terceros_son_encargados:        Optional[bool] = None
+    contratos_proteccion_datos:     Optional[bool] = None
+    contratos_proteccion_datos_detalle: Optional[str] = None
+    datos_transferidos_detalle:     Optional[str] = None
+    metodo_transferencia:           Optional[str] = None
+    # Sistemas y tecnología
+    sistemas_origen:           Optional[str] = None
+    sistemas_destino:          Optional[str] = None
+    sistemas_tratamiento:      Optional[str] = None
+    tipos_tratamiento_sistema: Optional[str] = None
+    base_datos_nombre:         Optional[str] = None
+    proveedor_tecnologico:     Optional[str] = None
+    # Principios legales
+    criterio_plazo:            Optional[str] = None
+    metodo_eliminacion:        Optional[str] = None
+    documenta_destruccion:     Optional[bool] = None
+    minimizacion_justificacion: Optional[str] = None
+    mecanismos_exactitud:      Optional[str] = None
+    evaluacion_periodica:      Optional[bool] = None
+    cumplimiento_demostrable:  Optional[bool] = None
+    incidentes_historicos:     Optional[str] = None
+    cambios_futuros:           Optional[str] = None
+    # DPIA
+    requiere_dpia:  Optional[bool] = None
+    dpia_realizada: Optional[bool] = None
+    dpia_detalle:   Optional[str] = None
     model_config = {"from_attributes": True}
 
 
@@ -200,7 +235,7 @@ class TratamientoCrear(BaseModel):
     decisiones_automatizadas: bool = False
     campos_detectados: list[CampoRatEntrada] = []
     detalle: Optional[DetalleRatBase] = None
-    detalle_extendido: Optional[DetalleRatExtendidoBase] = None   # campos del RAT real (B2)
+    detalle_extendido: Optional[DetalleRatExtendidoEntrada] = None
     sesion_id: Optional[int] = None
     campos_usados: Optional[list] = None
 
@@ -225,7 +260,7 @@ class TratamientoEditar(BaseModel):
     nivel_riesgo: Optional[str] = None
     estado: Optional[str] = None
     detalle: Optional[DetalleRatBase] = None
-    detalle_extendido: Optional[DetalleRatExtendidoBase] = None   # campos del RAT real (B2)
+    detalle_extendido: Optional[DetalleRatExtendidoEntrada] = None
     modificado_por: Optional[str] = None
 
     @field_validator("nombre")
@@ -269,8 +304,8 @@ class TratamientoRespuesta(BaseModel):
     probabilidad: Optional[str] = None
     impacto: Optional[str] = None
     fecha_evaluacion: Optional[datetime] = None
-    detalle: Optional[DetalleRatRespuesta] = None
-    detalle_extendido: Optional[DetalleRatExtendidoRespuesta] = None
+    detalle:    Optional[DetalleRatRespuesta] = None
+    detalle_extendido:  Optional[DetalleRatExtendidoRespuesta] = None
     sesion_origen: Optional[str] = None
     model_config = {"from_attributes": True}
 
@@ -352,12 +387,11 @@ class InformeRespuesta(BaseModel):
     - num_tratamientos no está en la tabla informes, se calcula en el endpoint
     - tiene_ia indica si Groq respondió al generar
     """
-    id:                  int
-    generado_en:         Optional[datetime] = None
-    tiene_ia:            bool = False
-    ruta_pdf:            Optional[str] = None
-    num_tratamientos:    int = 0
-    versiones_snapshot:  Optional[dict] = None
+    id:                 int
+    generado_en:        Optional[datetime] = None
+    tiene_ia:           bool = False
+    ruta_pdf:           Optional[str] = None
+    num_tratamientos:   int = 0          # cuántos tratamientos tenía la org al generar
 
     model_config = {"from_attributes": True}
 

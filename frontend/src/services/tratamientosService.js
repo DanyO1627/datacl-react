@@ -103,6 +103,7 @@ export async function actualizarTratamiento(id, datos) {
       throw e;
     }
     const detail = err.response?.data?.detail;
+    console.error("422 DETAIL:", JSON.stringify(detail));
     throw new Error(typeof detail === "string" ? detail : "Error al actualizar el borrador.");
   }
 }
