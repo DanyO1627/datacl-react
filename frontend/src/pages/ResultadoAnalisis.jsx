@@ -113,13 +113,11 @@ export default function AsignacionCampos() {
 
     const esMio = activa.campos.some((c) => c.nombre_columna === campo.nombre_columna);
     if (esMio) {
-      // Desasignar del activa
       desasignar(actividadActiva, campo.nombre_columna);
       return;
     }
-    if (asignadas.has(campo.nombre_columna)) return; // ya está en otra
 
-    // Asignar
+    // Un mismo campo puede pertenecer a múltiples actividades (ej: RUT en Ventas y en Clínica)
     setActividades((prev) =>
       prev.map((a) =>
         a.id === actividadActiva ? { ...a, campos: [...a.campos, campo] } : a,
@@ -226,13 +224,15 @@ export default function AsignacionCampos() {
   function estadoCampo(nombreColumna) {
     const activa = actividades.find((a) => a.id === actividadActiva);
     if (activa?.campos.some((c) => c.nombre_columna === nombreColumna)) return "en-activa";
-    if (asignadas.has(nombreColumna)) return "asignado-otro";
+    if (asignadas.has(nombreColumna)) return "compartible";
     if (!actividadActiva) return "sin-actividad";
     return "libre";
   }
 
-  function nombreActividadDeCampo(nombreColumna) {
-    return actividades.find((a) => a.campos.some((c) => c.nombre_columna === nombreColumna))?.nombre ?? "";
+  function actividadesDeCampo(nombreColumna) {
+    return actividades
+      .filter((a) => a.campos.some((c) => c.nombre_columna === nombreColumna))
+      .map((a) => a.nombre);
   }
 
   /* ── Render ────────────────────────────────────────────────── */
@@ -304,14 +304,14 @@ export default function AsignacionCampos() {
                 detectadosFiltrados.map((campo) => {
                   const estado      = estadoCampo(campo.nombre_columna);
                   const esSensible  = campo.tipo === "SENSIBLE";
-                  const activNombre = estado === "asignado-otro" ? nombreActividadDeCampo(campo.nombre_columna) : "";
+                  const enOtras     = estado === "compartible" ? actividadesDeCampo(campo.nombre_columna) : [];
                   return (
                     <div
                       key={campo.nombre_columna}
                       className={`ac-campo ac-campo--${estado}`}
                       onClick={() => clickCampo(campo)}
                       title={
-                        estado === "asignado-otro"   ? `Asignado a "${activNombre}"` :
+                        estado === "compartible"     ? `Ya en: ${enOtras.join(", ")} — clic para agregar también aquí` :
                         estado === "sin-actividad"   ? "Selecciona una actividad primero" :
                         estado === "en-activa"        ? "Clic para desasignar" :
                         "Clic para asignar a la actividad seleccionada"
@@ -324,8 +324,8 @@ export default function AsignacionCampos() {
                       {tieneMultiTabla && campo.tabla_origen && (
                         <span className="ac-campo-tabla">{campo.tabla_origen}</span>
                       )}
-                      {estado === "asignado-otro" && (
-                        <span className="ac-campo-actividad" title={activNombre}>→ {activNombre}</span>
+                      {estado === "compartible" && (
+                        <span className="ac-campo-actividad" title={enOtras.join(", ")}>en {enOtras.length} act.</span>
                       )}
                       {estado === "en-activa" && (
                         <span style={{ fontSize: 11, color: "#1d4ed8", fontWeight: 700 }}>✓</span>
@@ -343,14 +343,14 @@ export default function AsignacionCampos() {
                   </div>
                   {pendientesFiltrados.map((campo) => {
                     const estado      = estadoCampo(campo.nombre_columna);
-                    const activNombre = estado === "asignado-otro" ? nombreActividadDeCampo(campo.nombre_columna) : "";
+                    const enOtras     = estado === "compartible" ? actividadesDeCampo(campo.nombre_columna) : [];
                     return (
                       <div
                         key={campo.nombre_columna}
                         className={`ac-campo ac-campo--pendiente ac-campo--${estado}`}
                         onClick={() => clickCampo(campo)}
                         title={
-                          estado === "asignado-otro"  ? `Asignado a "${activNombre}"` :
+                          estado === "compartible"    ? `Ya en: ${enOtras.join(", ")} — clic para agregar también aquí` :
                           estado === "sin-actividad"  ? "Selecciona una actividad primero" :
                           estado === "en-activa"       ? "Clic para desasignar" :
                           "Clic para asignar a la actividad seleccionada"
@@ -361,8 +361,8 @@ export default function AsignacionCampos() {
                         {tieneMultiTabla && campo.tabla_origen && (
                           <span className="ac-campo-tabla">{campo.tabla_origen}</span>
                         )}
-                        {estado === "asignado-otro" && (
-                          <span className="ac-campo-actividad" title={activNombre}>→ {activNombre}</span>
+                        {estado === "compartible" && (
+                          <span className="ac-campo-actividad" title={enOtras.join(", ")}>en {enOtras.length} act.</span>
                         )}
                         {estado === "en-activa" && (
                           <span style={{ fontSize: 11, color: "#6b8099", fontWeight: 700 }}>✓</span>

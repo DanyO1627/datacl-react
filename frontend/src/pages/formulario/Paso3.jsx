@@ -617,7 +617,7 @@ export default function Paso3() {
                   <FilaRevision label="Responsable" valor={form.responsable} />
                   <FilaRevision label="Departamento" valor={form.departamento} />
                   <FilaRevision label="Finalidad" valor={form.finalidad} />
-                  <FilaRevision label="Base legal" valor={ETIQ_BASE_LEGAL[form.base_legal] || form.base_legal} />
+                  <FilaRevision label="Base legal" valor={(form.base_legal || "").split(",").filter(Boolean).map((v) => ETIQ_BASE_LEGAL[v] || v).join(", ")} />
                 </div>
 
                 <div className="p3-revision-seccion">
@@ -627,7 +627,7 @@ export default function Paso3() {
                     valor={(form.categorias_titulares || []).map((id) => ETIQ_TITULARES[id] || id).join(", ")}
                   />
                   <FilaRevision label="Universo de titulares" valor={form.universo_titulares} />
-                  <FilaRevision label="Origen de los datos" valor={ETIQ_ORIGEN[form.origen_datos] || form.origen_datos} />
+                  <FilaRevision label="Origen de los datos" valor={(form.origen_datos || "").split(",").filter(Boolean).map((v) => ETIQ_ORIGEN[v] || v).join(", ")} />
                   <FilaRevision
                     label="Categorías de datos"
                     valor={categoriasDatos.map((id) => ETIQ_CATEGORIAS[id] || id).join(", ")}

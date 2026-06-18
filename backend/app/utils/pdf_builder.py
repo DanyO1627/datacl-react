@@ -138,11 +138,13 @@ def _estilos():
 
 
 def _val(d, campo, mapa=None):
-    """Saca un valor del dict, traduce con mapa si existe. None si vacío."""
+    """Saca un valor del dict, traduce con mapa si existe. Soporta multi-valor (coma)."""
     val = d.get(campo)
     if val is None or val == "":
         return None
     if mapa and isinstance(val, str):
+        if "," in val:
+            return ", ".join(mapa.get(v.strip(), v.strip()) for v in val.split(",") if v.strip())
         return mapa.get(val, val)
     if isinstance(val, bool):
         return "Sí" if val else "No"

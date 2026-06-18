@@ -197,7 +197,7 @@ export default function Paso2() {
     // Campos existentes
     categorias_titulares: form.categorias_titulares || [],
     universo_titulares:   form.universo_titulares || "",
-    origen_datos:         form.origen_datos || "",
+    origen_datos:         form.origen_datos ? form.origen_datos.split(",").filter(Boolean) : [],
     categorias_datos:     categoriasDatosIniciales,
     datos_sensibles:      primeraVezEnPaso2 ? haySensiblesDetectados : form.datos_sensibles,
     categorias_sensibles: categoriasSensiblesIniciales,
@@ -251,6 +251,18 @@ export default function Paso2() {
     setPendiente(null);
   }
 
+  function toggleOrigenDatos(valor) {
+    setLocal((prev) => {
+      const lista = prev.origen_datos;
+      return {
+        ...prev,
+        origen_datos: lista.includes(valor)
+          ? lista.filter((v) => v !== valor)
+          : [...lista, valor],
+      };
+    });
+  }
+
   function toggleSensibles(valor) {
     setLocal((prev) => ({
       ...prev,
@@ -288,8 +300,8 @@ export default function Paso2() {
   const [guardandoBorrador, setGuardandoBorrador] = useState(false);
   const [borradorOk, setBorradorOk] = useState(false);
 
-  function handleSiguiente() { actualizarForm(local); navigate("/nuevo-tratamiento/paso3"); }
-  function handleAnterior()  { actualizarForm(local); navigate("/nuevo-tratamiento"); }
+  function handleSiguiente() { actualizarForm({ ...local, origen_datos: local.origen_datos.join(",") }); navigate("/nuevo-tratamiento/paso3"); }
+  function handleAnterior()  { actualizarForm({ ...local, origen_datos: local.origen_datos.join(",") }); navigate("/nuevo-tratamiento"); }
   function handleCancelar()  { navigate("/dashboard"); }
 
   async function handleGuardarBorrador() {
@@ -448,15 +460,20 @@ export default function Paso2() {
 
               <div className="p2-campo-grupo">
                 <label className="p2-campo-label">Origen de los datos</label>
-                <select className="p2-select"
-                  value={local.origen_datos}
-                  onChange={(e) => setLocal((prev) => ({ ...prev, origen_datos: e.target.value }))}
-                >
-                  <option value="">Selecciona el origen...</option>
-                  {ORIGENES_DATOS.map((o) => (
-                    <option key={o.valor} value={o.valor}>{o.etiqueta}</option>
-                  ))}
-                </select>
+                <div className="p2-checkboxes">
+                  {ORIGENES_DATOS.map((o) => {
+                    const marcado = local.origen_datos.includes(o.valor);
+                    return (
+                      <label key={o.valor} className={`p2-check-item ${marcado ? "p2-check-item--marcado" : ""}`}>
+                        <input type="checkbox" className="p2-check-input"
+                          checked={marcado}
+                          onChange={() => toggleOrigenDatos(o.valor)}
+                        />
+                        <span className="p2-check-texto">{o.etiqueta}</span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 

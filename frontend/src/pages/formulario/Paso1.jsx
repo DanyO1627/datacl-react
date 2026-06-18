@@ -139,7 +139,7 @@ export default function Paso1() {
     es_responsable: form.es_responsable ?? true,
     departamento:   form.departamento   || "",
     finalidad:      form.finalidad      || "",
-    base_legal:     form.base_legal     || "",
+    base_legal:     form.base_legal ? form.base_legal.split(",").filter(Boolean) : [],
     // Campos extendidos B2-03
     descripcion_detallada:       form.descripcion_detallada       || "",
     subarea_responsable:         form.subarea_responsable         || "",
@@ -153,6 +153,18 @@ export default function Paso1() {
   const [guardandoBorrador, setGuardandoBorrador] = useState(false);
   const [borradorOk, setBorradorOk] = useState(false);
   const [abiertaAdicional, setAbiertaAdicional] = useState(false);
+
+  function toggleBaseLegal(valor) {
+    setLocal((prev) => {
+      const lista = prev.base_legal;
+      return {
+        ...prev,
+        base_legal: lista.includes(valor)
+          ? lista.filter((v) => v !== valor)
+          : [...lista, valor],
+      };
+    });
+  }
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -175,8 +187,8 @@ export default function Paso1() {
   async function handleGuardarBorrador() {
     setGuardandoBorrador(true);
     try {
-      actualizarForm(local);
-      const datos = { ...form, ...local };
+      actualizarForm({ ...local, base_legal: local.base_legal.join(",") });
+      const datos = { ...form, ...local, base_legal: local.base_legal.join(",") };
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
@@ -267,7 +279,7 @@ export default function Paso1() {
 
   function handleSiguiente() {
     if (!puedeAvanzar) return;
-    actualizarForm(local);
+    actualizarForm({ ...local, base_legal: local.base_legal.join(",") });
     navigate("/nuevo-tratamiento/paso2");
   }
 
@@ -492,30 +504,36 @@ export default function Paso1() {
                   ))}
                 </div>
               </div>
-              <select
-                id="base_legal"
-                name="base_legal"
-                className="p1-select"
-                value={local.base_legal}
-                onChange={handleChange}
-              >
-                <option value="">Selecciona la base legal</option>
-                {BASES_LEGALES.map((op) => (
-                  <option key={op.valor} value={op.valor}>
-                    {op.etiqueta}
-                  </option>
-                ))}
-              </select>
+              <div className="p1-checkboxes">
+                {BASES_LEGALES.map((op) => {
+                  const marcado = local.base_legal.includes(op.valor);
+                  return (
+                    <label key={op.valor} className={`p1-check-item ${marcado ? "p1-check-item--marcado" : ""}`}>
+                      <input
+                        type="checkbox"
+                        className="p1-check-input"
+                        checked={marcado}
+                        onChange={() => toggleBaseLegal(op.valor)}
+                      />
+                      <span className="p1-check-texto">{op.etiqueta}</span>
+                      <span className="p1-check-articulo">{op.articulo}</span>
+                    </label>
+                  );
+                })}
+              </div>
 
-              {/* Descripción de la opción seleccionada */}
-              {local.base_legal && (() => {
-                const base = BASES_LEGALES.find((b) => b.valor === local.base_legal);
-                return (
-                  <p className="p1-base-desc">
-                    <span className="p1-base-articulo">{base?.articulo} —</span> {base?.descripcion}
-                  </p>
-                );
-              })()}
+              {local.base_legal.length > 0 && (
+                <div className="p1-bases-seleccionadas">
+                  {local.base_legal.map((valor) => {
+                    const base = BASES_LEGALES.find((b) => b.valor === valor);
+                    return base ? (
+                      <p key={valor} className="p1-base-desc">
+                        <span className="p1-base-articulo">{base.articulo} —</span> {base.descripcion}
+                      </p>
+                    ) : null;
+                  })}
+                </div>
+              )}
             </div>
             {/* ── Sección colapsable: Información adicional ── */}
             <div className="p1-adicional">

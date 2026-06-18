@@ -254,7 +254,7 @@ export default function DetalleTratamiento() {
               <Valor v={tratamiento.finalidad} />
             </Campo>
             <Campo label="Base legal">
-              <Valor v={tratamiento.base_legal} mapa={BASE_LEGAL} />
+              <Badges items={tratamiento.base_legal?.split(",").filter(Boolean).map(v => BASE_LEGAL[v] || v)} />
             </Campo>
           </div>
 
@@ -329,7 +329,7 @@ export default function DetalleTratamiento() {
               <Valor v={d?.universo_titulares} vacio="—" />
             </Campo>
             <Campo label="Origen de los datos">
-              <Valor v={d?.origen_datos} mapa={ORIGEN} />
+              <Badges items={d?.origen_datos?.split(",").filter(Boolean).map(v => ORIGEN[v] || v)} />
             </Campo>
             <Campo label="Categoría de datos (detalle RAT)">
               {d?.categoria_datos

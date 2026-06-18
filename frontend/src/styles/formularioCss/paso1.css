@@ -540,6 +540,56 @@
   flex-shrink: 0;
 }
 
+/* ─── Checkboxes base legal (multi-select) ───────────────────── */
+.p1-check-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1.5px solid #dce9f4;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 13px;
+}
+
+.p1-check-item:hover {
+  border-color: var(--mid);
+  background: #f4f9ff;
+}
+
+.p1-check-item--marcado {
+  border-color: var(--mid);
+  background: #eef4fb;
+}
+
+.p1-check-input {
+  accent-color: var(--mid);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.p1-check-texto {
+  color: var(--dark);
+  font-weight: 500;
+}
+
+.p1-check-articulo {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--mid);
+  font-weight: 600;
+}
+
+.p1-bases-seleccionadas {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 /* ─── Sección adicional colapsable ───────────────────────────── */
 .p1-adicional {
   border: 1.5px solid #c8dcee;

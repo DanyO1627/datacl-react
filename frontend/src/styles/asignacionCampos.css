@@ -185,15 +185,17 @@
   background: #eef4fb;
 }
 
-/* Atenuado cuando está asignado a otra actividad */
-.ac-campo--asignado-otro {
-  opacity: 0.45;
-  cursor: default;
+/* Campo ya asignado a otra actividad — clickeable para compartir */
+.ac-campo--compartible {
+  opacity: 0.7;
+  cursor: pointer;
+  border-left: 3px solid #7c3aed;
 }
 
-.ac-campo--asignado-otro:hover {
-  border-color: #dcedf8;
-  background: #f8fbff;
+.ac-campo--compartible:hover {
+  opacity: 1;
+  border-color: #7c3aed;
+  background: #f5f3ff;
 }
 
 /* Resaltado cuando pertenece a la actividad activa */
