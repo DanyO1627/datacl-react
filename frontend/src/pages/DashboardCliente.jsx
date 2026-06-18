@@ -12,12 +12,15 @@ import "../styles/dashboardCliente.css"
 
 const COLORES_RIESGO = { BAJO: "#38a169", MEDIO: "#d97706", ALTO: "#e53e3e" }
 
+const PESO_RIESGO = { ALTO: 3, MEDIO: 2, BAJO: 1 }
+
 function obtenerFactoresRiesgo(t) {
   const factores = []
   if (t.datos_sensibles)           factores.push("Datos sensibles")
   if (t.sale_extranjero)           factores.push("Transferencia al extranjero")
   if (t.decisiones_automatizadas)  factores.push("Decisiones automatizadas")
   if (t.destinatarios?.trim())     factores.push("Destinatarios externos")
+  if (t.extendido?.incluye_nna)    factores.push("NNA")
   return factores
 }
 
@@ -57,7 +60,7 @@ export default function Dashboard() {
         })
 
         const ordenados = [...activos].sort(
-          (a, b) => new Date(b.creado_en) - new Date(a.creado_en)
+          (a, b) => (PESO_RIESGO[b.nivel_riesgo] ?? 0) - (PESO_RIESGO[a.nivel_riesgo] ?? 0)
         )
         setUltimos(ordenados.slice(0, 3))
       } catch {
@@ -309,7 +312,7 @@ export default function Dashboard() {
         {/* Últimos tratamientos */}
         {ultimos.length > 0 && (
           <section className="dashboard__ultimos-card">
-            <h2 className="dashboard__ultimos-titulo">Últimos tratamientos</h2>
+            <h2 className="dashboard__ultimos-titulo">Top 3 por nivel de riesgo</h2>
             <ul className="dashboard__ultimos-lista">
               {ultimos.map(t => {
                 const factores = obtenerFactoresRiesgo(t)

@@ -6,11 +6,25 @@ const FORM_VACIO = {
   // ── Paso 1 ───────────────────────────────────────────────
   nombre: "", responsable: "", es_responsable: true,
   departamento: "", finalidad: "", base_legal: "",
+  // Campos extendidos Paso 1 (B2-03)
+  descripcion_detallada: "", subarea_responsable: "",
+  procesos_relacionados: "", finalidades_secundarias: "",
+  informa_titulares: [], documento_respaldo_tiene: null,
+  documento_respaldo_descripcion: "",
   // ── Paso 2 ───────────────────────────────────────────────
   categorias_titulares: [], universo_titulares: "", origen_datos: "",
   categorias_datos: [], datos_sensibles: false, categorias_sensibles: [],
   categoria_datos: "",
   destinatarios: "", sale_extranjero: false, pais_destino: "", otros_datos: "",
+  // B2-05: campos extendidos Paso 2
+  incluye_nna: false, nna_detalle: "",
+  datos_navegacion: false, datos_navegacion_detalle: "",
+  destinatarios_internos: "", destinatarios_nacionales: "", destinatarios_internacionales: "",
+  terceros_son_encargados: false,
+  contratos_proteccion_datos: false, contratos_proteccion_datos_detalle: "",
+  datos_transferidos_detalle: "", metodo_transferencia: [],
+  sistemas_origen: "", sistemas_destino: "", sistemas_tratamiento: "",
+  tipos_tratamiento_sistema: [], base_datos_nombre: "", proveedor_tecnologico: "",
   // ── Paso 3 ───────────────────────────────────────────────
   plazo_conservacion: "", plazo_otro: "", otras_medidas: "",
   medidas_seguridad: [], decisiones_automatizadas: false,

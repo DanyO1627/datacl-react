@@ -120,6 +120,94 @@ class DetalleRatRespuesta(DetalleRatBase):
     model_config = {"from_attributes": True}
 
 
+class DetalleRatExtendidoEntrada(BaseModel):
+    descripcion_detallada:      Optional[str] = None
+    subarea_responsable:        Optional[str] = None
+    procesos_relacionados:      Optional[str] = None
+    finalidades_secundarias:    Optional[str] = None
+    informa_titulares:          Optional[str] = None
+    documento_respaldo_permiso: Optional[str] = None
+    incluye_nna:                    Optional[bool] = None
+    nna_detalle:                    Optional[str] = None
+    datos_navegacion:               Optional[bool] = None
+    datos_navegacion_detalle:       Optional[str] = None
+    destinatarios_internos:         Optional[str] = None
+    destinatarios_nacionales:       Optional[str] = None
+    destinatarios_internacionales:  Optional[str] = None
+    terceros_son_encargados:        Optional[bool] = None
+    contratos_proteccion_datos:     Optional[bool] = None
+    contratos_proteccion_datos_detalle: Optional[str] = None
+    datos_transferidos_detalle:     Optional[str] = None
+    metodo_transferencia:           Optional[str] = None
+    sistemas_origen:           Optional[str] = None
+    sistemas_destino:          Optional[str] = None
+    sistemas_tratamiento:      Optional[str] = None
+    tipos_tratamiento_sistema: Optional[str] = None
+    base_datos_nombre:         Optional[str] = None
+    proveedor_tecnologico:     Optional[str] = None
+    criterio_plazo:            Optional[str] = None
+    metodo_eliminacion:        Optional[str] = None
+    documenta_destruccion:     Optional[bool] = None
+    minimizacion_justificacion: Optional[str] = None
+    mecanismos_exactitud:      Optional[str] = None
+    evaluacion_periodica:      Optional[bool] = None
+    cumplimiento_demostrable:  Optional[bool] = None
+    incidentes_historicos:     Optional[str] = None
+    cambios_futuros:           Optional[str] = None
+    requiere_dpia:  Optional[bool] = None
+    dpia_realizada: Optional[bool] = None
+    dpia_detalle:   Optional[str] = None
+
+
+class DetalleRatExtendidoRespuesta(BaseModel):
+    id:             int
+    tratamiento_id: int
+    # Identificación detallada
+    descripcion_detallada:      Optional[str] = None
+    subarea_responsable:        Optional[str] = None
+    procesos_relacionados:      Optional[str] = None
+    # Finalidad y transparencia
+    finalidades_secundarias:     Optional[str] = None
+    informa_titulares:           Optional[str] = None
+    documento_respaldo_permiso:  Optional[str] = None
+    # Datos especiales
+    incluye_nna:                    Optional[bool] = None
+    nna_detalle:                    Optional[str] = None
+    datos_navegacion:               Optional[bool] = None
+    datos_navegacion_detalle:       Optional[str] = None
+    # Transferencias y terceros
+    destinatarios_internos:         Optional[str] = None
+    destinatarios_nacionales:       Optional[str] = None
+    destinatarios_internacionales:  Optional[str] = None
+    terceros_son_encargados:        Optional[bool] = None
+    contratos_proteccion_datos:     Optional[bool] = None
+    contratos_proteccion_datos_detalle: Optional[str] = None
+    datos_transferidos_detalle:     Optional[str] = None
+    metodo_transferencia:           Optional[str] = None
+    # Sistemas y tecnología
+    sistemas_origen:           Optional[str] = None
+    sistemas_destino:          Optional[str] = None
+    sistemas_tratamiento:      Optional[str] = None
+    tipos_tratamiento_sistema: Optional[str] = None
+    base_datos_nombre:         Optional[str] = None
+    proveedor_tecnologico:     Optional[str] = None
+    # Principios legales
+    criterio_plazo:            Optional[str] = None
+    metodo_eliminacion:        Optional[str] = None
+    documenta_destruccion:     Optional[bool] = None
+    minimizacion_justificacion: Optional[str] = None
+    mecanismos_exactitud:      Optional[str] = None
+    evaluacion_periodica:      Optional[bool] = None
+    cumplimiento_demostrable:  Optional[bool] = None
+    incidentes_historicos:     Optional[str] = None
+    cambios_futuros:           Optional[str] = None
+    # DPIA
+    requiere_dpia:  Optional[bool] = None
+    dpia_realizada: Optional[bool] = None
+    dpia_detalle:   Optional[str] = None
+    model_config = {"from_attributes": True}
+
+
 # ── Schemas de tratamientos ────────────────────────────────────────────────
 
 # Schema para cada campo que llega desde el análisis de Python
@@ -145,6 +233,7 @@ class TratamientoCrear(BaseModel):
     decisiones_automatizadas: bool = False
     campos_detectados: list[CampoRatEntrada] = []
     detalle: Optional[DetalleRatBase] = None
+    detalle_extendido: Optional[DetalleRatExtendidoEntrada] = None
     sesion_id: Optional[int] = None
     campos_usados: Optional[list] = None
 
@@ -169,6 +258,7 @@ class TratamientoEditar(BaseModel):
     nivel_riesgo: Optional[str] = None
     estado: Optional[str] = None
     detalle: Optional[DetalleRatBase] = None
+    detalle_extendido: Optional[DetalleRatExtendidoEntrada] = None
     modificado_por: Optional[str] = None
 
     @field_validator("nombre")
@@ -212,7 +302,8 @@ class TratamientoRespuesta(BaseModel):
     probabilidad: Optional[str] = None
     impacto: Optional[str] = None
     fecha_evaluacion: Optional[datetime] = None
-    detalle: Optional[DetalleRatRespuesta] = None
+    detalle:    Optional[DetalleRatRespuesta] = None
+    extendido:  Optional[DetalleRatExtendidoRespuesta] = None
     sesion_origen: Optional[str] = None
     model_config = {"from_attributes": True}
 

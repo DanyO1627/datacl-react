@@ -120,6 +120,15 @@ const ETIQ_MEDIDAS = {
   otras: "Otras",
 };
 
+const ETIQ_SENSIBLES = {
+  datos_salud:         "Datos de salud",
+  datos_biometricos:   "Datos biométricos",
+  origen_etnico:       "Origen étnico",
+  religion_creencias:  "Religión o creencias",
+  orientacion_sexual:  "Orientación sexual",
+  opiniones_politicas: "Opiniones políticas",
+};
+
 const ETIQ_CATEGORIAS = {
   nombre_apellido: "Nombre y apellido",
   rut_dni: "RUT / DNI",
@@ -203,7 +212,11 @@ export default function Paso3() {
       finalidad:                formularioCompleto.finalidad    || null,
       base_legal:               formularioCompleto.base_legal   || null,
       datos_sensibles:          formularioCompleto.datos_sensibles      ?? false,
-      destinatarios:            formularioCompleto.destinatarios        || null,
+      destinatarios: [
+        formularioCompleto.destinatarios_internos,
+        formularioCompleto.destinatarios_nacionales,
+        formularioCompleto.destinatarios_internacionales,
+      ].filter(Boolean).join("; ") || formularioCompleto.destinatarios || null,
       sale_extranjero:          formularioCompleto.sale_extranjero      ?? false,
       plazo_conservacion:       formularioCompleto.plazo_conservacion   || null,
       plazo_otro:               formularioCompleto.plazo_otro           || null,
@@ -230,7 +243,42 @@ export default function Paso3() {
         origen_datos:         formularioCompleto.origen_datos || null,
         categoria_datos:      formularioCompleto.categoria_datos || null,
       },
+
     };
+
+    // Solo incluir detalle_extendido si tiene al menos un campo con valor
+    const _ext = {
+      descripcion_detallada:       formularioCompleto.descripcion_detallada       || null,
+      subarea_responsable:         formularioCompleto.subarea_responsable         || null,
+      procesos_relacionados:       formularioCompleto.procesos_relacionados       || null,
+      finalidades_secundarias:     formularioCompleto.finalidades_secundarias     || null,
+      informa_titulares:           (formularioCompleto.informa_titulares || []).join(",") || null,
+      documento_respaldo_permiso:  formularioCompleto.documento_respaldo_tiene === true
+        ? (formularioCompleto.documento_respaldo_descripcion || "Sí")
+        : null,
+      // B2-05
+      incluye_nna:                        formularioCompleto.incluye_nna ? true : null,
+      nna_detalle:                        formularioCompleto.nna_detalle || null,
+      datos_navegacion:                   formularioCompleto.datos_navegacion ? true : null,
+      datos_navegacion_detalle:           formularioCompleto.datos_navegacion_detalle || null,
+      destinatarios_internos:             formularioCompleto.destinatarios_internos || null,
+      destinatarios_nacionales:           formularioCompleto.destinatarios_nacionales || null,
+      destinatarios_internacionales:      formularioCompleto.destinatarios_internacionales || null,
+      terceros_son_encargados:            formularioCompleto.terceros_son_encargados ? true : null,
+      contratos_proteccion_datos:         formularioCompleto.contratos_proteccion_datos ? true : null,
+      contratos_proteccion_datos_detalle: formularioCompleto.contratos_proteccion_datos_detalle || null,
+      datos_transferidos_detalle:         formularioCompleto.datos_transferidos_detalle || null,
+      metodo_transferencia:               (formularioCompleto.metodo_transferencia || []).join(",") || null,
+      sistemas_origen:                    formularioCompleto.sistemas_origen || null,
+      sistemas_destino:                   formularioCompleto.sistemas_destino || null,
+      sistemas_tratamiento:               formularioCompleto.sistemas_tratamiento || null,
+      tipos_tratamiento_sistema:          (formularioCompleto.tipos_tratamiento_sistema || []).join(",") || null,
+      base_datos_nombre:                  formularioCompleto.base_datos_nombre || null,
+      proveedor_tecnologico:              formularioCompleto.proveedor_tecnologico || null,
+    };
+    if (Object.values(_ext).some((v) => v !== null)) {
+      payload.detalle_extendido = _ext;
+    }
 
     try {
       const idx = form.actividadActual ?? 0;
@@ -277,7 +325,8 @@ export default function Paso3() {
         navigate("/login");
         return;
       }
-      setError(e.message);
+      console.error("ERROR GUARDAR:", e.message, e.errores);
+      setError(e.message || "Error al guardar el tratamiento. Intenta nuevamente.");
     } finally {
       setGuardando(false);
     }
@@ -319,7 +368,11 @@ export default function Paso3() {
         finalidad: datos.finalidad || null,
         base_legal: datos.base_legal || null,
         datos_sensibles: datos.datos_sensibles ?? false,
-        destinatarios: datos.destinatarios || null,
+        destinatarios: [
+          datos.destinatarios_internos,
+          datos.destinatarios_nacionales,
+          datos.destinatarios_internacionales,
+        ].filter(Boolean).join("; ") || datos.destinatarios || null,
         sale_extranjero: datos.sale_extranjero ?? false,
         plazo_conservacion: local.plazo_conservacion || null,
         medidas_seguridad: medStr,
@@ -334,6 +387,34 @@ export default function Paso3() {
           universo_titulares: datos.universo_titulares || null,
           origen_datos: datos.origen_datos || null,
           categoria_datos: datos.categoria_datos || null,
+        },
+        detalle_extendido: {
+          descripcion_detallada:      datos.descripcion_detallada       || null,
+          subarea_responsable:        datos.subarea_responsable         || null,
+          procesos_relacionados:      datos.procesos_relacionados       || null,
+          finalidades_secundarias:    datos.finalidades_secundarias     || null,
+          informa_titulares:          (datos.informa_titulares || []).join(",") || null,
+          documento_respaldo_permiso: datos.documento_respaldo_tiene === true
+            ? (datos.documento_respaldo_descripcion || "Sí")
+            : null,
+          incluye_nna:                        datos.incluye_nna ? true : null,
+          nna_detalle:                        datos.nna_detalle || null,
+          datos_navegacion:                   datos.datos_navegacion ? true : null,
+          datos_navegacion_detalle:           datos.datos_navegacion_detalle || null,
+          destinatarios_internos:             datos.destinatarios_internos || null,
+          destinatarios_nacionales:           datos.destinatarios_nacionales || null,
+          destinatarios_internacionales:      datos.destinatarios_internacionales || null,
+          terceros_son_encargados:            datos.terceros_son_encargados ? true : null,
+          contratos_proteccion_datos:         datos.contratos_proteccion_datos ? true : null,
+          contratos_proteccion_datos_detalle: datos.contratos_proteccion_datos_detalle || null,
+          datos_transferidos_detalle:         datos.datos_transferidos_detalle || null,
+          metodo_transferencia:               (datos.metodo_transferencia || []).join(",") || null,
+          sistemas_origen:                    datos.sistemas_origen || null,
+          sistemas_destino:                   datos.sistemas_destino || null,
+          sistemas_tratamiento:               datos.sistemas_tratamiento || null,
+          tipos_tratamiento_sistema:          (datos.tipos_tratamiento_sistema || []).join(",") || null,
+          base_datos_nombre:                  datos.base_datos_nombre || null,
+          proveedor_tecnologico:              datos.proveedor_tecnologico || null,
         },
       };
 
@@ -558,7 +639,7 @@ export default function Paso3() {
                   {form.datos_sensibles && categoriasSensibles.length > 0 && (
                     <FilaRevision
                       label="Tipos sensibles"
-                      valor={categoriasSensibles.join(", ")}
+                      valor={categoriasSensibles.map((id) => ETIQ_SENSIBLES[id] || id).join(", ")}
                     />
                   )}
                   <FilaRevision label="Destinatarios" valor={form.destinatarios} />

@@ -509,6 +509,84 @@
   background: #fee2e2;
   color: #991b1b;
 }
+/* ─── Radios genéricos ────────────────────────────────────────── */
+.p1-radios {
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+/* ─── Checkboxes ──────────────────────────────────────────────── */
+.p1-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.p1-checkbox-opcion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--dark);
+  cursor: pointer;
+}
+
+.p1-checkbox-opcion input[type="checkbox"] {
+  accent-color: var(--mid);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ─── Sección adicional colapsable ───────────────────────────── */
+.p1-adicional {
+  border: 1.5px solid #c8dcee;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.p1-adicional-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #f4f9ff;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dark);
+  font-family: 'Georgia', serif;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.p1-adicional-toggle:hover {
+  background: #e8f0fb;
+}
+
+.p1-adicional-icono {
+  font-size: 11px;
+  color: var(--mid);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.p1-adicional-icono--abierto {
+  transform: rotate(90deg);
+}
+
+.p1-adicional-contenido {
+  padding: 1.2rem 1.2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  border-top: 1.5px solid #e8f0f8;
+}
+
 /* ─── Toast borrador guardado ─────────────────────────────────── */
 .p1-toast-borrador {
   display: flex;

@@ -140,15 +140,36 @@ export default function Paso1() {
     departamento:   form.departamento   || "",
     finalidad:      form.finalidad      || "",
     base_legal:     form.base_legal     || "",
+    // Campos extendidos B2-03
+    descripcion_detallada:       form.descripcion_detallada       || "",
+    subarea_responsable:         form.subarea_responsable         || "",
+    procesos_relacionados:       form.procesos_relacionados       || "",
+    finalidades_secundarias:     form.finalidades_secundarias     || "",
+    informa_titulares:           form.informa_titulares           || [],
+    documento_respaldo_tiene:    form.documento_respaldo_tiene    ?? null,
+    documento_respaldo_descripcion: form.documento_respaldo_descripcion || "",
   });
 
   const [guardandoBorrador, setGuardandoBorrador] = useState(false);
   const [borradorOk, setBorradorOk] = useState(false);
+  const [abiertaAdicional, setAbiertaAdicional] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
     if (name === "finalidad" && contarPalabras(value) > 1000) return;
     setLocal((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function toggleInformaTitulares(valor) {
+    setLocal((prev) => {
+      const actual = prev.informa_titulares || []
+      return {
+        ...prev,
+        informa_titulares: actual.includes(valor)
+          ? actual.filter((v) => v !== valor)
+          : [...actual, valor],
+      }
+    })
   }
 
   async function handleGuardarBorrador() {
@@ -406,6 +427,39 @@ export default function Paso1() {
               </div>
             </div>
 
+            {/* Subárea responsable */}
+            <div className="p1-campo">
+              <label className="p1-label" htmlFor="subarea_responsable">
+                Área específica
+              </label>
+              <input
+                id="subarea_responsable"
+                name="subarea_responsable"
+                type="text"
+                className="p1-input"
+                placeholder="Ej: Subgerencia de Farmacias / Encargado de ventas"
+                value={local.subarea_responsable}
+                onChange={handleChange}
+                maxLength={200}
+              />
+            </div>
+
+            {/* Descripción detallada — siempre visible */}
+            <div className="p1-campo">
+              <label className="p1-label" htmlFor="descripcion_detallada">
+                Descripción detallada del tratamiento
+              </label>
+              <textarea
+                id="descripcion_detallada"
+                name="descripcion_detallada"
+                className="p1-textarea"
+                placeholder="¿Qué datos se tratan? ¿Para qué? ¿Cómo?"
+                value={local.descripcion_detallada}
+                onChange={handleChange}
+                rows={4}
+              />
+            </div>
+
             {/* Finalidad */}
             <div className="p1-campo">
               <label className="p1-label" htmlFor="finalidad">
@@ -462,6 +516,115 @@ export default function Paso1() {
                   </p>
                 );
               })()}
+            </div>
+            {/* ── Sección colapsable: Información adicional ── */}
+            <div className="p1-adicional">
+              <button
+                type="button"
+                className="p1-adicional-toggle"
+                onClick={() => setAbiertaAdicional((v) => !v)}
+              >
+                <span className={`p1-adicional-icono ${abiertaAdicional ? "p1-adicional-icono--abierto" : ""}`}>▶</span>
+                Información adicional — completa si aplica a tu organización
+              </button>
+
+              {abiertaAdicional && (
+                <div className="p1-adicional-contenido">
+
+                  {/* Procesos relacionados */}
+                  <div className="p1-campo">
+                    <label className="p1-label" htmlFor="procesos_relacionados">
+                      Procesos relacionados
+                    </label>
+                    <textarea
+                      id="procesos_relacionados"
+                      name="procesos_relacionados"
+                      className="p1-textarea"
+                      placeholder="¿Se relaciona con otros procesos internos? Ej: BackOffice, Contabilidad, TI"
+                      value={local.procesos_relacionados}
+                      onChange={handleChange}
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Finalidades secundarias */}
+                  <div className="p1-campo">
+                    <label className="p1-label" htmlFor="finalidades_secundarias">
+                      Finalidades secundarias
+                    </label>
+                    <textarea
+                      id="finalidades_secundarias"
+                      name="finalidades_secundarias"
+                      className="p1-textarea"
+                      placeholder="¿Existen finalidades secundarias como fidelización, reportes internos?"
+                      value={local.finalidades_secundarias}
+                      onChange={handleChange}
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Documento respaldo permiso */}
+                  <div className="p1-campo">
+                    <label className="p1-label">¿Existe documento de respaldo o permiso?</label>
+                    <div className="p1-radios">
+                      <label className="p1-rol-opcion">
+                        <input
+                          type="radio"
+                          name="documento_respaldo_tiene"
+                          checked={local.documento_respaldo_tiene === true}
+                          onChange={() => setLocal((p) => ({ ...p, documento_respaldo_tiene: true }))}
+                        />
+                        <span>Sí</span>
+                      </label>
+                      <label className="p1-rol-opcion">
+                        <input
+                          type="radio"
+                          name="documento_respaldo_tiene"
+                          checked={local.documento_respaldo_tiene === false}
+                          onChange={() => setLocal((p) => ({ ...p, documento_respaldo_tiene: false, documento_respaldo_descripcion: "" }))}
+                        />
+                        <span>No</span>
+                      </label>
+                    </div>
+                    {local.documento_respaldo_tiene === true && (
+                      <textarea
+                        id="documento_respaldo_descripcion"
+                        name="documento_respaldo_descripcion"
+                        className="p1-textarea"
+                        placeholder="Describe el documento de respaldo o permiso"
+                        value={local.documento_respaldo_descripcion}
+                        onChange={handleChange}
+                        rows={2}
+                        style={{ marginTop: 8 }}
+                      />
+                    )}
+                  </div>
+
+                  {/* Cómo se informa a los titulares */}
+                  <div className="p1-campo">
+                    <label className="p1-label">¿Cómo se informa a los titulares?</label>
+                    <div className="p1-checkboxes">
+                      {[
+                        { valor: "web",       etiqueta: "Aviso en web" },
+                        { valor: "correo",    etiqueta: "Correo electrónico" },
+                        { valor: "contrato",  etiqueta: "Contrato" },
+                        { valor: "mandato",   etiqueta: "Mandato" },
+                        { valor: "no_informa", etiqueta: "No se informa" },
+                      ].map(({ valor, etiqueta }) => (
+                        <label key={valor} className="p1-checkbox-opcion">
+                          <input
+                            type="checkbox"
+                            checked={(local.informa_titulares || []).includes(valor)}
+                            onChange={() => toggleInformaTitulares(valor)}
+                          />
+                          <span>{etiqueta}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+              )}
             </div>
           </div>
 

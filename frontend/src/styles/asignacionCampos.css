@@ -442,6 +442,22 @@
 
 .ac-btn-borrador:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.ac-btn-marcar-todos {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--mid);
+  background: #eef4fb;
+  color: var(--dark);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ac-btn-marcar-todos:hover {
+  background: var(--mid);
+  color: #fff;
+}
+
 .ac-msg-guardado {
   font-size: 12px;
   color: #276749;

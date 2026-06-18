@@ -76,6 +76,11 @@ def crear_tratamiento(
 
         db.add(models.DetalleRat(tratamiento_id=nuevo.id, **detalle_campos))
 
+        if datos.detalle_extendido:
+            ext_campos = datos.detalle_extendido.model_dump(exclude_none=True)
+            if ext_campos:
+                db.add(models.DetalleRatExtendido(tratamiento_id=nuevo.id, **ext_campos))
+
         # Vincular a sesión de análisis si viene sesion_id
         if datos.sesion_id:
             db.add(models.SesionActividad(
@@ -117,6 +122,7 @@ def obtener_tratamiento_por_id(
         db.query(models.Tratamiento)
         .options(
             joinedload(models.Tratamiento.detalle),
+            joinedload(models.Tratamiento.extendido),
             joinedload(models.Tratamiento.sesiones_actividad)
             .joinedload(models.SesionActividad.sesion),
         )
@@ -225,7 +231,10 @@ def editar_tratamiento(
 ) -> models.Tratamiento | None:
     tratamiento = (
         db.query(models.Tratamiento)
-        .options(joinedload(models.Tratamiento.detalle))
+        .options(
+            joinedload(models.Tratamiento.detalle),
+            joinedload(models.Tratamiento.extendido),
+        )
         .filter(
             models.Tratamiento.id == tratamiento_id,
             models.Tratamiento.organizacion_id == organizacion_id,
@@ -269,6 +278,14 @@ def editar_tratamiento(
                 # Y solo se actualizan los campos que llegaron explícitamente
                 for campo, valor in datos.detalle.model_dump(exclude_unset=True).items():
                     setattr(tratamiento.detalle, campo, valor)
+
+        if datos.detalle_extendido is not None:
+            ext_campos = datos.detalle_extendido.model_dump(exclude_unset=True)
+            if tratamiento.extendido is None:
+                tratamiento.extendido = models.DetalleRatExtendido(**ext_campos)
+            else:
+                for campo, valor in ext_campos.items():
+                    setattr(tratamiento.extendido, campo, valor)
 
         db.flush()  # aplica los cambios en memoria antes de tomar el snapshot "después"
 
