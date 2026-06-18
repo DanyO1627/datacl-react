@@ -3,6 +3,7 @@
 // Permite editar nombre y correo, y cambiar contraseña.
 
 import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import BarraLateral from "../components/BarraLateral";
 import axios from "axios";
@@ -64,6 +65,16 @@ function IconoError() {
 // ── Componente principal ───────────────────────────────────────
 export default function Perfil() {
   const { usuario, token } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (location.hash === "#personalizacion") {
+      setTimeout(() => {
+        document.getElementById("personalizacion")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
+  }, [location.hash]);
 
   // ── Estado del formulario de perfil ──────────────────────────
   const [perfil, setPerfil] = useState({ nombre: "", correo: "", rut: "" });
@@ -469,7 +480,7 @@ export default function Perfil() {
         </div>{/* fin contenido */}
 
           {/* ════════ Sección: personalización PDF ════════ */}
-          <div className="pf-contenido" style={{ marginTop: "1.5rem" }}>
+          <div id="personalizacion" className="pf-contenido" style={{ marginTop: "1.5rem" }}>
             <section className="pf-seccion">
               <h2 className="pf-seccion-titulo" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ width: 4, height: 20, background: colorInst, borderRadius: 2, display: "inline-block" }} />
@@ -576,8 +587,16 @@ export default function Perfil() {
                 </div>
               )}
 
-              {/* Botón guardar */}
+              {/* Botón guardar + volver */}
               <div className="pf-form-footer" style={{ marginTop: 16 }}>
+                {location.hash === "#personalizacion" && (
+                  <button
+                    className="pf-btn pf-btn--cancelar"
+                    onClick={() => navigate("/informes/nuevo")}
+                  >
+                    ← Volver a generar informe
+                  </button>
+                )}
                 <button
                   className={`pf-btn pf-btn--guardar ${guardandoColor ? "pf-btn--cargando" : ""}`}
                   onClick={handleGuardarColor}

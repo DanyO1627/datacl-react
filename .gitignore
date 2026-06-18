@@ -7,4 +7,6 @@ dist/
 .claude
 informes_generados/
 test.db
+test.db-journal
+uploads/logos/
 Sprint7_Tarjetas_Trello_v2.md

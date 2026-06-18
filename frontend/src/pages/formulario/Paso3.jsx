@@ -290,11 +290,15 @@ export default function Paso3() {
           formularioCompleto.medidas_seguridad,
           formularioCompleto.otras_medidas,
         );
+        const tieneDestinatarios = formularioCompleto.destinatarios ||
+          formularioCompleto.destinatarios_internos ||
+          formularioCompleto.destinatarios_nacionales ||
+          formularioCompleto.destinatarios_internacionales;
         const estadoFinal = (
           formularioCompleto.finalidad &&
           formularioCompleto.base_legal &&
           formularioCompleto.plazo_conservacion &&
-          formularioCompleto.destinatarios &&
+          tieneDestinatarios &&
           medStr
         ) ? "COMPLETO" : "PENDIENTE";
 

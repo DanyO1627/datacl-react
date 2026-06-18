@@ -261,21 +261,29 @@
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
-.btn-generar-pdf {
+.btn-generar-pdf,
+.btn-personalizar-pdf {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  background-color: #7c5cbf;
   color: #fff;
   border: none;
   border-radius: 10px;
   padding: 12px 28px;
   font-size: 15px;
   font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   cursor: pointer;
   transition: background 0.2s;
+  text-decoration: none;
+}
+
+.btn-generar-pdf {
+  background-color: #7c5cbf;
 }
 
 .btn-generar-pdf:hover:not(:disabled) {
@@ -285,6 +293,14 @@
 .btn-generar-pdf:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.btn-personalizar-pdf {
+  background-color: #294d83;
+}
+
+.btn-personalizar-pdf:hover {
+  background-color: #021024;
 }
 
 /* Spinner */

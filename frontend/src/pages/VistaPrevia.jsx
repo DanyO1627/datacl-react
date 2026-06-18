@@ -35,7 +35,13 @@ export default function VistaPrevia() {
       if (!res.ok) throw new Error()
       const data = await res.json()
       setTratamientos(data)
-      setSeleccionados(new Set(data.map(t => t.id)))
+      const guardados = sessionStorage.getItem("seleccion_informe")
+      if (guardados) {
+        setSeleccionados(new Set(JSON.parse(guardados)))
+        sessionStorage.removeItem("seleccion_informe")
+      } else {
+        setSeleccionados(new Set(data.map(t => t.id)))
+      }
     } catch {
       setError('No se pudieron cargar los tratamientos')
     } finally {
@@ -219,7 +225,7 @@ export default function VistaPrevia() {
               </div>
             )}
 
-            {/* Botón generar */}
+            {/* Botón generar + link personalización */}
             <div className="vistaprevia-acciones">
               {ningunoSeleccionado && (
                 <p className="vistaprevia-aviso-seleccion">
@@ -239,6 +245,15 @@ export default function VistaPrevia() {
                 ) : (
                   'Generar informe PDF'
                 )}
+              </button>
+              <button
+                className="btn-personalizar-pdf"
+                onClick={() => {
+                  sessionStorage.setItem("seleccion_informe", JSON.stringify([...seleccionados]))
+                  navigate("/perfil#personalizacion")
+                }}
+              >
+                Personalizar PDF
               </button>
             </div>
           </>
