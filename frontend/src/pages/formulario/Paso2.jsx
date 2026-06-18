@@ -156,7 +156,8 @@ function Tooltip({ texto }) {
 
 export default function Paso2() {
   const navigate = useNavigate();
-  const { form, actualizarForm } = useFormulario();
+  const { form, actualizarForm, resetForm } = useFormulario();
+  const esEdicion = form.modoEdicion;
 
   const detectadas = new Set();
   form.campos_detectados.forEach((campo) => {
@@ -300,9 +301,17 @@ export default function Paso2() {
   const [guardandoBorrador, setGuardandoBorrador] = useState(false);
   const [borradorOk, setBorradorOk] = useState(false);
 
-  function handleSiguiente() { actualizarForm({ ...local, origen_datos: local.origen_datos.join(",") }); navigate("/nuevo-tratamiento/paso3"); }
-  function handleAnterior()  { actualizarForm({ ...local, origen_datos: local.origen_datos.join(",") }); navigate("/nuevo-tratamiento"); }
-  function handleCancelar()  { navigate("/dashboard"); }
+  function handleSiguiente() { actualizarForm({ ...local, origen_datos: local.origen_datos.join(",") }); navigate("/nuevo-tratamiento/paso3"); window.scrollTo(0, 0); }
+  function handleAnterior()  { actualizarForm({ ...local, origen_datos: local.origen_datos.join(",") }); navigate("/nuevo-tratamiento"); window.scrollTo(0, 0); }
+  function handleCancelar()  {
+    if (esEdicion) {
+      const editId = form.tratamientoEditId;
+      resetForm();
+      navigate(`/tratamientos/${editId}`);
+    } else {
+      navigate("/dashboard");
+    }
+  }
 
   async function handleGuardarBorrador() {
     setGuardandoBorrador(true);
@@ -409,8 +418,8 @@ export default function Paso2() {
 
       <main className="p2-main">
         <div className="p2-header">
-          <h1 className="p2-titulo">Nuevo tratamiento</h1>
-          <p className="p2-subtitulo">Completa la información para registrar este tratamiento en el RAT</p>
+          <h1 className="p2-titulo">{esEdicion ? "Editar tratamiento" : "Nuevo tratamiento"}</h1>
+          <p className="p2-subtitulo">{esEdicion ? "Modifica la información del tratamiento" : "Completa la información para registrar este tratamiento en el RAT"}</p>
         </div>
 
         <div className="p2-card">
@@ -854,9 +863,11 @@ export default function Paso2() {
           <div className="p2-navegacion">
             <div className="p2-nav-izquierda">
               <button className="p2-btn p2-btn--cancelar" onClick={handleCancelar}>Cancelar</button>
-              <button className="p2-btn p2-btn--borrador" onClick={handleGuardarBorrador} disabled={guardandoBorrador}>
-                {guardandoBorrador ? "Guardando..." : "Guardar borrador"}
-              </button>
+              {!esEdicion && (
+                <button className="p2-btn p2-btn--borrador" onClick={handleGuardarBorrador} disabled={guardandoBorrador}>
+                  {guardandoBorrador ? "Guardando..." : "Guardar borrador"}
+                </button>
+              )}
             </div>
             <div className="p2-nav-derecha">
               <button className="p2-btn p2-btn--anterior" onClick={handleAnterior}>← Atrás</button>

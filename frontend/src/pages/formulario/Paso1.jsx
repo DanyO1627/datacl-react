@@ -118,7 +118,8 @@ function contarPalabras(texto) {
 export default function Paso1() {
   const navigate = useNavigate();
   const { state: datosAnalisis } = useLocation();
-  const { form, actualizarForm } = useFormulario();
+  const { form, actualizarForm, resetForm } = useFormulario();
+  const esEdicion = form.modoEdicion;
 
   // Pre-cargar campos detectados desde el análisis si el formulario viene vacío.
   // Depende de form.campos_detectados.length (no del array completo) para no
@@ -281,10 +282,17 @@ export default function Paso1() {
     if (!puedeAvanzar) return;
     actualizarForm({ ...local, base_legal: local.base_legal.join(",") });
     navigate("/nuevo-tratamiento/paso2");
+    window.scrollTo(0, 0);
   }
 
   function handleCancelar() {
-    navigate("/dashboard");
+    if (esEdicion) {
+      const editId = form.tratamientoEditId;
+      resetForm();
+      navigate(`/tratamientos/${editId}`);
+    } else {
+      navigate("/dashboard");
+    }
   }
 
   // Badge resumen de lo que detectó el análisis
@@ -297,14 +305,14 @@ export default function Paso1() {
 
       <main className="p1-main">
         <div className="p1-header">
-          <h1 className="p1-titulo">{local.nombre.trim() || "Nuevo tratamiento"}</h1>
-          <p className="p1-subtitulo">Completa la información para registrar este tratamiento en el RAT</p>
+          <h1 className="p1-titulo">{esEdicion ? "Editar tratamiento" : (local.nombre.trim() || "Nuevo tratamiento")}</h1>
+          <p className="p1-subtitulo">{esEdicion ? "Modifica la información del tratamiento" : "Completa la información para registrar este tratamiento en el RAT"}</p>
         </div>
 
         <div className="p1-card">
 
           {/* ── Banner progreso multi-actividad ── */}
-          {form.actividadesPendientes?.length > 0 && (() => {
+          {!esEdicion && form.actividadesPendientes?.length > 0 && (() => {
             const total = form.actividadesPendientes.length;
             const idx   = form.actividadActual ?? 0;
             const act   = form.actividadesPendientes[idx];
@@ -334,7 +342,7 @@ export default function Paso1() {
           <BarraProgreso pasoActual={1} />
 
           {/* ── Resumen del análisis (si viene de pantalla 8) ── */}
-          {detectados.length > 0 && (
+          {!esEdicion && detectados.length > 0 && (
             <div className="p1-resumen-analisis">
               <span className="p1-resumen-icono">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -424,7 +432,7 @@ export default function Paso1() {
               </div>
               <div className="p1-campo">
                 <label className="p1-label" htmlFor="departamento">
-                  Departamento o área
+                  Departamento, área o Dominio
                 </label>
                 <input
                   id="departamento"
@@ -667,13 +675,15 @@ export default function Paso1() {
               <button className="p1-btn p1-btn--cancelar" onClick={handleCancelar}>
                 Cancelar
               </button>
-              <button
-                className="p1-btn p1-btn--borrador"
-                onClick={handleGuardarBorrador}
-                disabled={guardandoBorrador || !local.nombre.trim()}
-              >
-                {guardandoBorrador ? "Guardando..." : "Guardar borrador"}
-              </button>
+              {!esEdicion && (
+                <button
+                  className="p1-btn p1-btn--borrador"
+                  onClick={handleGuardarBorrador}
+                  disabled={guardandoBorrador || !local.nombre.trim()}
+                >
+                  {guardandoBorrador ? "Guardando..." : "Guardar borrador"}
+                </button>
+              )}
             </div>
             <button
               className={`p1-btn p1-btn--siguiente ${!puedeAvanzar ? "p1-btn--disabled" : ""}`}

@@ -360,6 +360,62 @@
   }
 }
 
+.detalle-justificacion-riesgo {
+  margin-top: 20px;
+  padding: 16px 20px;
+  background: #f9f8fd;
+  border: 1px solid #e8e4f5;
+  border-radius: 10px;
+}
+
+.detalle-justificacion-titulo {
+  font-size: 14px;
+  color: #2b2b3b;
+  margin: 0 0 12px;
+}
+
+.detalle-justificacion-nivel {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detalle-justificacion-nivel--bajo  { color: #16a34a; }
+.detalle-justificacion-nivel--medio { color: #d97706; }
+.detalle-justificacion-nivel--alto  { color: #dc2626; }
+
+.detalle-justificacion-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 700px) {
+  .detalle-justificacion-cols { grid-template-columns: 1fr; }
+}
+
+.detalle-justificacion-sub {
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.detalle-justificacion-lista {
+  margin: 6px 0 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detalle-justificacion-lista li {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.5;
+}
+
 .detalle-eval-nota {
   font-size: 12px;
   color: #aaa;

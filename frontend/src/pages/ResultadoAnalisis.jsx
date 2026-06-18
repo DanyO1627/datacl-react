@@ -79,7 +79,7 @@ export default function AsignacionCampos() {
   function nuevaActividad() {
     const id  = `act_${Date.now()}`;
     const num = actividades.length + 1;
-    setActividades((prev) => [...prev, { id, nombre: `Actividad ${num}`, campos: [], nombreEditado: false }]);
+    setActividades((prev) => [...prev, { id, nombre: `RAT ${num}`, campos: [], nombreEditado: false }]);
     setActividadActiva(id);
   }
 
@@ -245,8 +245,8 @@ export default function AsignacionCampos() {
         {/* ── Header ── */}
         <div className="ac-header">
           <div className="ac-header-izq">
-            <h1>Asignación de campos a actividades</h1>
-            <p>Crea actividades y asigna cada campo detectado a la que corresponda</p>
+            <h1>Asignación de campos a RATs</h1>
+            <p>Crea RATs y asigna cada campo detectado al que corresponda</p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {sinAsignar > 0 && actividadActiva && (
@@ -267,7 +267,7 @@ export default function AsignacionCampos() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
-          Selecciona una actividad a la derecha y haz clic en los campos libres para asignarlos.
+          Selecciona un RAT a la derecha y haz clic en los campos libres para asignarlos.
           Haz clic en un chip <strong>×</strong> para desasignarlo.
         </div>
 
@@ -380,13 +380,13 @@ export default function AsignacionCampos() {
             <div className="ac-panel-header">
               <span className="ac-panel-titulo">
                 Registro de actividades de tratamiento ({actividades.length})
-                <Tooltip texto="Nombra la actividad según su propósito (ej: «Gestión de nómina», «Atención al cliente», «Reclutamiento de personal»), no según el sistema o departamento. Si los mismos datos se usan para dos fines distintos, créalos como actividades separadas." />
+                <Tooltip texto="Nombra el RAT según su propósito (ej: «Gestión de nómina», «Atención al cliente», «Reclutamiento de personal»), no según el sistema o departamento. Si los mismos datos se usan para dos fines distintos, créalos como RATs separados." />
               </span>
             </div>
             <div className="ac-panel-cuerpo">
 
               {actividades.length === 0 && (
-                <p className="ac-vacio">Crea una actividad para empezar a asignar campos.</p>
+                <p className="ac-vacio">Crea un RAT para empezar a asignar campos.</p>
               )}
 
               {actividades.map((act) => (
@@ -405,7 +405,7 @@ export default function AsignacionCampos() {
                       value={act.nombre}
                       onClick={(e) => e.stopPropagation()}
                       onChange={(e) => renombrar(act.id, e.target.value)}
-                      placeholder="Nombre de la actividad"
+                      placeholder="Nombre del RAT"
                       maxLength={80}
                     />
                     <button
@@ -449,7 +449,7 @@ export default function AsignacionCampos() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                   <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
-                Nueva actividad
+                Nuevo RAT
               </button>
             </div>
           </div>
@@ -497,7 +497,7 @@ export default function AsignacionCampos() {
             className="ac-btn-continuar"
             onClick={handleContinuar}
             disabled={!puedeAvanzar}
-            title={!puedeAvanzar ? "Crea al menos una actividad con campos asignados para continuar" : ""}
+            title={!puedeAvanzar ? "Crea al menos un RAT con campos asignados para continuar" : ""}
           >
             Continuar →
           </button>

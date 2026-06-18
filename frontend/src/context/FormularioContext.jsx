@@ -35,6 +35,8 @@ const FORM_VACIO = {
   incidentes_historicos: "", cambios_futuros: "",
   // ── Paso 3 — DPIA ────────────────────────────────────────
   requiere_dpia: false, dpia_realizada: null, dpia_detalle: "",
+  // ── Modo edición ──────────────────────────────────────────
+  modoEdicion: false, tratamientoEditId: null,
   // ── Análisis ─────────────────────────────────────────────
   campos_detectados: [], campos_pendientes: [],
   // ── Sesión / actividades ─────────────────────────────────
@@ -95,8 +97,12 @@ export function FormularioProvider({ children }) {
     setForm(FORM_VACIO);
   }
 
+  function cargarFormCompleto(campos) {
+    setForm({ ...FORM_VACIO, ...campos });
+  }
+
   return (
-    <FormularioContext.Provider value={{ form, actualizarForm, actualizarActividades, avanzarActividad, resetForm }}>
+    <FormularioContext.Provider value={{ form, actualizarForm, actualizarActividades, avanzarActividad, resetForm, cargarFormCompleto }}>
       {children}
     </FormularioContext.Provider>
   );

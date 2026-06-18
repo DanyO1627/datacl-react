@@ -197,6 +197,52 @@ export default function DetalleTratamiento() {
   const d      = tratamiento.detalle     // puede ser null en tratamientos anteriores
   const ext    = tratamiento.detalle_extendido   // null si la tabla aún no tiene fila para este tratamiento
 
+  function detectaSensibleEnCategorias() {
+    const cat = (d?.categoria_datos || '').toLowerCase()
+    const keywords = ['salud', 'diagnóstico', 'diagnostico', 'medicamento', 'biométric', 'biometric', 'huella', 'facial', 'iris', 'étnic', 'etnic', 'raza', 'religión', 'religion', 'creencia', 'orientación sexual', 'orientacion sexual', 'opinión polít', 'opinion polit', 'genétic', 'genetic', 'sindical']
+    return keywords.some(kw => cat.includes(kw))
+  }
+  const tieneSensibles = tratamiento.datos_sensibles || detectaSensibleEnCategorias()
+  const categoriasSensiblesDetectadas = (d?.categoria_datos || '').split('\n').filter(linea => {
+    const l = linea.toLowerCase()
+    return ['salud', 'biométric', 'biometric', 'huella', 'étnic', 'etnic', 'religión', 'religion', 'sexual', 'polít', 'genétic', 'sindical'].some(kw => l.includes(kw))
+  }).map(l => l.trim()).join(', ')
+
+  function razonesProbabilidad() {
+    const r = []
+    if (tieneSensibles) {
+      const detalle = categoriasSensiblesDetectadas ? `: ${categoriasSensiblesDetectadas.substring(0, 150)}` : ''
+      r.push(`Contiene datos sensibles${detalle} — probabilidad ALTA directa`)
+    }
+    if (tratamiento.destinatarios)
+      r.push(`Los datos se comparten con terceros: ${tratamiento.destinatarios.substring(0, 100)}`)
+    if (tratamiento.sale_extranjero)
+      r.push('Los datos salen al extranjero, lo que aumenta la exposición')
+    if (ext?.destinatarios_internacionales?.trim())
+      r.push(`Existen destinatarios internacionales: ${ext.destinatarios_internacionales.substring(0, 100)}`)
+    if (r.length === 0)
+      r.push('No se detectaron factores que aumenten la probabilidad de incidente')
+    return r
+  }
+  function razonesImpacto() {
+    const r = []
+    if (tieneSensibles) {
+      const detalle = categoriasSensiblesDetectadas ? `: ${categoriasSensiblesDetectadas.substring(0, 150)}` : ''
+      r.push(`Contiene datos sensibles${detalle} — una filtración tendría impacto ALTO directo sobre los titulares`)
+    }
+    if (ext?.incluye_nna) {
+      const detNna = ext.nna_detalle ? `: ${ext.nna_detalle.substring(0, 100)}` : ''
+      r.push(`Incluye datos de menores de edad (NNA)${detNna} — Art. 16 bis Ley 21.719 los trata como categoría especial`)
+    }
+    if (tratamiento.decisiones_automatizadas)
+      r.push('Se realizan decisiones automatizadas sobre personas (ej: scoring, perfilamiento), lo que amplifica el daño potencial')
+    if (!tratamiento.medidas_seguridad)
+      r.push('No se declararon medidas de seguridad (sin cifrado, backups ni control de acceso), aumentando el daño posible ante una brecha')
+    if (r.length === 0)
+      r.push('No se detectaron factores que aumenten el impacto sobre los titulares')
+    return r
+  }
+
   // Oculta una sección extendida si todos sus campos son null/vacío/undefined
   function seccionExtendidaTieneData(...campos) {
     return campos.some(v => v !== null && v !== undefined && v !== '')
@@ -350,6 +396,25 @@ export default function DetalleTratamiento() {
           <div className="detalle-evaluacion-grid">
             <BarraRiesgo label="Probabilidad" valor={tratamiento.probabilidad} />
             <BarraRiesgo label="Impacto"      valor={tratamiento.impacto} />
+          </div>
+          <div className="detalle-justificacion-riesgo">
+            <p className="detalle-justificacion-titulo">
+              El sistema determinó que el riesgo es <strong className={`detalle-justificacion-nivel detalle-justificacion-nivel--${(tratamiento.nivel_riesgo || 'BAJO').toLowerCase()}`}>{(tratamiento.nivel_riesgo || 'BAJO')}</strong> porque:
+            </p>
+            <div className="detalle-justificacion-cols">
+              <div>
+                <span className="detalle-justificacion-sub">Probabilidad: {tratamiento.probabilidad || '—'}</span>
+                <ul className="detalle-justificacion-lista">
+                  {razonesProbabilidad().map((r, i) => <li key={i}>{r}</li>)}
+                </ul>
+              </div>
+              <div>
+                <span className="detalle-justificacion-sub">Impacto: {tratamiento.impacto || '—'}</span>
+                <ul className="detalle-justificacion-lista">
+                  {razonesImpacto().map((r, i) => <li key={i}>{r}</li>)}
+                </ul>
+              </div>
+            </div>
           </div>
           <p className="detalle-eval-nota">
             {tratamiento.fecha_evaluacion

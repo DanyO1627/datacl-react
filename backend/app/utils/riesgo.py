@@ -7,25 +7,43 @@
 #
 # "Sube un nivel" significa: BAJO→MEDIO o MEDIO→ALTO (nunca pasa de ALTO).
 
+_KEYWORDS_SENSIBLES = (
+    "salud", "diagnóstico", "diagnostico", "medicamento",
+    "biométric", "biometric", "huella", "facial", "iris",
+    "étnic", "etnic", "raza",
+    "religión", "religion", "creencia",
+    "orientación sexual", "orientacion sexual",
+    "opinión polít", "opinion polit", "afiliación",
+    "genétic", "genetic",
+    "sindical",
+)
+
+
+def _tiene_datos_sensibles(tratamiento) -> bool:
+    if tratamiento.datos_sensibles:
+        return True
+    detalle = getattr(tratamiento, "detalle", None)
+    if detalle:
+        cat = (getattr(detalle, "categoria_datos", "") or "").lower()
+        if any(kw in cat for kw in _KEYWORDS_SENSIBLES):
+            return True
+    return False
 
 
 def calcular_probabilidad(tratamiento) -> str:
-    if tratamiento.datos_sensibles: # Si hay datos sensibles, entonces la probabilidad pasa a ser ALTA directo
+    if _tiene_datos_sensibles(tratamiento):
         return "ALTA"
 
     nivel = "BAJA"
 
-    if tratamiento.destinatarios: # Si se comparten datos con 3ros, entonces sube un nivel
+    if tratamiento.destinatarios:
         nivel = "MEDIA"
 
-
-    if tratamiento.sale_extranjero: # si los datos al extranjero, entonces sube un nivel
+    if tratamiento.sale_extranjero:
         nivel = "ALTA" if nivel == "MEDIA" else "MEDIA"
 
-
-    # getattr evita error si el tratamiento no tiene detalle_extendido (tratamientos viejos)
-    detalle_ext = getattr(tratamiento, "detalle_extendido", None) 
-    dest_int = getattr(detalle_ext, "destinatarios_internacionales", None) if detalle_ext else None # si tiene destinatarios internacionales sube un nivel
+    detalle_ext = getattr(tratamiento, "detalle_extendido", None)
+    dest_int = getattr(detalle_ext, "destinatarios_internacionales", None) if detalle_ext else None
     if dest_int and dest_int.strip():
         nivel = "ALTA" if nivel == "MEDIA" else "MEDIA"
 
@@ -33,21 +51,18 @@ def calcular_probabilidad(tratamiento) -> str:
 
 
 def calcular_impacto(tratamiento) -> str:
-    if tratamiento.datos_sensibles: # si tiene datos sensibles, entonces el impacto pasa a ser alto
+    if _tiene_datos_sensibles(tratamiento):
         return "ALTO"
 
-
     detalle_ext = getattr(tratamiento, "detalle_extendido", None)
-    if detalle_ext and getattr(detalle_ext, "incluye_nna", False): # si incluye datos de menores (NNA), entonces pasa a ser alto
-        return "ALTO" # de hecho, la ley 21.719 Art. 16 bis los trata como categoría especial
+    if detalle_ext and getattr(detalle_ext, "incluye_nna", False):
+        return "ALTO"
 
     nivel = "BAJO"
 
-    # si usa algoritmos o ia para decidir cosas sobre personas, sube un nivel
     if tratamiento.decisiones_automatizadas:
         nivel = "MEDIO"
 
-    # Si tiene campos identificadores fuertes (RUT, fecha nacimiento), entonces sube un nivel
     campos = getattr(tratamiento, "campos", None) or getattr(tratamiento, "campos_detectados", None) or []
     tiene_dato_identificador = any(
         c.nombre_columna.lower() in ("rut", "fecha_nacimiento", "fecha_nac")
@@ -56,15 +71,12 @@ def calcular_impacto(tratamiento) -> str:
     if tiene_dato_identificador:
         nivel = "ALTO" if nivel == "MEDIO" else "MEDIO"
 
-    # Si no se declaró ninguna medida de seguridad, entonces sube un nivel
-    # porque eso quiere decir que no tiene cifrado, backups, nada, entonces hay más daño posible ante brecha
     if not tratamiento.medidas_seguridad:
         nivel = "ALTO" if nivel == "MEDIO" else "MEDIO"
 
     return nivel
 
 
-# y acá es donde se cruza la probabilidad * impacto en la matriz 3×3 y esto nos da el nivel final del riesgo
 def determinar_nivel_riesgo(probabilidad: str, impacto: str) -> str:
     matriz = {
         ("ALTA",  "ALTO"):  "ALTO",

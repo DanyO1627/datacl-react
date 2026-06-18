@@ -152,8 +152,8 @@ class DetalleRatExtendidoEntrada(BaseModel):
     documenta_destruccion:     Optional[bool] = None
     minimizacion_justificacion: Optional[str] = None
     mecanismos_exactitud:      Optional[str] = None
-    evaluacion_periodica:      Optional[bool] = None
-    cumplimiento_demostrable:  Optional[bool] = None
+    evaluacion_periodica:      Optional[str] = None
+    cumplimiento_demostrable:  Optional[str] = None
     incidentes_historicos:     Optional[str] = None
     cambios_futuros:           Optional[str] = None
     requiere_dpia:  Optional[bool] = None
@@ -199,8 +199,8 @@ class DetalleRatExtendidoRespuesta(BaseModel):
     documenta_destruccion:     Optional[bool] = None
     minimizacion_justificacion: Optional[str] = None
     mecanismos_exactitud:      Optional[str] = None
-    evaluacion_periodica:      Optional[bool] = None
-    cumplimiento_demostrable:  Optional[bool] = None
+    evaluacion_periodica:      Optional[str] = None
+    cumplimiento_demostrable:  Optional[str] = None
     incidentes_historicos:     Optional[str] = None
     cambios_futuros:           Optional[str] = None
     # DPIA
@@ -391,7 +391,8 @@ class InformeRespuesta(BaseModel):
     generado_en:        Optional[datetime] = None
     tiene_ia:           bool = False
     ruta_pdf:           Optional[str] = None
-    num_tratamientos:   int = 0          # cuántos tratamientos tenía la org al generar
+    num_tratamientos:   int = 0
+    versiones_snapshot: Optional[dict] = None
 
     model_config = {"from_attributes": True}
 
