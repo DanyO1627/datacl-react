@@ -128,7 +128,6 @@ export default function NuevaSesion() {
   function handleOpcion(id, deshabilitado) {
     if (deshabilitado) return;
     if (id === "manual") { navigate("/nueva-sesion/manual"); return; }
-    if (id === "bd")     { navigate("/nueva-sesion/conexion-bd"); return; }
     setFuenteActiva(id);
   }
 
@@ -281,6 +280,26 @@ export default function NuevaSesion() {
             </button>
           ))}
         </div>
+
+        {/* ── Conectar a BD (CTA) ── */}
+        {fuenteActiva === "bd" && (
+          <div className="ca-contenido ca-bd-cta" style={{ textAlign: "center", padding: "2.5rem 1.5rem" }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🗄️</div>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: "#052659", margin: "0 0 8px" }}>
+              Conecta tu base de datos
+            </h3>
+            <p style={{ fontSize: 14, color: "#5483B3", margin: "0 0 20px", maxWidth: 480, marginInline: "auto" }}>
+              DataCL leerá solo los nombres de tablas y columnas — nunca accede al contenido de tus registros ni guarda tus credenciales.
+            </p>
+            <button
+              className="ns-btn-ir-archivo"
+              style={{ background: "#052659", color: "#fff", border: "none", borderRadius: 10, padding: "12px 28px", fontSize: 15, fontWeight: 600, cursor: "pointer" }}
+              onClick={() => navigate("/nueva-sesion/conexion-bd")}
+            >
+              Configurar conexión →
+            </button>
+          </div>
+        )}
 
         {/* ── Subir archivo ── */}
         {fuenteActiva === "archivo" && (
