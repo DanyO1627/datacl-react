@@ -1,6 +1,6 @@
 """
 Tests de tratamientos, análisis e informes
-— CP-07, CP-11~18, CP-19~25, CP-41, CP-49~51
+— CP-07, CP-11~18, CP-19~25, CP-41, CP-49~51, CP-64~68
 """
 import io
 
@@ -254,3 +254,67 @@ def test_cp51_destinatarios_internacionales_sube_riesgo(client, auth_header):
     nivel_con = con_int.json()["nivel_riesgo"]
     orden = {"BAJO": 0, "MEDIO": 1, "ALTO": 2}
     assert orden[nivel_con] >= orden[nivel_sin]
+
+
+# ── CP-64: Crear tratamiento con detalle_extendido → campos guardados ───────
+def test_cp64_crear_con_detalle_extendido(client, auth_header):
+    resp = _crear_tratamiento(client, auth_header, {
+        "detalle_extendido": {
+            "descripcion_detallada": "Tratamiento de prueba extendido",
+            "subarea_responsable": "Recursos Humanos",
+            "incluye_nna": True,
+            "nna_detalle": "Hijos de funcionarios",
+            "destinatarios_internos": "Gerencia",
+            "destinatarios_nacionales": "SERNAC",
+            "destinatarios_internacionales": "Google LLC",
+            "requiere_dpia": True,
+        },
+    })
+    assert resp.status_code == 201
+    body = resp.json()
+    ext = body["detalle_extendido"]
+    assert ext["descripcion_detallada"] == "Tratamiento de prueba extendido"
+    assert ext["subarea_responsable"] == "Recursos Humanos"
+    assert ext["incluye_nna"] is True
+    assert ext["destinatarios_internacionales"] == "Google LLC"
+    assert ext["requiere_dpia"] is True
+
+
+# ── CP-65: Obtener campos RAT de un tratamiento → lista ─────────────────────
+def test_cp65_obtener_campos_rat(client, auth_header):
+    tid = _crear_tratamiento(client, auth_header).json()["id"]
+    resp = client.get(f"/tratamientos/{tid}/campos", headers=auth_header)
+    assert resp.status_code == 200
+    campos = resp.json()
+    assert len(campos) == 2
+    nombres = {c["nombre_columna"] for c in campos}
+    assert "nombre" in nombres
+    assert "correo" in nombres
+
+
+# ── CP-66: Base legal multi-valor se guarda correctamente ────────────────────
+def test_cp66_base_legal_multivalor(client, auth_header):
+    resp = _crear_tratamiento(client, auth_header, {
+        "base_legal": "Consentimiento (Art. 12), Interés legítimo (Art. 13)",
+    })
+    assert resp.status_code == 201
+    assert "Consentimiento" in resp.json()["base_legal"]
+    assert "Interés legítimo" in resp.json()["base_legal"]
+
+
+# ── CP-67: Eliminar tratamiento propio → 200 ────────────────────────────────
+def test_cp67_eliminar_tratamiento(client, auth_header):
+    tid = _crear_tratamiento(client, auth_header).json()["id"]
+    resp = client.delete(f"/tratamientos/{tid}", headers=auth_header)
+    assert resp.status_code == 200
+    assert resp.json()["mensaje"] == "Tratamiento eliminado correctamente."
+
+    resp2 = client.get(f"/tratamientos/{tid}", headers=auth_header)
+    assert resp2.status_code == 404
+
+
+# ── CP-68: Eliminar tratamiento de otra org → 404 ───────────────────────────
+def test_cp68_eliminar_tratamiento_otra_org(client, auth_header, auth_header2):
+    tid = _crear_tratamiento(client, auth_header).json()["id"]
+    resp = client.delete(f"/tratamientos/{tid}", headers=auth_header2)
+    assert resp.status_code == 404
