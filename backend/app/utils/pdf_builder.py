@@ -486,8 +486,8 @@ def construir_pdf(org, tratamientos: list) -> bytes:
         pagesize=A4,
         rightMargin=1.5 * cm,
         leftMargin=1.5 * cm,
-        topMargin=1.5 * cm,
-        bottomMargin=1.8 * cm,
+        topMargin=2.5 * cm,
+        bottomMargin=2.5 * cm,
         title=f"RAT — {org.nombre}",
         author=org.nombre,
         subject="Registro de Actividades de Tratamiento — Ley 21.719 (Chile)",
@@ -575,20 +575,70 @@ def construir_pdf(org, tratamientos: list) -> bytes:
         elementos.append(PageBreak())
         elementos.extend(_ficha_tratamiento(d, idx, total, estilos_dict, ancho, color_header))
 
-    # ── Pie de página ─────────────────────────────────────────────
-    def pie(canvas, doc):
+    # ── Header y footer en cada página ──────────────────────────
+    logo_path = logo_ruta if (logo_ruta and Path(logo_ruta).exists()) else None
+    org_nombre = org.nombre
+
+    def _header_footer(canvas, doc_obj):
         canvas.saveState()
+        page_w, page_h = A4
+        margen = doc_obj.leftMargin
+
+        # ── HEADER: barra de color con logo + texto ──────────
+        header_h = 0.8 * cm
+        header_y = page_h - 1.2 * cm
+
+        # Barra de color de ancho completo
+        canvas.setFillColor(color_header)
+        canvas.rect(margen, header_y, page_w - 2 * margen, header_h, fill=1, stroke=0)
+
+        # Logo pequeño en el header (si existe)
+        if logo_path:
+            try:
+                logo_h = 0.55 * cm
+                logo_w = 0.55 * cm
+                canvas.drawImage(
+                    logo_path,
+                    margen + 0.15 * cm,
+                    header_y + (header_h - logo_h) / 2,
+                    width=logo_w, height=logo_h,
+                    preserveAspectRatio=True, mask="auto",
+                )
+            except Exception:
+                pass
+
+        # Texto del header
+        canvas.setFillColor(COLOR_BLANCO)
+        canvas.setFont("Helvetica-Bold", 8)
+        text_x = margen + (0.85 * cm if logo_path else 0.3 * cm)
+        canvas.drawString(text_x, header_y + 0.25 * cm, f"{org_nombre} — Registro de Actividades de Tratamiento")
+
+        canvas.setFont("Helvetica", 7)
+        canvas.drawRightString(
+            page_w - margen - 0.3 * cm,
+            header_y + 0.25 * cm,
+            "DataCL · Ley 21.719",
+        )
+
+        # ── FOOTER: org + metodología + página ───────────────
+        footer_y = 0.8 * cm
+
+        # Línea separadora
+        canvas.setStrokeColor(colors.HexColor("#BFBFBF"))
+        canvas.setLineWidth(0.5)
+        canvas.line(margen, footer_y + 0.35 * cm, page_w - margen, footer_y + 0.35 * cm)
+
         canvas.setFont("Helvetica", 7)
         canvas.setFillColor(colors.HexColor("#888888"))
         canvas.drawString(
-            doc.leftMargin, 0.75 * cm,
+            margen, footer_y,
             "Metodología AEPD adaptada a Ley 21.719 — Protección de Datos Personales (Chile)",
         )
         canvas.drawRightString(
-            A4[0] - doc.rightMargin, 0.75 * cm,
+            page_w - margen, footer_y,
             f"Página {canvas.getPageNumber()}",
         )
         canvas.restoreState()
 
-    doc.build(elementos, onFirstPage=pie, onLaterPages=pie)
+    doc.build(elementos, onFirstPage=_header_footer, onLaterPages=_header_footer)
     return buffer.getvalue()

@@ -72,6 +72,13 @@ export default function Perfil() {
   const [guardandoPerfil, setGuardandoPerfil] = useState(false);
   const [alertaPerfil, setAlertaPerfil] = useState(null); // { tipo: "exito"|"error", mensaje }
 
+  // ── Estado de personalización PDF ─────────────────────────────
+  const [colorInst, setColorInst] = useState("#7030A0");
+  const [logoUrl, setLogoUrl] = useState(null);
+  const [subiendoLogo, setSubiendoLogo] = useState(false);
+  const [guardandoColor, setGuardandoColor] = useState(false);
+  const [alertaPdf, setAlertaPdf] = useState(null);
+
   // ── Estado del formulario de contraseña ──────────────────────
   const [password, setPassword] = useState({
     password_actual: "",
@@ -94,6 +101,8 @@ export default function Perfil() {
           correo: res.data.correo || "",
           rut:    res.data.rut    || "",
         });
+        if (res.data.color_institucional) setColorInst(res.data.color_institucional);
+        if (res.data.logo_ruta) setLogoUrl(`${API}/organizaciones/logo?t=${Date.now()}`);
       } catch {
         // fallback al contexto si el endpoint falla
         if (usuario) {
@@ -164,6 +173,64 @@ export default function Perfil() {
       });
     } finally {
       setGuardandoPass(false);
+    }
+  }
+
+  // ── Subir logo ────────────────────────────────────────────────
+  async function handleSubirLogo(e) {
+    const archivo = e.target.files?.[0];
+    if (!archivo) return;
+
+    const ext = archivo.name.split(".").pop().toLowerCase();
+    if (!["png", "jpg", "jpeg"].includes(ext)) {
+      setAlertaPdf({ tipo: "error", mensaje: "Formato no válido. Usa PNG o JPG." });
+      return;
+    }
+    if (archivo.size > 2 * 1024 * 1024) {
+      setAlertaPdf({ tipo: "error", mensaje: "El archivo excede 2 MB." });
+      return;
+    }
+
+    setSubiendoLogo(true);
+    setAlertaPdf(null);
+    try {
+      const formData = new FormData();
+      formData.append("archivo", archivo);
+      await api.post("/organizaciones/logo", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setLogoUrl(`${API}/organizaciones/logo?t=${Date.now()}`);
+      setAlertaPdf({ tipo: "exito", mensaje: "Logo subido correctamente." });
+    } catch (err) {
+      const detalle = err.response?.data?.detail;
+      setAlertaPdf({ tipo: "error", mensaje: typeof detalle === "string" ? detalle : "Error al subir el logo." });
+    } finally {
+      setSubiendoLogo(false);
+    }
+  }
+
+  async function handleEliminarLogo() {
+    try {
+      await api.delete("/organizaciones/logo");
+      setLogoUrl(null);
+      setAlertaPdf({ tipo: "exito", mensaje: "Logo eliminado." });
+    } catch {
+      setAlertaPdf({ tipo: "error", mensaje: "Error al eliminar el logo." });
+    }
+  }
+
+  // ── Guardar color ────────────────────────────────────────────
+  async function handleGuardarColor() {
+    setGuardandoColor(true);
+    setAlertaPdf(null);
+    try {
+      await api.put("/organizaciones/color", { color: colorInst });
+      setAlertaPdf({ tipo: "exito", mensaje: "Color guardado correctamente." });
+    } catch (err) {
+      const detalle = err.response?.data?.detail;
+      setAlertaPdf({ tipo: "error", mensaje: typeof detalle === "string" ? detalle : "Error al guardar el color." });
+    } finally {
+      setGuardandoColor(false);
     }
   }
 
@@ -400,6 +467,128 @@ export default function Perfil() {
           </section>
 
         </div>{/* fin contenido */}
+
+          {/* ════════ Sección: personalización PDF ════════ */}
+          <div className="pf-contenido" style={{ marginTop: "1.5rem" }}>
+            <section className="pf-seccion">
+              <h2 className="pf-seccion-titulo" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ width: 4, height: 20, background: colorInst, borderRadius: 2, display: "inline-block" }} />
+                Personalización del informe PDF
+              </h2>
+
+              <div className="pf-pdf-grid">
+                {/* ── Columna izquierda: logo + color ── */}
+                <div className="pf-pdf-controles">
+                  {/* Logo */}
+                  <div className="pf-pdf-bloque">
+                    <label className="pf-label">Logo de la organización</label>
+                    <span className="pf-pdf-hint">PNG o JPG · Máx. 2 MB</span>
+
+                    <div className="pf-logo-area">
+                      {logoUrl ? (
+                        <img src={logoUrl} alt="Logo" className="pf-logo-img" />
+                      ) : (
+                        <div className="pf-logo-placeholder">Sin logo</div>
+                      )}
+                    </div>
+
+                    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                      <label className="pf-btn pf-btn--guardar pf-btn--sm" style={{ cursor: "pointer" }}>
+                        {subiendoLogo ? "Subiendo..." : "Subir logo"}
+                        <input
+                          type="file"
+                          accept=".png,.jpg,.jpeg"
+                          onChange={handleSubirLogo}
+                          style={{ display: "none" }}
+                          disabled={subiendoLogo}
+                        />
+                      </label>
+                      <button
+                        className="pf-btn pf-btn--cancelar pf-btn--sm"
+                        onClick={handleEliminarLogo}
+                        disabled={!logoUrl}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Color */}
+                  <div className="pf-pdf-bloque">
+                    <label className="pf-label">Color institucional</label>
+                    <span className="pf-pdf-hint">Se aplica al header del PDF generado</span>
+
+                    <div className="pf-color-row">
+                      <input
+                        type="color"
+                        value={colorInst}
+                        onChange={(e) => setColorInst(e.target.value)}
+                        className="pf-color-picker"
+                      />
+                      <input
+                        type="text"
+                        value={colorInst}
+                        onChange={(e) => setColorInst(e.target.value)}
+                        className="pf-color-hex"
+                        maxLength={7}
+                      />
+                    </div>
+                    <div className="pf-color-preview" style={{ background: colorInst }} />
+                    <span className="pf-pdf-hint">Vista previa del header del PDF</span>
+                  </div>
+                </div>
+
+                {/* ── Columna derecha: preview del PDF ── */}
+                <div className="pf-pdf-preview-col">
+                  <label className="pf-label">Vista previa del PDF</label>
+                  <span className="pf-pdf-hint">Se actualiza al cambiar logo o color</span>
+
+                  <div className="pf-pdf-preview">
+                    <div className="pf-preview-header" style={{ background: colorInst }}>
+                      DataCL · Ley 21.719
+                    </div>
+                    <div className="pf-preview-body">
+                      {logoUrl ? (
+                        <img src={logoUrl} alt="Logo" className="pf-preview-logo" />
+                      ) : (
+                        <div className="pf-preview-logo-placeholder" />
+                      )}
+                      <p className="pf-preview-nombre">{perfil.nombre || "Nombre de tu organización"}</p>
+                      <p className="pf-preview-rut">RUT: {perfil.rut || "00.000.000-0"}</p>
+                      <hr className="pf-preview-hr" />
+                      <p className="pf-preview-sub">Levantamiento de Actividades de Tratamiento</p>
+                      <p className="pf-preview-fecha">Generado por DataCL · {new Date().toLocaleDateString("es-CL")}</p>
+                    </div>
+                    <div className="pf-preview-nota">
+                      El logo y color se aplican solo al PDF, no a la plataforma
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Alerta PDF */}
+              {alertaPdf && (
+                <div className={`pf-alerta pf-alerta--${alertaPdf.tipo}`} style={{ marginTop: 12 }}>
+                  <span className="pf-alerta-icono">
+                    {alertaPdf.tipo === "exito" ? <IconoCheck /> : <IconoError />}
+                  </span>
+                  <span>{alertaPdf.mensaje}</span>
+                </div>
+              )}
+
+              {/* Botón guardar */}
+              <div className="pf-form-footer" style={{ marginTop: 16 }}>
+                <button
+                  className={`pf-btn pf-btn--guardar ${guardandoColor ? "pf-btn--cargando" : ""}`}
+                  onClick={handleGuardarColor}
+                  disabled={guardandoColor}
+                >
+                  {guardandoColor ? "Guardando..." : "Guardar cambios"}
+                </button>
+              </div>
+            </section>
+          </div>
+
       </main>
     </div>
   );

@@ -55,6 +55,8 @@ class OrganizacionRespuesta(BaseModel):
     rut: str
     correo: str
     rol: str
+    color_institucional: Optional[str] = None
+    logo_ruta: Optional[str] = None
     model_config = {"from_attributes": True}
 
 
