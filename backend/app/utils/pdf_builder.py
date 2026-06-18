@@ -20,7 +20,7 @@ from reportlab.lib.units import cm
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, KeepTogether, Image,
+    PageBreak, KeepTogether,
 )
 
 
@@ -277,7 +277,10 @@ def _tabla_seccion(titulo, filas, estilos_dict, ancho_total, color_header, col_i
         ("VALIGN",        (0, 0), (-1, -1), "TOP"),
     ]))
 
-    return [KeepTogether(tabla), Spacer(1, 0.35 * cm)]
+    # Secciones chicas se mantienen juntas; grandes fluyen natural
+    if len(data) <= 6:
+        return [KeepTogether(tabla), Spacer(1, 0.35 * cm)]
+    return [tabla, Spacer(1, 0.35 * cm)]
 
 
 # ── Ficha de un tratamiento (todas las secciones) ────────────────────────
@@ -471,23 +474,202 @@ def _ficha_tratamiento(d, idx, total, estilos_dict, ancho, color_header):
     return elementos
 
 
+# ── NumberedCanvas — permite "Página X de Y" (requiere 2 pasadas) ─────────
+
+from reportlab.pdfgen.canvas import Canvas
+
+class _NumberedCanvas(Canvas):
+    """Canvas que registra el total de páginas para mostrar 'Página X de Y'."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        super().showPage()
+
+    def save(self):
+        num_pages = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self.draw_page_number(num_pages)
+            super().showPage()
+        super().save()
+
+    def draw_page_number(self, total):
+        page_w, _ = A4
+        margen = 1.5 * cm
+        self.saveState()
+        self.setFont("Helvetica", 7)
+        self.setFillColor(colors.HexColor("#888888"))
+        self.drawRightString(
+            page_w - margen, 0.8 * cm,
+            f"Página {self._pageNumber} de {total}",
+        )
+        self.restoreState()
+
+
+# ── Helpers de header/footer para canvas ──────────────────────────────────
+
+def _draw_header_compact(canvas, color_header, logo_path, org_nombre):
+    """Header compacto: barra de color + logo chico + nombre org + DataCL."""
+    page_w, page_h = A4
+    margen = 1.5 * cm
+    header_h = 0.9 * cm
+    header_y = page_h - 1.4 * cm
+    content_w = page_w - 2 * margen
+
+    # Barra de color
+    canvas.setFillColor(color_header)
+    canvas.rect(margen, header_y, content_w, header_h, fill=1, stroke=0)
+
+    # Logo (~1.2cm, tamaño La Liga)
+    if logo_path:
+        try:
+            logo_size = 0.65 * cm
+            canvas.drawImage(
+                logo_path,
+                margen + 0.15 * cm,
+                header_y + (header_h - logo_size) / 2,
+                width=logo_size, height=logo_size,
+                preserveAspectRatio=True, mask="auto",
+            )
+        except Exception:
+            pass
+
+    # Nombre org — con font dinámico para nombres largos
+    canvas.setFillColor(COLOR_BLANCO)
+    text_x = margen + (1.0 * cm if logo_path else 0.3 * cm)
+    texto = f"{org_nombre} — Registro de Actividades de Tratamiento"
+    espacio_disponible = content_w - (text_x - margen) - 4.5 * cm
+
+    font_size = 8
+    while font_size >= 6:
+        ancho_texto = canvas.stringWidth(texto, "Helvetica-Bold", font_size)
+        if ancho_texto <= espacio_disponible:
+            break
+        font_size -= 0.5
+
+    canvas.setFont("Helvetica-Bold", font_size)
+    canvas.drawString(text_x, header_y + 0.3 * cm, texto)
+
+    # DataCL a la derecha
+    canvas.setFont("Helvetica", 7)
+    canvas.drawRightString(
+        page_w - margen - 0.3 * cm,
+        header_y + 0.3 * cm,
+        "DataCL · Ley 21.719",
+    )
+
+
+def _draw_header_first(canvas, color_header, logo_path, org_nombre, org_rut, total_trat, fecha):
+    """Header primera página: más alto, con logo grande + info de la org + fecha."""
+    page_w, page_h = A4
+    margen = 1.5 * cm
+    content_w = page_w - 2 * margen
+
+    # Barra de color (más alta que la compacta)
+    header_h = 1.8 * cm
+    header_y = page_h - 2.3 * cm
+    canvas.setFillColor(color_header)
+    canvas.rect(margen, header_y, content_w, header_h, fill=1, stroke=0)
+
+    # Logo grande (~1.4cm)
+    text_start_x = margen + 0.3 * cm
+    if logo_path:
+        try:
+            logo_size = 1.3 * cm
+            canvas.drawImage(
+                logo_path,
+                margen + 0.2 * cm,
+                header_y + (header_h - logo_size) / 2,
+                width=logo_size, height=logo_size,
+                preserveAspectRatio=True, mask="auto",
+            )
+            text_start_x = margen + 1.7 * cm
+        except Exception:
+            pass
+
+    canvas.setFillColor(COLOR_BLANCO)
+
+    # Nombre org (bold, más grande)
+    canvas.setFont("Helvetica-Bold", 10)
+    y_cursor = header_y + header_h - 0.45 * cm
+    canvas.drawString(text_start_x, y_cursor, org_nombre)
+
+    # RUT + total tratamientos
+    canvas.setFont("Helvetica", 7.5)
+    y_cursor -= 0.35 * cm
+    canvas.drawString(text_start_x, y_cursor, f"RUT: {org_rut}  ·  {total_trat} tratamiento(s) incluidos")
+
+    # Fecha
+    y_cursor -= 0.35 * cm
+    canvas.drawString(text_start_x, y_cursor, f"Generado: {fecha}")
+
+    # DataCL a la derecha (centrado verticalmente)
+    canvas.setFont("Helvetica-Bold", 8)
+    canvas.drawRightString(
+        page_w - margen - 0.3 * cm,
+        header_y + header_h / 2 + 0.15 * cm,
+        "DataCL",
+    )
+    canvas.setFont("Helvetica", 7)
+    canvas.drawRightString(
+        page_w - margen - 0.3 * cm,
+        header_y + header_h / 2 - 0.2 * cm,
+        "Ley 21.719",
+    )
+
+
+def _draw_footer(canvas, color_header, logo_path):
+    """Footer estilo La Liga: logo org + texto centrado + página (dibujada por NumberedCanvas)."""
+    page_w = A4[0]
+    margen = 1.5 * cm
+    footer_y = 0.7 * cm
+    content_w = page_w - 2 * margen
+
+    # Línea separadora con color institucional
+    canvas.setStrokeColor(color_header)
+    canvas.setLineWidth(1)
+    canvas.line(margen, footer_y + 0.45 * cm, page_w - margen, footer_y + 0.45 * cm)
+
+    # Logo chico a la izquierda del footer
+    if logo_path:
+        try:
+            logo_size = 0.35 * cm
+            canvas.drawImage(
+                logo_path,
+                margen,
+                footer_y - 0.02 * cm,
+                width=logo_size, height=logo_size,
+                preserveAspectRatio=True, mask="auto",
+            )
+        except Exception:
+            pass
+
+    # Texto centrado
+    canvas.setFont("Helvetica", 7)
+    canvas.setFillColor(colors.HexColor("#888888"))
+    canvas.drawCentredString(
+        page_w / 2, footer_y,
+        "Metodología AEPD adaptada a Ley 21.719 — Protección de Datos Personales (Chile)",
+    )
+
+
 # ── Función principal ─────────────────────────────────────────────────────
 
 def construir_pdf(org, tratamientos: list) -> bytes:
-    """Genera el PDF RAT estilo La Liga y devuelve los bytes.
-
-    tratamientos: lista de objetos ORM o dicts planos.
-    org: objeto Organizacion (ORM) con nombre, rut, correo, color_institucional, logo_ruta.
-    """
+    """Genera el PDF RAT estilo La Liga y devuelve los bytes. Sin portada."""
     buffer = BytesIO()
 
+    # Márgenes: más arriba en pág 1 (header grande), normal en las demás
     doc = SimpleDocTemplate(
         buffer,
         pagesize=A4,
         rightMargin=1.5 * cm,
         leftMargin=1.5 * cm,
-        topMargin=2.5 * cm,
-        bottomMargin=2.5 * cm,
+        topMargin=2.8 * cm,
+        bottomMargin=1.8 * cm,
         title=f"RAT — {org.nombre}",
         author=org.nombre,
         subject="Registro de Actividades de Tratamiento — Ley 21.719 (Chile)",
@@ -495,12 +677,12 @@ def construir_pdf(org, tratamientos: list) -> bytes:
     )
 
     ancho = A4[0] - 3 * cm
-
-    # Color personalizable por org (default: morado La Liga)
     color_hex = getattr(org, "color_institucional", None) or COLOR_HEADER_DEFAULT
     color_header = colors.HexColor(color_hex)
 
-    # Convertir ORM a dicts
+    logo_ruta = getattr(org, "logo_ruta", None)
+    logo_path = logo_ruta if (logo_ruta and Path(logo_ruta).exists()) else None
+
     dicts = []
     for t in tratamientos:
         dicts.append(t if isinstance(t, dict) else tratamiento_a_dict(t))
@@ -508,137 +690,38 @@ def construir_pdf(org, tratamientos: list) -> bytes:
     estilos_dict = _estilos()
     elementos = []
 
-    # ── PORTADA ───────────────────────────────────────────────────
-    elementos.append(Spacer(1, 1.5 * cm))
+    fecha_gen = datetime.now().strftime("%d/%m/%Y %H:%M")
+    org_nombre = org.nombre
+    org_rut = org.rut
 
-    # Logo de la org (si tiene)
-    logo_ruta = getattr(org, "logo_ruta", None)
-    if logo_ruta and Path(logo_ruta).exists():
-        try:
-            logo = Image(logo_ruta, width=4 * cm, height=4 * cm)
-            logo.hAlign = "CENTER"
-            elementos.append(logo)
-            elementos.append(Spacer(1, 0.5 * cm))
-        except Exception:
-            pass
-
-    # Título con barra de color
-    titulo_data = [[Paragraph(
-        "Levantamiento de Actividades de Tratamiento de Datos Personales — Ley 21.719",
-        estilos_dict["trat_titulo"],
-    )]]
-    titulo_tabla = Table(titulo_data, colWidths=[ancho])
-    titulo_tabla.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, -1), color_header),
-        ("TOPPADDING", (0, 0), (-1, -1), 8),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-        ("LEFTPADDING", (0, 0), (-1, -1), 10),
-    ]))
-    elementos.append(titulo_tabla)
-    elementos.append(Spacer(1, 0.8 * cm))
-
-    elementos.append(Paragraph(f"<b>Organización:</b> {org.nombre}", estilos_dict["dato_portada"]))
-    elementos.append(Paragraph(f"<b>RUT:</b> {org.rut}", estilos_dict["dato_portada"]))
-    elementos.append(Paragraph(f"<b>Correo:</b> {org.correo}", estilos_dict["dato_portada"]))
-    elementos.append(Paragraph(
-        f"<b>Fecha de generación:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}",
-        estilos_dict["dato_portada"],
-    ))
-    elementos.append(Spacer(1, 0.4 * cm))
-    elementos.append(Paragraph(
-        f"<b>Total de tratamientos incluidos:</b> {len(dicts)}",
-        estilos_dict["dato_portada"],
-    ))
-
+    # Aviso de pendientes (va al inicio, antes del primer tratamiento)
     pendientes = [d for d in dicts if d.get("estado") == "PENDIENTE"]
     if pendientes:
         nombres = ", ".join(f'"{d.get("nombre", "?")}"' for d in pendientes[:3])
         if len(pendientes) > 3:
             nombres += f" y {len(pendientes) - 3} más"
-        elementos.append(Spacer(1, 0.3 * cm))
         elementos.append(Paragraph(
             f"<b>⚠ {len(pendientes)} tratamiento(s) incompleto(s):</b> {nombres}. "
             "Estos tratamientos tienen campos clave sin completar.",
             estilos_dict["advertencia"],
         ))
+        elementos.append(Spacer(1, 0.3 * cm))
 
-    elementos.append(Spacer(1, 1 * cm))
-    elementos.append(Paragraph(
-        "Elaborado bajo la metodología AEPD adaptada a la Ley 21.719 "
-        "de Protección de Datos Personales de Chile.",
-        estilos_dict["metodologia"],
-    ))
-
-    # ── FICHAS ────────────────────────────────────────────────────
+    # Fichas de tratamiento (sin portada, directo al contenido)
     total = len(dicts)
     for idx, d in enumerate(dicts, 1):
-        elementos.append(PageBreak())
+        if idx > 1:
+            elementos.append(PageBreak())
         elementos.extend(_ficha_tratamiento(d, idx, total, estilos_dict, ancho, color_header))
 
-    # ── Header y footer en cada página ──────────────────────────
-    logo_path = logo_ruta if (logo_ruta and Path(logo_ruta).exists()) else None
-    org_nombre = org.nombre
+    # Callbacks para header/footer
+    def on_first_page(canvas, doc_obj):
+        _draw_header_first(canvas, color_header, logo_path, org_nombre, org_rut, total, fecha_gen)
+        _draw_footer(canvas, color_header, logo_path)
 
-    def _header_footer(canvas, doc_obj):
-        canvas.saveState()
-        page_w, page_h = A4
-        margen = doc_obj.leftMargin
+    def on_later_pages(canvas, doc_obj):
+        _draw_header_compact(canvas, color_header, logo_path, org_nombre)
+        _draw_footer(canvas, color_header, logo_path)
 
-        # ── HEADER: barra de color con logo + texto ──────────
-        header_h = 0.8 * cm
-        header_y = page_h - 1.2 * cm
-
-        # Barra de color de ancho completo
-        canvas.setFillColor(color_header)
-        canvas.rect(margen, header_y, page_w - 2 * margen, header_h, fill=1, stroke=0)
-
-        # Logo pequeño en el header (si existe)
-        if logo_path:
-            try:
-                logo_h = 0.55 * cm
-                logo_w = 0.55 * cm
-                canvas.drawImage(
-                    logo_path,
-                    margen + 0.15 * cm,
-                    header_y + (header_h - logo_h) / 2,
-                    width=logo_w, height=logo_h,
-                    preserveAspectRatio=True, mask="auto",
-                )
-            except Exception:
-                pass
-
-        # Texto del header
-        canvas.setFillColor(COLOR_BLANCO)
-        canvas.setFont("Helvetica-Bold", 8)
-        text_x = margen + (0.85 * cm if logo_path else 0.3 * cm)
-        canvas.drawString(text_x, header_y + 0.25 * cm, f"{org_nombre} — Registro de Actividades de Tratamiento")
-
-        canvas.setFont("Helvetica", 7)
-        canvas.drawRightString(
-            page_w - margen - 0.3 * cm,
-            header_y + 0.25 * cm,
-            "DataCL · Ley 21.719",
-        )
-
-        # ── FOOTER: org + metodología + página ───────────────
-        footer_y = 0.8 * cm
-
-        # Línea separadora
-        canvas.setStrokeColor(colors.HexColor("#BFBFBF"))
-        canvas.setLineWidth(0.5)
-        canvas.line(margen, footer_y + 0.35 * cm, page_w - margen, footer_y + 0.35 * cm)
-
-        canvas.setFont("Helvetica", 7)
-        canvas.setFillColor(colors.HexColor("#888888"))
-        canvas.drawString(
-            margen, footer_y,
-            "Metodología AEPD adaptada a Ley 21.719 — Protección de Datos Personales (Chile)",
-        )
-        canvas.drawRightString(
-            page_w - margen, footer_y,
-            f"Página {canvas.getPageNumber()}",
-        )
-        canvas.restoreState()
-
-    doc.build(elementos, onFirstPage=_header_footer, onLaterPages=_header_footer)
+    doc.build(elementos, onFirstPage=on_first_page, onLaterPages=on_later_pages, canvasmaker=_NumberedCanvas)
     return buffer.getvalue()
