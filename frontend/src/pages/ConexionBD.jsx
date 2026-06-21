@@ -20,7 +20,7 @@ GRANT USAGE ON SCHEMA public TO datacl_reader;`,
 const PUERTOS_DEFAULT = { mysql: 3306, postgresql: 5432, sqlserver: 1433 };
 
 // ── Pantalla 1: Instrucciones de permisos ────────────────────────────────
-function PantallaInstrucciones({ onContinuar, onVolver }) {
+function PantallaInstrucciones({ onContinuar }) {
   const [motorActivo, setMotorActivo] = useState("mysql");
   const [copiado, setCopiado] = useState(false);
 
@@ -47,7 +47,6 @@ function PantallaInstrucciones({ onContinuar, onVolver }) {
         </span>
       </div>
 
-      {/* Tabs de motor */}
       <div className="cbd-tabs">
         {["mysql", "postgresql", "sqlserver"].map((m) => (
           <button
@@ -60,7 +59,6 @@ function PantallaInstrucciones({ onContinuar, onVolver }) {
         ))}
       </div>
 
-      {/* Bloque de código */}
       <div className="cbd-codigo-wrapper">
         <pre className="cbd-codigo">{SQL_INSTRUCCIONES[motorActivo]}</pre>
         <button className="cbd-copiar-btn" onClick={copiar}>
@@ -68,7 +66,6 @@ function PantallaInstrucciones({ onContinuar, onVolver }) {
         </button>
       </div>
 
-      {/* Pasos */}
       <ol className="cbd-pasos">
         <li className="cbd-paso">
           <span className="cbd-paso-num">1</span>
@@ -95,7 +92,6 @@ function PantallaInstrucciones({ onContinuar, onVolver }) {
       </ol>
 
       <div className="cbd-botones">
-        
         <button className="cbd-btn-primario" onClick={onContinuar}>
           ya creé el usuario, continuar →
         </button>
@@ -105,7 +101,7 @@ function PantallaInstrucciones({ onContinuar, onVolver }) {
 }
 
 // ── Pantalla 2: Formulario de conexión ──────────────────────────────────
-function PantallaFormulario({ onVolver, onAnalisis }) {
+function PantallaFormulario({ onVolver, onAnalizarDirecto }) {
   const { form: formGlobal, actualizarForm } = useFormulario();
   const conexion = formGlobal.conexionBD;
 
@@ -120,11 +116,9 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
   const cambiar = (campo) => (e) => {
     const val = campo === "puerto" ? Number(e.target.value) : e.target.value;
     const cambios = { [campo]: val };
-    // Si cambia el motor, actualizar puerto por defecto
     if (campo === "motor") {
       cambios.puerto = PUERTOS_DEFAULT[e.target.value] ?? puerto;
     }
-    // Resetear estado de prueba si el usuario edita algo
     cambios.estado = "idle";
     cambios.tablas = [];
     cambios.tablasSelec = [];
@@ -159,11 +153,11 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
     }
   };
 
-  const analizar = async () => {
+  const irADiccionario = async () => {
     if (!tablasSelec.length) return;
-    actualizarConexion({ estado: "analizando", errorMsg: "" });
+    actualizarConexion({ estado: "cargando_columnas", errorMsg: "" });
     try {
-      const res = await fetch("http://localhost:8000/analizar/conexion", {
+      const res = await fetch("http://localhost:8000/analizar/conexion/columnas", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -173,9 +167,9 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
       });
       const data = await res.json();
       if (res.ok) {
-        onAnalisis(data, tablasSelec.join(", "), motor);
+        actualizarConexion({ estado: "ok", columnasTablas: data.columnas, diccionarioColumnas: {}, paso: 3 });
       } else {
-        actualizarConexion({ estado: "ok", errorMsg: data.detail ?? "Error al analizar" });
+        actualizarConexion({ estado: "ok", errorMsg: data.detail ?? "Error al obtener columnas" });
       }
     } catch {
       actualizarConexion({ estado: "ok", errorMsg: "No se pudo conectar con el servidor." });
@@ -191,15 +185,10 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
       </p>
 
       <div className="cbd-card">
-        {/* Fila 1: motor y base de datos */}
         <div className="cbd-grid2">
           <div className="cbd-field">
             <label className="cbd-label">Motor de base de datos</label>
-            <select
-              className="cbd-select"
-              value={motor}
-              onChange={cambiar("motor")}
-            >
+            <select className="cbd-select" value={motor} onChange={cambiar("motor")}>
               <option value="mysql">MySQL</option>
               <option value="postgresql">PostgreSQL</option>
               <option value="sqlserver">SQL Server</option>
@@ -207,68 +196,37 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
           </div>
           <div className="cbd-field">
             <label className="cbd-label">Nombre de la base de datos</label>
-            <input
-              className="cbd-input"
-              placeholder="mi_base_de_datos"
-              value={base_datos}
-              onChange={cambiar("base_datos")}
-            />
+            <input className="cbd-input" placeholder="mi_base_de_datos" value={base_datos} onChange={cambiar("base_datos")} />
           </div>
         </div>
 
-        {/* Fila 2: host y puerto */}
         <div className="cbd-grid2">
           <div className="cbd-field">
             <label className="cbd-label">Host</label>
-            <input
-              className="cbd-input"
-              placeholder="192.168.1.100"
-              value={host}
-              onChange={cambiar("host")}
-            />
+            <input className="cbd-input" placeholder="192.168.1.100" value={host} onChange={cambiar("host")} />
           </div>
           <div className="cbd-field">
             <label className="cbd-label">Puerto</label>
-            <input
-              className="cbd-input"
-              type="number"
-              value={puerto}
-              onChange={cambiar("puerto")}
-            />
+            <input className="cbd-input" type="number" value={puerto} onChange={cambiar("puerto")} />
           </div>
         </div>
 
-        {/* Fila 3: usuario y contraseña */}
         <div className="cbd-grid2">
           <div className="cbd-field">
             <label className="cbd-label">Usuario</label>
-            <input
-              className="cbd-input"
-              placeholder="datacl_reader"
-              value={usuario}
-              onChange={cambiar("usuario")}
-              autoComplete="off"
-            />
+            <input className="cbd-input" placeholder="datacl_reader" value={usuario} onChange={cambiar("usuario")} autoComplete="off" />
           </div>
           <div className="cbd-field">
             <label className="cbd-label">Contraseña</label>
-            <input
-              className="cbd-input"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={cambiar("password")}
-              autoComplete="new-password"
-            />
+            <input className="cbd-input" type="password" placeholder="••••••••" value={password} onChange={cambiar("password")} autoComplete="new-password" />
           </div>
         </div>
 
-        {/* Botón probar conexión */}
         <button
           className="cbd-btn-primario"
           style={{ marginTop: "1rem" }}
           onClick={probarConexion}
-          disabled={!formCompleto || estado === "probando" || estado === "analizando"}
+          disabled={!formCompleto || estado === "probando" || estado === "cargando_columnas"}
         >
           {estado === "probando" ? (
             <><span className="cbd-spinner" /> Probando...</>
@@ -277,7 +235,6 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
           )}
         </button>
 
-        {/* Feedback de estado */}
         {estado === "ok" && (
           <div className="cbd-estado-ok">
             ✓ Conexión exitosa — {tablas.length} tabla{tablas.length !== 1 ? "s" : ""} encontrada{tablas.length !== 1 ? "s" : ""}
@@ -290,7 +247,6 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
           </div>
         )}
 
-        {/* Selector de tablas — solo si la conexión fue exitosa */}
         {estado === "ok" && tablas.length > 0 && (
           <div style={{ marginTop: "1.4rem" }}>
             <p className="cbd-label" style={{ marginBottom: "8px" }}>
@@ -320,7 +276,6 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
           </div>
         )}
 
-        {/* Nota privacidad */}
         <div className="cbd-nota-privacidad">
           <span>🔒</span>
           <span>
@@ -335,10 +290,122 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
         <button className="cbd-btn-secundario" onClick={onVolver}>
           ← Instrucciones de permisos
         </button>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button
+            className="cbd-btn-secundario"
+            onClick={onAnalizarDirecto}
+            disabled={!tablasSelec.length || estado === "cargando_columnas"}
+          >
+            Analizar directo →
+          </button>
+          <button
+            className="cbd-btn-primario"
+            onClick={irADiccionario}
+            disabled={!tablasSelec.length || estado === "cargando_columnas"}
+          >
+            {estado === "cargando_columnas" ? (
+              <><span className="cbd-spinner" /> Cargando...</>
+            ) : (
+              "Describir columnas →"
+            )}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Pantalla 3: Diccionario de columnas ──────────────────────────────────
+function PantallaDiccionario({ onVolver, onAnalizar }) {
+  const { form: formGlobal, actualizarForm } = useFormulario();
+  const conexion = formGlobal.conexionBD;
+  const { columnasTablas, diccionarioColumnas, estado } = conexion;
+
+  const actualizarConexion = (cambios) => {
+    actualizarForm({ conexionBD: { ...formGlobal.conexionBD, ...cambios } });
+  };
+
+  const actualizarDescripcion = (nombre, valor) => {
+    actualizarConexion({
+      diccionarioColumnas: { ...diccionarioColumnas, [nombre]: valor },
+    });
+  };
+
+  const descripciones = Object.values(diccionarioColumnas).filter((v) => v.trim()).length;
+
+  const tablasUnicas = [...new Set(columnasTablas.map((c) => c.tabla_origen))];
+
+  return (
+    <>
+      <h1 className="cbd-titulo">Diccionario de columnas</h1>
+      <p className="cbd-subtitulo">
+        Si tus columnas tienen nombres técnicos, agrega una descripción para
+        mejorar la clasificación. Este paso es opcional.
+      </p>
+
+      <div className="cbd-alerta">
+        <span className="cbd-alerta-icono">💡</span>
+        <span>
+          Ejemplo: si una columna se llama <strong>usr_nm</strong>, escribe
+          "Nombre del usuario" para que DataCL la clasifique correctamente como
+          dato personal.
+        </span>
+      </div>
+
+      <div className="cbd-card">
+        <div className="cbd-dic-resumen">
+          <span>{columnasTablas.length} columna{columnasTablas.length !== 1 ? "s" : ""}</span>
+          <span className="cbd-dic-sep">·</span>
+          <span>{tablasUnicas.length} tabla{tablasUnicas.length !== 1 ? "s" : ""}</span>
+          {descripciones > 0 && (
+            <>
+              <span className="cbd-dic-sep">·</span>
+              <span className="cbd-dic-descritas">{descripciones} descrita{descripciones !== 1 ? "s" : ""}</span>
+            </>
+          )}
+        </div>
+
+        <div className="cbd-dic-tabla-wrapper">
+          <table className="cbd-dic-tabla">
+            <thead>
+              <tr>
+                <th>Columna</th>
+                <th>Tabla</th>
+                <th>Descripción (opcional)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {columnasTablas.map((col, i) => (
+                <tr key={`${col.tabla_origen}-${col.nombre}-${i}`}>
+                  <td className="cbd-dic-col-nombre">
+                    <code>{col.nombre}</code>
+                  </td>
+                  <td className="cbd-dic-col-tabla">
+                    <span className="cbd-dic-tabla-badge">{col.tabla_origen}</span>
+                  </td>
+                  <td>
+                    <input
+                      className="cbd-dic-input"
+                      placeholder="Ej: Nombre del usuario"
+                      value={diccionarioColumnas[col.nombre] || ""}
+                      onChange={(e) => actualizarDescripcion(col.nombre, e.target.value)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="cbd-botones">
+        <button className="cbd-btn-secundario" onClick={onVolver}>
+          ← Volver
+        </button>
         <button
           className="cbd-btn-primario"
-          onClick={analizar}
-          disabled={!tablasSelec.length || estado === "analizando" || estado === "probando"}
+          onClick={onAnalizar}
+          disabled={estado === "analizando"}
         >
           {estado === "analizando" ? (
             <><span className="cbd-spinner" /> Analizando...</>
@@ -355,20 +422,78 @@ function PantallaFormulario({ onVolver, onAnalisis }) {
 export default function ConexionBD() {
   const navigate = useNavigate();
   const { form, actualizarForm } = useFormulario();
-  const paso = form.conexionBD.paso; // 1 = instrucciones, 2 = formulario
+  const paso = form.conexionBD.paso; // 1 = instrucciones, 2 = formulario, 3 = diccionario
   const setPaso = (p) => actualizarForm({ conexionBD: { ...form.conexionBD, paso: p } });
 
-  const handleAnalisis = (resultado, tabla, motor) => {
-    // Navega a resultados-analisis pasando los datos por location.state
-    // (mismo flujo que CargaArchivo para mantener consistencia)
+  const conexion = form.conexionBD;
+  const token = localStorage.getItem("token");
+
+  const handleAnalisis = (resultado) => {
+    const { motor, tablasSelec } = conexion;
     navigate("/resultados-analisis", {
       state: {
         ...resultado,
         fuente: "bd",
-        nombre: tabla,
+        nombre: tablasSelec.join(", "),
         motor,
       },
     });
+  };
+
+  const analizarConDiccionario = async () => {
+    const { motor, host, puerto, base_datos, usuario, password, tablasSelec, diccionarioColumnas } = conexion;
+    actualizarForm({ conexionBD: { ...conexion, estado: "analizando", errorMsg: "" } });
+
+    const dicLimpio = {};
+    for (const [k, v] of Object.entries(diccionarioColumnas)) {
+      if (v.trim()) dicLimpio[k] = v.trim();
+    }
+
+    try {
+      const res = await fetch("http://localhost:8000/analizar/conexion", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          motor, host, puerto, base_datos, usuario, password,
+          tablas: tablasSelec,
+          diccionario: Object.keys(dicLimpio).length > 0 ? dicLimpio : null,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        handleAnalisis(data);
+      } else {
+        actualizarForm({ conexionBD: { ...conexion, estado: "ok", errorMsg: data.detail ?? "Error al analizar" } });
+      }
+    } catch {
+      actualizarForm({ conexionBD: { ...conexion, estado: "ok", errorMsg: "No se pudo conectar con el servidor." } });
+    }
+  };
+
+  const analizarDirecto = async () => {
+    const { motor, host, puerto, base_datos, usuario, password, tablasSelec } = conexion;
+    actualizarForm({ conexionBD: { ...conexion, estado: "analizando", errorMsg: "" } });
+    try {
+      const res = await fetch("http://localhost:8000/analizar/conexion", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ motor, host, puerto, base_datos, usuario, password, tablas: tablasSelec }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        handleAnalisis(data);
+      } else {
+        actualizarForm({ conexionBD: { ...conexion, estado: "ok", errorMsg: data.detail ?? "Error al analizar" } });
+      }
+    } catch {
+      actualizarForm({ conexionBD: { ...conexion, estado: "ok", errorMsg: "No se pudo conectar con el servidor." } });
+    }
   };
 
   return (
@@ -377,15 +502,21 @@ export default function ConexionBD() {
       <BarraLateral />
 
       <main style={{ flex: 1, padding: "2.5rem 2.5rem 2.5rem 2rem", maxWidth: "860px" }}>
-        {paso === 1 ? (
+        {paso === 1 && (
           <PantallaInstrucciones
             onContinuar={() => setPaso(2)}
-            onVolver={() => navigate(-1)}
           />
-        ) : (
+        )}
+        {paso === 2 && (
           <PantallaFormulario
             onVolver={() => setPaso(1)}
-            onAnalisis={handleAnalisis}
+            onAnalizarDirecto={analizarDirecto}
+          />
+        )}
+        {paso === 3 && (
+          <PantallaDiccionario
+            onVolver={() => setPaso(2)}
+            onAnalizar={analizarConDiccionario}
           />
         )}
       </main>

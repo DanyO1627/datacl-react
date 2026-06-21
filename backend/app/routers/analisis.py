@@ -216,7 +216,8 @@ class ConexionBDRequest(BaseModel):
     base_datos: str
     usuario:    str
     password:   str
-    tablas:     list[str] | None = None # antes : tabla. Ahora "tablas". 
+    tablas:     list[str] | None = None
+    diccionario: dict[str, str] | None = None  # {nombre_columna: descripcion}
 
 
 def _crear_url_conexion(motor: str, host: str, puerto: int,
@@ -298,6 +299,50 @@ async def probar_conexion(
     finally:
         if engine:
             engine.dispose()   # cierra pool inmediatamente, no queda nada abierto
+
+
+@router.post("/conexion/columnas")
+async def obtener_columnas_bd(
+    datos: ConexionBDRequest,
+    _usuario=Depends(obtener_usuario_actual),
+):
+    """
+    Devuelve los nombres de columnas de las tablas seleccionadas,
+    sin clasificarlas. Sirve para que el frontend muestre la tabla
+    editable del diccionario antes de analizar.
+    """
+    from sqlalchemy import inspect as sa_inspect
+
+    if not datos.tablas:
+        raise HTTPException(status_code=400, detail="Debes indicar al menos una tabla.")
+
+    url = _crear_url_conexion(
+        datos.motor, datos.host, datos.puerto,
+        datos.base_datos, datos.usuario, datos.password
+    )
+    engine = None
+    try:
+        engine = _engine_temporal(url)
+        with engine.connect():
+            inspector = sa_inspect(engine)
+            tablas_disponibles = inspector.get_table_names()
+            columnas = []
+            for nombre_tabla in datos.tablas:
+                if nombre_tabla not in tablas_disponibles:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"La tabla '{nombre_tabla}' no existe en la base de datos."
+                    )
+                for col in inspector.get_columns(nombre_tabla):
+                    columnas.append({"nombre": col["name"], "tabla_origen": nombre_tabla})
+        return {"columnas": columnas}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Error al leer columnas de la base de datos.")
+    finally:
+        if engine:
+            engine.dispose()
 
 
 @router.post("/conexion")
@@ -390,6 +435,30 @@ async def analizar_conexion_bd(
     finally:
         if engine:
             engine.dispose()
+
+    if datos.diccionario:
+        mapa_dic = {k.strip().lower(): v.strip() for k, v in datos.diccionario.items() if v.strip()}
+        pendientes_reclasificados = []
+        for campo in pendientes_totales:
+            col = campo["nombre_columna"]
+            descripcion = mapa_dic.get(col.lower())
+            if descripcion:
+                resultado_desc = clasificar_columnas([descripcion])
+                if resultado_desc["detectados"]:
+                    clasificado = resultado_desc["detectados"][0]
+                    detectados_totales.append({
+                        "nombre_columna":    col,
+                        "tipo":              clasificado["tipo"],
+                        "categoria_tematica": clasificado.get("categoria_tematica", "Otros"),
+                        "origen":            "diccionario",
+                        "descripcion":       descripcion,
+                        "tabla_origen":      campo.get("tabla_origen"),
+                    })
+                else:
+                    pendientes_reclasificados.append(campo)
+            else:
+                pendientes_reclasificados.append(campo)
+        pendientes_totales = pendientes_reclasificados
 
     return {
         "tablas":         datos.tablas,

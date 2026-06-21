@@ -52,6 +52,8 @@ const FORM_VACIO = {
     estado: "idle",     // idle | ok | error
     errorMsg: "",
     tablas: [], tablasSelec: [],
+    columnasTablas: [],       // [{nombre, tabla_origen}] — columnas de las tablas seleccionadas
+    diccionarioColumnas: {},  // {nombre_columna: descripcion}
   },
   // ── Nueva sesión: ingreso manual ──────────────────────────
   ingresoManual: {
