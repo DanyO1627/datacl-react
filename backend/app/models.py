@@ -29,7 +29,7 @@ class Tratamiento(Base):
     organizacion_id          = Column(Integer, ForeignKey("organizaciones.id", ondelete="CASCADE"), nullable=False)
     nombre                   = Column(String(200), nullable=False)
     finalidad                = Column(Text, nullable=True)
-    base_legal               = Column(String(100), nullable=True)
+    base_legal               = Column(Text, nullable=True)
     datos_sensibles          = Column(Boolean, default=False, nullable=False)
     # DECISIÓN DE ARQUITECTURA — destinatarios (legado) vs campos aditivos
     # destinatarios es texto libre original del formulario; se conserva intacto.
