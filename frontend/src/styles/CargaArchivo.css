@@ -154,6 +154,28 @@
   border-color: var(--dark);
 }
 
+/* ─── Lista de archivos seleccionados ─────────────────────────── */
+.ca-archivos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.ca-archivos-lista .ca-archivo-info {
+  background: #f4f8fc;
+  border: 1px solid #dce8f2;
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.ca-archivos-contador {
+  font-size: 13px;
+  color: var(--mid);
+  text-align: right;
+  margin: 4px 0 0;
+}
+
 /* ─── Archivo seleccionado ────────────────────────────────────── */
 .ca-archivo-info {
   display: flex;

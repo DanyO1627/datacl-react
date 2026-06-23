@@ -138,6 +138,40 @@ const ETIQ_CATEGORIAS = {
   fecha_nacimiento: "Fecha de nacimiento",
 };
 
+const ETIQ_INFORMA_TITULARES = {
+  web: "Aviso en web",
+  correo: "Correo electrónico",
+  contrato: "Contrato",
+  mandato: "Mandato",
+  no_informa: "No se informa",
+};
+
+const ETIQ_METODO_TRANSFERENCIA = {
+  digital: "Digital",
+  verbal: "Verbal",
+  fisico: "Físico",
+};
+
+const ETIQ_CRITERIO_PLAZO = {
+  legal: "Legal (normativa aplicable)",
+  contractual: "Contractual (duración del contrato)",
+  operacional: "Operacional (necesidad del proceso)",
+};
+
+const ETIQ_METODO_ELIMINACION = {
+  digital: "Eliminación segura digital",
+  fisica: "Destrucción física",
+  anonimizacion: "Anonimización",
+  otro: "Otro",
+};
+
+const ETIQ_EVALUACION_PERIODICA = {
+  anual: "Anual",
+  bienal: "Bienal (cada 2 años)",
+  ante_cambios: "Ante cambios importantes",
+  sin_definir: "Sin definir",
+};
+
 const CRITERIOS_PLAZO = [
   { valor: "legal", etiqueta: "Legal (normativa aplicable)" },
   { valor: "contractual", etiqueta: "Contractual (duración del contrato)" },
@@ -815,8 +849,22 @@ export default function Paso3() {
                   <FilaRevision label="Nombre" valor={form.nombre} />
                   <FilaRevision label="Responsable" valor={form.responsable} />
                   <FilaRevision label="Departamento" valor={form.departamento} />
+                  <FilaRevision label="Sub-área responsable" valor={form.subarea_responsable} />
                   <FilaRevision label="Finalidad" valor={form.finalidad} />
+                  <FilaRevision label="Descripción detallada" valor={form.descripcion_detallada} />
                   <FilaRevision label="Base legal" valor={(form.base_legal || "").split(",").filter(Boolean).map((v) => ETIQ_BASE_LEGAL[v] || v).join(", ")} />
+                  <FilaRevision label="Procesos relacionados" valor={form.procesos_relacionados} />
+                  <FilaRevision label="Finalidades secundarias" valor={form.finalidades_secundarias} />
+                  <FilaRevision
+                    label="¿Cómo se informa a los titulares?"
+                    valor={(form.informa_titulares || []).map((v) => ETIQ_INFORMA_TITULARES[v] || v).join(", ")}
+                  />
+                  <FilaRevision
+                    label="Documento de respaldo"
+                    valor={form.documento_respaldo_tiene === true
+                      ? `Sí — ${form.documento_respaldo_descripcion || "sin descripción"}`
+                      : form.documento_respaldo_tiene === false ? "No" : null}
+                  />
                 </div>
 
                 <div className="p3-revision-seccion">
@@ -841,8 +889,28 @@ export default function Paso3() {
                       valor={categoriasSensibles.map((id) => ETIQ_SENSIBLES[id] || id).join(", ")}
                     />
                   )}
+                  <FilaRevision label="¿Incluye NNA?" valor={form.incluye_nna ? "Sí" : "No"} />
+                  <FilaRevision label="¿Datos de navegación?" valor={form.datos_navegacion ? "Sí" : "No"} />
+                  {form.datos_navegacion && (
+                    <FilaRevision label="Detalle navegación" valor={form.datos_navegacion_detalle} />
+                  )}
                   <FilaRevision label="Destinatarios" valor={form.destinatarios} />
+                  <FilaRevision label="Destinatarios internos" valor={form.destinatarios_internos} />
+                  <FilaRevision label="Destinatarios nacionales" valor={form.destinatarios_nacionales} />
+                  <FilaRevision label="Destinatarios internacionales" valor={form.destinatarios_internacionales} />
                   <FilaRevision label="Sale al extranjero" valor={form.sale_extranjero ? `Sí — ${form.pais_destino || "país no especificado"}` : "No"} />
+                  <FilaRevision label="¿Terceros son encargados?" valor={form.terceros_son_encargados ? "Sí" : "No"} />
+                  <FilaRevision label="¿Contratos de protección?" valor={form.contratos_proteccion_datos ? "Sí" : "No"} />
+                  {form.contratos_proteccion_datos && (
+                    <FilaRevision label="Detalle contratos" valor={form.contratos_proteccion_datos_detalle} />
+                  )}
+                  <FilaRevision
+                    label="Método de transferencia"
+                    valor={(form.metodo_transferencia || []).map((v) => ETIQ_METODO_TRANSFERENCIA[v] || v).join(", ")}
+                  />
+                  <FilaRevision label="Sistema origen" valor={form.sistemas_origen} />
+                  <FilaRevision label="Sistema destino" valor={form.sistemas_destino} />
+                  <FilaRevision label="Sistema tratamiento" valor={form.sistemas_tratamiento} />
                 </div>
 
                 <div className="p3-revision-seccion">
@@ -861,6 +929,29 @@ export default function Paso3() {
                     <FilaRevision label="Otras medidas" valor={local.otras_medidas} />
                   )}
                   <FilaRevision label="Decisiones automatizadas" valor={local.decisiones_automatizadas ? "Sí" : "No"} />
+                </div>
+
+                <div className="p3-revision-seccion">
+                  <h4 className="p3-revision-titulo">Paso 3 — Principios Ley 21.719</h4>
+                  <FilaRevision label="Criterio de plazo" valor={ETIQ_CRITERIO_PLAZO[local.criterio_plazo]} />
+                  <FilaRevision label="Método de eliminación" valor={ETIQ_METODO_ELIMINACION[local.metodo_eliminacion]} />
+                  <FilaRevision label="¿Documenta destrucción?" valor={local.documenta_destruccion ? "Sí" : "No"} />
+                  <FilaRevision label="Excepciones al plazo" valor={local.excepciones_plazo} />
+                  <FilaRevision label="Evaluación periódica" valor={ETIQ_EVALUACION_PERIODICA[local.evaluacion_periodica]} />
+                  <FilaRevision label="Justificación minimización" valor={local.minimizacion_justificacion} />
+                  <FilaRevision label="Mecanismos de exactitud" valor={local.mecanismos_exactitud} />
+                  <FilaRevision label="Cumplimiento demostrable" valor={local.cumplimiento_demostrable} />
+                </div>
+
+                <div className="p3-revision-seccion">
+                  <h4 className="p3-revision-titulo">Paso 3 — DPIA</h4>
+                  <FilaRevision label="¿Requiere DPIA?" valor={local.requiere_dpia ? "Sí" : "No"} />
+                  {local.requiere_dpia && (
+                    <>
+                      <FilaRevision label="¿DPIA realizada?" valor={local.dpia_realizada === true ? "Sí" : local.dpia_realizada === false ? "No" : null} />
+                      <FilaRevision label="Detalle DPIA" valor={local.dpia_detalle} />
+                    </>
+                  )}
                 </div>
 
                 {camposDetectados.length > 0 && (
