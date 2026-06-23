@@ -137,20 +137,24 @@ def analizar_informe_ia(
     if not informe:
         raise HTTPException(status_code=404, detail="Informe no encontrado.")
 
-    # Reintento: toma los mismos N tratamientos más recientes que se usaron
-    # al generar el informe (num_tratamientos). Sin IDs guardados en BD es
-    # la mejor aproximación posible sin migración de esquema.
-    tratamientos = (
-        db.query(models.Tratamiento)
-        .options(
-            joinedload(models.Tratamiento.detalle),
-            joinedload(models.Tratamiento.campos),
+    if informe.versiones_snapshot:
+        ids_originales = [int(k) for k in informe.versiones_snapshot.keys()]
+        tratamientos = (
+            db.query(models.Tratamiento)
+            .filter(
+                models.Tratamiento.id.in_(ids_originales),
+                models.Tratamiento.organizacion_id == usuario.id,
+            )
+            .all()
         )
-        .filter(models.Tratamiento.organizacion_id == usuario.id)
-        .order_by(models.Tratamiento.creado_en.desc())
-        .limit(informe.num_tratamientos or 10)
-        .all()
-    )
+    else:
+        tratamientos = (
+            db.query(models.Tratamiento)
+            .filter(models.Tratamiento.organizacion_id == usuario.id)
+            .order_by(models.Tratamiento.creado_en.desc())
+            .limit(informe.num_tratamientos or 10)
+            .all()
+        )
 
     contenido_ia = pedir_analisis_ia(tratamientos)
 

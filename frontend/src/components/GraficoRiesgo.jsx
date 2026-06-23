@@ -71,14 +71,15 @@ function LeyendaPersonalizada({ payload }) {
 
 // ── Componente principal ───────────────────────────────────────
 export default function GraficoRiesgo({ tratamientos = [] }) {
-  // Calcular conteos por nivel
+  const activos = tratamientos.filter(t => t.estado !== 'BORRADOR')
+
   const conteos = NIVELES.map(({ key, label, color }) => ({
     name: label,
-    value: tratamientos.filter(t => t.nivel_riesgo === key).length,
+    value: activos.filter(t => t.nivel_riesgo === key).length,
     color,
-  })).filter(d => d.value > 0) // excluir niveles sin tratamientos
+  })).filter(d => d.value > 0)
 
-  const total = tratamientos.length
+  const total = conteos.reduce((s, d) => s + d.value, 0)
 
   // Sin tratamientos — mensaje vacío
   if (total === 0) {
