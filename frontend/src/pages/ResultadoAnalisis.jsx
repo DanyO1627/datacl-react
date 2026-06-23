@@ -44,12 +44,17 @@ export default function AsignacionCampos() {
   const [tablaFiltro,     setTablaFiltro]    = useState("todos");
   const [toastFiltro,     setToastFiltro]    = useState(false);
 
+  /* ── Clave única por campo (nombre + tabla) ─────────────────── */
+  function claveCampo(c) {
+    return `${c.nombre_columna}__${c.tabla_origen || c.archivo_origen || ''}`;
+  }
+
   /* ── Derivados ─────────────────────────────────────────────── */
   const asignadas = useMemo(
-    () => new Set(actividades.flatMap((a) => a.campos.map((c) => c.nombre_columna))),
+    () => new Set(actividades.flatMap((a) => a.campos.map((c) => claveCampo(c)))),
     [actividades],
   );
-  const sinAsignar  = detectados.filter((c) => !asignadas.has(c.nombre_columna)).length;
+  const sinAsignar  = detectados.filter((c) => !asignadas.has(claveCampo(c))).length;
   const puedeAvanzar = actividades.length > 0 && actividades.some((a) => a.campos.length > 0);
 
   const tieneMultiTabla = useMemo(
@@ -111,13 +116,13 @@ export default function AsignacionCampos() {
     const activa = actividades.find((a) => a.id === actividadActiva);
     if (!activa) return;
 
-    const esMio = activa.campos.some((c) => c.nombre_columna === campo.nombre_columna);
+    const clave = claveCampo(campo);
+    const esMio = activa.campos.some((c) => claveCampo(c) === clave);
     if (esMio) {
-      desasignar(actividadActiva, campo.nombre_columna);
+      desasignar(actividadActiva, campo);
       return;
     }
 
-    // Un mismo campo puede pertenecer a múltiples actividades (ej: RUT en Ventas y en Clínica)
     setActividades((prev) =>
       prev.map((a) =>
         a.id === actividadActiva ? { ...a, campos: [...a.campos, campo] } : a,
@@ -127,7 +132,7 @@ export default function AsignacionCampos() {
 
   function asignarTodos() {
     if (!actividadActiva) return;
-    const libres = detectados.filter((c) => !asignadas.has(c.nombre_columna));
+    const libres = detectados.filter((c) => !asignadas.has(claveCampo(c)));
     if (libres.length === 0) return;
     setActividades((prev) =>
       prev.map((a) =>
@@ -136,11 +141,12 @@ export default function AsignacionCampos() {
     );
   }
 
-  function desasignar(actividadId, nombreColumna) {
+  function desasignar(actividadId, campo) {
+    const clave = claveCampo(campo);
     setActividades((prev) =>
       prev.map((a) =>
         a.id === actividadId
-          ? { ...a, campos: a.campos.filter((c) => c.nombre_columna !== nombreColumna) }
+          ? { ...a, campos: a.campos.filter((c) => claveCampo(c) !== clave) }
           : a,
       ),
     );
@@ -221,17 +227,19 @@ export default function AsignacionCampos() {
   }
 
   /* ── Helper: estado visual de un campo ────────────────────── */
-  function estadoCampo(nombreColumna) {
+  function estadoCampo(campo) {
+    const clave = claveCampo(campo);
     const activa = actividades.find((a) => a.id === actividadActiva);
-    if (activa?.campos.some((c) => c.nombre_columna === nombreColumna)) return "en-activa";
-    if (asignadas.has(nombreColumna)) return "compartible";
+    if (activa?.campos.some((c) => claveCampo(c) === clave)) return "en-activa";
+    if (asignadas.has(clave)) return "compartible";
     if (!actividadActiva) return "sin-actividad";
     return "libre";
   }
 
-  function actividadesDeCampo(nombreColumna) {
+  function actividadesDeCampo(campo) {
+    const clave = claveCampo(campo);
     return actividades
-      .filter((a) => a.campos.some((c) => c.nombre_columna === nombreColumna))
+      .filter((a) => a.campos.some((c) => claveCampo(c) === clave))
       .map((a) => a.nombre);
   }
 
@@ -302,9 +310,9 @@ export default function AsignacionCampos() {
                 <p className="ac-vacio">No se detectaron campos en el archivo.</p>
               ) : (
                 detectadosFiltrados.map((campo) => {
-                  const estado      = estadoCampo(campo.nombre_columna);
+                  const estado      = estadoCampo(campo);
                   const esSensible  = campo.tipo === "SENSIBLE";
-                  const enOtras     = estado === "compartible" ? actividadesDeCampo(campo.nombre_columna) : [];
+                  const enOtras     = estado === "compartible" ? actividadesDeCampo(campo) : [];
                   return (
                     <div
                       key={`${campo.nombre_columna}_${campo.tabla_origen || ''}`}
@@ -342,8 +350,8 @@ export default function AsignacionCampos() {
                     Sin clasificar ({pendientesFiltrados.length}) — inclúyelos si contienen datos personales
                   </div>
                   {pendientesFiltrados.map((campo) => {
-                    const estado      = estadoCampo(campo.nombre_columna);
-                    const enOtras     = estado === "compartible" ? actividadesDeCampo(campo.nombre_columna) : [];
+                    const estado      = estadoCampo(campo);
+                    const enOtras     = estado === "compartible" ? actividadesDeCampo(campo) : [];
                     return (
                       <div
                         key={`${campo.nombre_columna}_${campo.tabla_origen || ''}`}
@@ -425,13 +433,13 @@ export default function AsignacionCampos() {
                     ) : (
                       act.campos.map((c) => (
                         <span
-                          key={c.nombre_columna}
+                          key={claveCampo(c)}
                           className={`ac-chip ${c.tipo === "SENSIBLE" ? "ac-chip--sensible" : ""}`}
                         >
                           {c.nombre_columna}
                           <button
                             className="ac-chip-quitar"
-                            onClick={() => desasignar(act.id, c.nombre_columna)}
+                            onClick={() => desasignar(act.id, c)}
                             title="Desasignar campo"
                           >
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
