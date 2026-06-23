@@ -576,7 +576,7 @@ export default function NuevaSesion() {
                     <div className="ns-sesion-info">
                       <span className="ns-sesion-nombre">{s.nombre || `Sesión ${s.id}`}</span>
                       <span className="ns-sesion-meta">
-                        {s.total_detectados ?? 0} campos detectados ·{" "}
+                        {s.columnas_json?.length ?? 0} campos detectados ·{" "}
                         {s.creado_en ? new Date(s.creado_en).toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—"}
                       </span>
                     </div>
