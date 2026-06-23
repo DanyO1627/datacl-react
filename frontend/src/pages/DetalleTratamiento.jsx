@@ -64,6 +64,7 @@ const COLOR_RIESGO = {
 const COLOR_ESTADO = {
   PENDIENTE: { clase: 'estado-pendiente', etiqueta: 'Pendiente' },
   COMPLETO:  { clase: 'estado-completo',  etiqueta: 'Completo' },
+  BORRADOR:  { clase: 'estado-borrador',  etiqueta: 'Borrador' },
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -384,10 +385,6 @@ export default function DetalleTratamiento() {
               }
             </Campo>
           </div>
-          <div className="detalle-campo detalle-campo-ancho">
-            <span className="detalle-campo-label">Categoría de datos</span>
-            <ValorMultilinea v={d?.categoria_datos} />
-          </div>
         </div>
 
         {/* ── Sección 4: Evaluación de riesgo ── */}
@@ -461,6 +458,38 @@ export default function DetalleTratamiento() {
               <Campo label="Documento de respaldo / permiso">
                 <ValorMultilinea v={ext.documento_respaldo_permiso} />
               </Campo>
+            </div>
+          </div>
+        )}
+
+        {ext && seccionExtendidaTieneData(
+          ext.incluye_nna, ext.nna_detalle, ext.datos_navegacion, ext.datos_navegacion_detalle
+        ) && (
+          <div className="detalle-seccion">
+            <h2 className="detalle-columna-titulo">Datos especiales</h2>
+            <div className="detalle-seccion-campos">
+              <Campo label="¿Incluye datos de NNA?">
+                {ext.incluye_nna === null || ext.incluye_nna === undefined
+                  ? <span className="detalle-campo-pendiente">—</span>
+                  : <span className="detalle-campo-valor">{ext.incluye_nna ? 'Sí' : 'No'}</span>
+                }
+              </Campo>
+              {ext.nna_detalle && (
+                <Campo label="Detalle NNA">
+                  <ValorMultilinea v={ext.nna_detalle} />
+                </Campo>
+              )}
+              <Campo label="¿Datos de navegación?">
+                {ext.datos_navegacion === null || ext.datos_navegacion === undefined
+                  ? <span className="detalle-campo-pendiente">—</span>
+                  : <span className="detalle-campo-valor">{ext.datos_navegacion ? 'Sí' : 'No'}</span>
+                }
+              </Campo>
+              {ext.datos_navegacion_detalle && (
+                <Campo label="Detalle navegación">
+                  <ValorMultilinea v={ext.datos_navegacion_detalle} />
+                </Campo>
+              )}
             </div>
           </div>
         )}

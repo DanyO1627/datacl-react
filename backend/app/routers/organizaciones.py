@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
@@ -158,7 +159,7 @@ def cambiar_color(
     usuario_actual: models.Organizacion = Depends(obtener_usuario_actual),
 ):
     color = datos.color.strip()
-    if not color.startswith("#") or len(color) != 7:
+    if not re.match(r'^#[0-9a-fA-F]{6}$', color):
         raise HTTPException(400, "Formato inválido. Usa formato hex: #7030A0")
 
     usuario_actual.color_institucional = color

@@ -232,7 +232,7 @@ export default function Paso1() {
       let currentTratId = tratId;
       if (tratId) {
         await fetch(`${API}/tratamientos/${tratId}`, {
-          method: "PUT", headers, body: JSON.stringify(payload),
+          method: "PUT", headers, body: JSON.stringify({ ...payload, estado: "BORRADOR" }),
         });
       } else {
         const res = await fetch(`${API}/tratamientos`, {

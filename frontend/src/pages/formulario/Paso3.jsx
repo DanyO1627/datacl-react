@@ -291,7 +291,7 @@ export default function Paso3() {
       informa_titulares:           (formularioCompleto.informa_titulares || []).join(",") || null,
       documento_respaldo_permiso:  formularioCompleto.documento_respaldo_tiene === true
         ? (formularioCompleto.documento_respaldo_descripcion || "Sí")
-        : null,
+        : formularioCompleto.documento_respaldo_tiene === false ? "No" : null,
       // B2-05
       incluye_nna:                        formularioCompleto.incluye_nna ? true : null,
       nna_detalle:                        formularioCompleto.nna_detalle || null,
@@ -337,9 +337,6 @@ export default function Paso3() {
         const tieneDestinatarios = formularioCompleto.destinatarios || formularioCompleto.destinatarios_internos || formularioCompleto.destinatarios_nacionales || formularioCompleto.destinatarios_internacionales;
         const estadoFinal = (formularioCompleto.finalidad && formularioCompleto.base_legal && formularioCompleto.plazo_conservacion && tieneDestinatarios && medStr) ? "COMPLETO" : "PENDIENTE";
         await actualizarTratamiento(form.tratamientoEditId, { ...payload, estado: estadoFinal });
-        await fetch(`${API}/tratamientos/${form.tratamientoEditId}/evaluar`, {
-          method: "POST", headers: { Authorization: `Bearer ${token}` },
-        });
         const editId = form.tratamientoEditId;
         resetForm();
         navigate(`/tratamientos/${editId}`);
@@ -367,9 +364,6 @@ export default function Paso3() {
         ) ? "COMPLETO" : "PENDIENTE";
 
         await actualizarTratamiento(tratId, { ...payload, estado: estadoFinal });
-        await fetch(`${API}/tratamientos/${tratId}/evaluar`, {
-          method: "POST", headers: { Authorization: `Bearer ${token}` },
-        });
       } else {
         const creado = await crearTratamiento(payload);
         if (creado?.id) {
@@ -472,7 +466,7 @@ export default function Paso3() {
           informa_titulares:          (datos.informa_titulares || []).join(",") || null,
           documento_respaldo_permiso: datos.documento_respaldo_tiene === true
             ? (datos.documento_respaldo_descripcion || "Sí")
-            : null,
+            : datos.documento_respaldo_tiene === false ? "No" : null,
           incluye_nna:                        datos.incluye_nna ? true : null,
           nna_detalle:                        datos.nna_detalle || null,
           datos_navegacion:                   datos.datos_navegacion ? true : null,

@@ -59,8 +59,8 @@ export default function EditarTratamiento() {
           procesos_relacionados: ext.procesos_relacionados || "",
           finalidades_secundarias: ext.finalidades_secundarias || "",
           informa_titulares: ext.informa_titulares ? ext.informa_titulares.split(",").filter(Boolean) : [],
-          documento_respaldo_tiene: docRespaldo != null ? true : null,
-          documento_respaldo_descripcion: (docRespaldo && docRespaldo !== "Sí") ? docRespaldo : "",
+          documento_respaldo_tiene: docRespaldo === "No" ? false : docRespaldo != null ? true : null,
+          documento_respaldo_descripcion: (docRespaldo && docRespaldo !== "Sí" && docRespaldo !== "No") ? docRespaldo : "",
           // ── Paso 2 ──────────────────────────────────────────
           categorias_titulares: det.categorias_titulares ? det.categorias_titulares.split(",").filter(Boolean) : [],
           universo_titulares: det.universo_titulares || "",

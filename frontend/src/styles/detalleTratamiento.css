@@ -73,6 +73,11 @@
   color: #0a3622;
 }
 
+.estado-borrador {
+  background: #e9ecef;
+  color: #495057;
+}
+
 /* Botones header */
 .detalle-acciones {
   display: flex;
