@@ -203,11 +203,17 @@ def _formatear_valor(valor) -> str:
 
 # nueva función: compara snapshot antes/después campo por campo y devuelve
 # solo los que cambiaron, en el formato que espera CampoModificado.
+def _normalizar_valor(v):
+    if v is None or v is False or v == "":
+        return None
+    return v
+
+
 def _comparar_snapshots(antes: dict, despues: dict) -> list[dict]:
     cambios = []
     for campo, valor_despues in despues.items():
         valor_antes = antes.get(campo)
-        if valor_antes != valor_despues:
+        if _normalizar_valor(valor_antes) != _normalizar_valor(valor_despues):
             cambios.append({
                 "campo": campo,
                 "antes": _formatear_valor(valor_antes),

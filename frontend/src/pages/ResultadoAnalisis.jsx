@@ -307,7 +307,7 @@ export default function AsignacionCampos() {
                   const enOtras     = estado === "compartible" ? actividadesDeCampo(campo.nombre_columna) : [];
                   return (
                     <div
-                      key={campo.nombre_columna}
+                      key={`${campo.nombre_columna}_${campo.tabla_origen || ''}`}
                       className={`ac-campo ac-campo--${estado}`}
                       onClick={() => clickCampo(campo)}
                       title={
@@ -346,7 +346,7 @@ export default function AsignacionCampos() {
                     const enOtras     = estado === "compartible" ? actividadesDeCampo(campo.nombre_columna) : [];
                     return (
                       <div
-                        key={campo.nombre_columna}
+                        key={`${campo.nombre_columna}_${campo.tabla_origen || ''}`}
                         className={`ac-campo ac-campo--pendiente ac-campo--${estado}`}
                         onClick={() => clickCampo(campo)}
                         title={

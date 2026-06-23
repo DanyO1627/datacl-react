@@ -121,10 +121,15 @@ export default function Paso1() {
   const { form, actualizarForm, resetForm } = useFormulario();
   const esEdicion = form.modoEdicion;
 
+  // Si se llega a Paso1 sin datos de análisis y sin modo edición,
+  // limpiar estado residual de sesiones anteriores para evitar datos sucios.
+  useEffect(() => {
+    if (!datosAnalisis && !form.modoEdicion && !form.sesionActual && form.actividadesPendientes?.length > 0) {
+      resetForm();
+    }
+  }, []);
+
   // Pre-cargar campos detectados desde el análisis si el formulario viene vacío.
-  // Depende de form.campos_detectados.length (no del array completo) para no
-  // re-disparar el efecto cuando actualizarForm reemplaza el array por otro
-  // de igual longitud, evitando un loop infinito.
   useEffect(() => {
     if (datosAnalisis?.campos_detectados?.length > 0 && form.campos_detectados.length === 0) {
       actualizarForm({
@@ -324,9 +329,9 @@ export default function Paso1() {
                 </div>
                 {act?.campos?.length > 0 && (
                   <div className="p1-banner-chips">
-                    {act.campos.map((c) => (
+                    {act.campos.map((c, i) => (
                       <span
-                        key={c.nombre_columna}
+                        key={`${c.nombre_columna}_${i}`}
                         className={`p1-banner-chip ${c.tipo === "SENSIBLE" ? "p1-banner-chip--sensible" : ""}`}
                       >
                         {c.nombre_columna}
