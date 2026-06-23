@@ -89,6 +89,20 @@ def crear_tratamiento(
                 campos_usados=datos.campos_usados,
             ))
 
+        db.flush()
+
+        # Versión inicial del RAT
+        snapshot = _serializar_tratamiento(nuevo)
+        db.add(models.VersionTratamiento(
+            tratamiento_id=nuevo.id,
+            numero_version=1,
+            datos_snapshot=snapshot,
+            campos_modificados=[],
+            modificado_por=None,
+            descripcion_cambio="Versión inicial del RAT",
+            nivel_riesgo=nuevo.nivel_riesgo,
+        ))
+
         db.commit()
         db.refresh(nuevo)
         return nuevo
@@ -150,15 +164,30 @@ _CAMPOS_SNAPSHOT_DETALLE = [
     "categorias_titulares", "universo_titulares", "origen_datos", "categoria_datos",
 ]
 
+_CAMPOS_SNAPSHOT_EXTENDIDO = [
+    "descripcion_detallada", "subarea_responsable", "procesos_relacionados",
+    "finalidades_secundarias", "informa_titulares", "documento_respaldo_permiso",
+    "incluye_nna", "nna_detalle", "datos_navegacion", "datos_navegacion_detalle",
+    "destinatarios_internos", "destinatarios_nacionales", "destinatarios_internacionales",
+    "terceros_son_encargados", "contratos_proteccion_datos", "contratos_proteccion_datos_detalle",
+    "datos_transferidos_detalle", "metodo_transferencia",
+    "sistemas_origen", "sistemas_destino", "sistemas_tratamiento",
+    "tipos_tratamiento_sistema", "base_datos_nombre", "proveedor_tecnologico",
+    "criterio_plazo", "metodo_eliminacion", "documenta_destruccion", "excepciones_plazo",
+    "minimizacion_justificacion", "mecanismos_exactitud", "evaluacion_periodica",
+    "cumplimiento_demostrable", "incidentes_historicos", "cambios_futuros",
+    "requiere_dpia", "dpia_realizada", "dpia_detalle",
+]
 
-# nueva función: junta los campos de Tratamiento + DetalleRat en UN SOLO dict
-# plano (sin sub-dict "detalle"), para poder comparar snapshots campo por
-# campo y que el historial muestre cada cambio como una pill legible.
+
 def _serializar_tratamiento(tratamiento: models.Tratamiento) -> dict:
     snapshot = {campo: getattr(tratamiento, campo) for campo in _CAMPOS_SNAPSHOT_TRATAMIENTO}
     detalle = tratamiento.detalle
     for campo in _CAMPOS_SNAPSHOT_DETALLE:
         snapshot[campo] = getattr(detalle, campo) if detalle else None
+    ext = tratamiento.detalle_extendido
+    for campo in _CAMPOS_SNAPSHOT_EXTENDIDO:
+        snapshot[campo] = getattr(ext, campo) if ext else None
     return snapshot
 
 
@@ -207,6 +236,44 @@ _ETIQUETAS_CAMPOS = {
     "responsable_tratamiento": "Responsable",
     "departamento": "Departamento",
     "es_responsable": "Rol del responsable",
+    # Detalle extendido
+    "descripcion_detallada": "Descripción detallada",
+    "subarea_responsable": "Subárea responsable",
+    "procesos_relacionados": "Procesos relacionados",
+    "finalidades_secundarias": "Finalidades secundarias",
+    "informa_titulares": "Información a titulares",
+    "documento_respaldo_permiso": "Documento de respaldo",
+    "incluye_nna": "Incluye datos de menores (NNA)",
+    "nna_detalle": "Detalle NNA",
+    "datos_navegacion": "Datos de navegación",
+    "datos_navegacion_detalle": "Detalle datos navegación",
+    "destinatarios_internos": "Destinatarios internos",
+    "destinatarios_nacionales": "Destinatarios nacionales",
+    "destinatarios_internacionales": "Destinatarios internacionales",
+    "terceros_son_encargados": "Terceros son encargados",
+    "contratos_proteccion_datos": "Contratos de protección de datos",
+    "contratos_proteccion_datos_detalle": "Detalle contratos protección",
+    "datos_transferidos_detalle": "Datos transferidos (detalle)",
+    "metodo_transferencia": "Método de transferencia",
+    "sistemas_origen": "Sistemas de origen",
+    "sistemas_destino": "Sistemas de destino",
+    "sistemas_tratamiento": "Sistemas de tratamiento",
+    "tipos_tratamiento_sistema": "Tipos de tratamiento en sistema",
+    "base_datos_nombre": "Base de datos",
+    "proveedor_tecnologico": "Proveedor tecnológico",
+    "criterio_plazo": "Criterio del plazo",
+    "metodo_eliminacion": "Método de eliminación",
+    "documenta_destruccion": "Documenta destrucción",
+    "excepciones_plazo": "Excepciones al plazo",
+    "minimizacion_justificacion": "Justificación de minimización",
+    "mecanismos_exactitud": "Mecanismos de exactitud",
+    "evaluacion_periodica": "Evaluación periódica",
+    "cumplimiento_demostrable": "Cumplimiento demostrable",
+    "incidentes_historicos": "Incidentes históricos",
+    "cambios_futuros": "Cambios futuros",
+    "requiere_dpia": "Requiere DPIA",
+    "dpia_realizada": "DPIA realizada",
+    "dpia_detalle": "Detalle DPIA",
 }
 
 
@@ -261,12 +328,6 @@ def editar_tratamiento(
         if datos.estado is not None:
             tratamiento.estado = datos.estado.upper()
 
-        # El riesgo SIEMPRE LO VAMOS A RECALCULAR después de editar
-        tratamiento.probabilidad = calcular_probabilidad(tratamiento)
-        tratamiento.impacto = calcular_impacto(tratamiento)
-        tratamiento.nivel_riesgo = determinar_nivel_riesgo(tratamiento.probabilidad, tratamiento.impacto)
-        tratamiento.fecha_evaluacion = datetime.now()
-
         if datos.detalle is not None:
             if tratamiento.detalle is None:
                 # Tratamientos viejos sin detalle_rat se crean ahora.
@@ -287,7 +348,13 @@ def editar_tratamiento(
                 for campo, valor in ext_campos.items():
                     setattr(tratamiento.detalle_extendido, campo, valor)
 
-        db.flush()  # aplica los cambios en memoria antes de tomar el snapshot "después"
+        # Recalcular riesgo DESPUÉS de actualizar detalle y detalle_extendido
+        tratamiento.probabilidad = calcular_probabilidad(tratamiento)
+        tratamiento.impacto = calcular_impacto(tratamiento)
+        tratamiento.nivel_riesgo = determinar_nivel_riesgo(tratamiento.probabilidad, tratamiento.impacto)
+        tratamiento.fecha_evaluacion = datetime.now()
+
+        db.flush()
 
         # Historial de versiones: se registra en cualquier estado del tratamiento.
         snapshot_despues = _serializar_tratamiento(tratamiento)
@@ -310,29 +377,19 @@ def editar_tratamiento(
             .first()
         )
 
-        if ultima_version:
-            # Ya existía al menos una versión -> comparamos antes/después
-            campos_modificados = _comparar_snapshots(snapshot_antes, snapshot_despues)
-            if campos_modificados:
-                db.add(models.VersionTratamiento(
-                    tratamiento_id=tratamiento.id,
-                    numero_version=ultima_version.numero_version + 1,
-                    datos_snapshot=snapshot_despues,
-                    campos_modificados=campos_modificados,
-                    modificado_por=modificado_por,
-                    descripcion_cambio=_generar_descripcion_cambio(campos_modificados),
-                    nivel_riesgo=tratamiento.nivel_riesgo,
-                ))
-            # si no hubo cambios reales, no se crea una versión vacía
-        else:
-            # Primera versión del tratamiento
+        campos_modificados = _comparar_snapshots(snapshot_antes, snapshot_despues)
+        if campos_modificados:
+            if ultima_version:
+                ultima_version.campos_modificados = campos_modificados
+                ultima_version.descripcion_cambio = _generar_descripcion_cambio(campos_modificados)
+            siguiente_num = (ultima_version.numero_version + 1) if ultima_version else 1
             db.add(models.VersionTratamiento(
                 tratamiento_id=tratamiento.id,
-                numero_version=1,
+                numero_version=siguiente_num,
                 datos_snapshot=snapshot_despues,
                 campos_modificados=[],
                 modificado_por=modificado_por,
-                descripcion_cambio="Versión inicial del RAT",
+                descripcion_cambio="Versión actual",
                 nivel_riesgo=tratamiento.nivel_riesgo,
             ))
 

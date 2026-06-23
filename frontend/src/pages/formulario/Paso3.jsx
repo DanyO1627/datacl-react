@@ -370,7 +370,8 @@ export default function Paso3() {
         const medStr = serializarMedidasSeguridad(formularioCompleto.medidas_seguridad, formularioCompleto.otras_medidas);
         const tieneDestinatarios = formularioCompleto.destinatarios || formularioCompleto.destinatarios_internos || formularioCompleto.destinatarios_nacionales || formularioCompleto.destinatarios_internacionales;
         const estadoFinal = (formularioCompleto.finalidad && formularioCompleto.base_legal && formularioCompleto.plazo_conservacion && tieneDestinatarios && medStr) ? "COMPLETO" : "PENDIENTE";
-        await actualizarTratamiento(form.tratamientoEditId, { ...payload, estado: estadoFinal });
+        const { campos_detectados, sesion_id, campos_usados, otras_medidas, ...editPayload } = payload;
+        await actualizarTratamiento(form.tratamientoEditId, { ...editPayload, estado: estadoFinal });
         const editId = form.tratamientoEditId;
         resetForm();
         navigate(`/tratamientos/${editId}`);
