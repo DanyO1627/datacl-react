@@ -564,7 +564,7 @@ export default function DetalleTratamiento() {
 
         {ext && seccionExtendidaTieneData(
           ext.criterio_plazo, ext.metodo_eliminacion, ext.documenta_destruccion,
-          ext.minimizacion_justificacion, ext.mecanismos_exactitud,
+          ext.excepciones_plazo, ext.minimizacion_justificacion, ext.mecanismos_exactitud,
           ext.evaluacion_periodica, ext.cumplimiento_demostrable,
           ext.incidentes_historicos, ext.cambios_futuros
         ) && (
@@ -582,6 +582,9 @@ export default function DetalleTratamiento() {
                   ? <span className="detalle-campo-pendiente">—</span>
                   : <span className="detalle-campo-valor">{ext.documenta_destruccion ? 'Sí' : 'No'}</span>
                 }
+              </Campo>
+              <Campo label="Excepciones al plazo">
+                <ValorMultilinea v={ext.excepciones_plazo} />
               </Campo>
               <Campo label="Justificación de minimización">
                 <ValorMultilinea v={ext.minimizacion_justificacion} />

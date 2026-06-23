@@ -150,6 +150,7 @@ class DetalleRatExtendidoEntrada(BaseModel):
     criterio_plazo:            Optional[str] = None
     metodo_eliminacion:        Optional[str] = None
     documenta_destruccion:     Optional[bool] = None
+    excepciones_plazo:         Optional[str] = None
     minimizacion_justificacion: Optional[str] = None
     mecanismos_exactitud:      Optional[str] = None
     evaluacion_periodica:      Optional[str] = None
@@ -197,6 +198,7 @@ class DetalleRatExtendidoRespuesta(BaseModel):
     criterio_plazo:            Optional[str] = None
     metodo_eliminacion:        Optional[str] = None
     documenta_destruccion:     Optional[bool] = None
+    excepciones_plazo:         Optional[str] = None
     minimizacion_justificacion: Optional[str] = None
     mecanismos_exactitud:      Optional[str] = None
     evaluacion_periodica:      Optional[str] = None
