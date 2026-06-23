@@ -31,14 +31,16 @@ api.interceptors.request.use((config) => {
 
 export async function analizarArchivo(archivo, diccionario = null) {
   const formData = new FormData();
-  formData.append("archivo", archivo);
 
   if (diccionario) {
+    formData.append("archivo", Array.isArray(archivo) ? archivo[0] : archivo);
     formData.append("diccionario", diccionario);
     const respuesta = await api.post("/analizar/diccionario", formData);
     return respuesta.data;
   }
 
+  const lista = Array.isArray(archivo) ? archivo : [archivo];
+  lista.forEach((a) => formData.append("archivos", a));
   const respuesta = await api.post("/analizar/archivo", formData);
   return respuesta.data;
 }

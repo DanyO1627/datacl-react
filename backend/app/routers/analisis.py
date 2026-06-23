@@ -30,7 +30,8 @@ router = APIRouter(prefix="/analizar", tags=["analisis"])
 
 EXTENSIONES_CSV   = ('.csv',)
 EXTENSIONES_EXCEL = ('.xlsx', '.xls')
-TAMANO_MAXIMO     = 5 * 1024 * 1024  # 5 MB
+TAMANO_MAXIMO     = 5 * 1024 * 1024  # 5 MB por archivo
+MAX_ARCHIVOS      = 10
 
 
 def _detectar_tipo_archivo(nombre: str) -> str:
@@ -74,39 +75,92 @@ def _leer_dataframe(contenido: bytes, tipo: str) -> pd.DataFrame:
 
 @router.post("/archivo")
 async def analizar_archivo(
-    archivo: Annotated[UploadFile, File(...)],
+    archivos: Annotated[list[UploadFile], File(...)],
     _usuario=Depends(obtener_usuario_actual),
 ):
     """
-    Nivel 1: recibe un archivo CSV o Excel y clasifica sus columnas.
+    Nivel 1: recibe uno o más archivos CSV/Excel y clasifica sus columnas.
+    Cada campo lleva archivo_origen indicando de qué archivo proviene.
     Los datos se analizan SOLO en memoria; nunca se persisten en la BD.
     Requiere autenticación JWT.
     """
-    tipo = _detectar_tipo_archivo(archivo.filename)
-    contenido: bytes = await archivo.read()
+    if len(archivos) == 0:
+        raise HTTPException(status_code=400, detail="Debes enviar al menos un archivo.")
+    if len(archivos) > MAX_ARCHIVOS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Máximo {MAX_ARCHIVOS} archivos por análisis.",
+        )
 
-    if len(contenido) == 0:
-        raise HTTPException(status_code=400, detail="El archivo está vacío.")
-    if len(contenido) > TAMANO_MAXIMO:
-        raise HTTPException(status_code=400, detail="El archivo supera el tamaño máximo permitido (5MB).")
+    detectados_totales: list[dict] = []
+    pendientes_totales: list[dict] = []
+    total_columnas = 0
+    errores: list[dict] = []
+    archivos_procesados: list[str] = []
 
-    try:
-        columnas = leer_columnas_csv(contenido) if tipo == 'csv' else leer_columnas_excel(contenido)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    for archivo in archivos:
+        nombre = archivo.filename or "sin_nombre"
 
-    resultado = clasificar_columnas(columnas)
+        try:
+            tipo = _detectar_tipo_archivo(nombre)
+        except HTTPException as e:
+            errores.append({"archivo": nombre, "error": e.detail})
+            continue
 
-    return {
-        "detectados":     resultado["detectados"],
-        "pendientes":     resultado["pendientes"],
-        "total_columnas": len(columnas),
+        contenido: bytes = await archivo.read()
+
+        if len(contenido) == 0:
+            errores.append({"archivo": nombre, "error": "El archivo está vacío."})
+            continue
+        if len(contenido) > TAMANO_MAXIMO:
+            errores.append({"archivo": nombre, "error": "Supera el tamaño máximo (5 MB)."})
+            continue
+
+        try:
+            columnas = (
+                leer_columnas_csv(contenido) if tipo == "csv"
+                else leer_columnas_excel(contenido)
+            )
+        except ValueError as e:
+            errores.append({"archivo": nombre, "error": str(e)})
+            continue
+
+        resultado = clasificar_columnas(columnas)
+
+        for campo in resultado["detectados"]:
+            campo["archivo_origen"] = nombre
+        for campo in resultado["pendientes"]:
+            campo["archivo_origen"] = nombre
+
+        detectados_totales.extend(resultado["detectados"])
+        pendientes_totales.extend(resultado["pendientes"])
+        total_columnas += len(columnas)
+        archivos_procesados.append(nombre)
+
+    if not archivos_procesados and errores:
+        raise HTTPException(
+            status_code=400,
+            detail="Ningún archivo pudo procesarse. "
+                   + "; ".join(e["error"] for e in errores),
+        )
+
+    respuesta = {
+        "detectados":     detectados_totales,
+        "pendientes":     pendientes_totales,
+        "total_columnas": total_columnas,
         "resumen": {
-            "personales":     sum(1 for d in resultado["detectados"] if d["tipo"] == "PERSONAL"),
-            "sensibles":      sum(1 for d in resultado["detectados"] if d["tipo"] == "SENSIBLE"),
-            "sin_clasificar": len(resultado["pendientes"]),
+            "personales":     sum(1 for d in detectados_totales if d["tipo"] == "PERSONAL"),
+            "sensibles":      sum(1 for d in detectados_totales if d["tipo"] == "SENSIBLE"),
+            "sin_clasificar": len(pendientes_totales),
         },
     }
+
+    if len(archivos) > 1:
+        respuesta["archivos"] = archivos_procesados
+    if errores:
+        respuesta["errores"] = errores
+
+    return respuesta
 
 
 @router.post("/diccionario")
