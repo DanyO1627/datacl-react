@@ -85,7 +85,7 @@ export default function NuevaSesion() {
   const [fuenteActiva, setFuenteActiva] = useState("bd");
 
   /* ── Estado subir archivo ──────────────────────────────────── */
-  const [archivo, setArchivo]                     = useState(null);
+  const [archivos, setArchivos]                    = useState([]);
   const [arrastrando, setArrastrando]             = useState(false);
   const [cargando, setCargando]                   = useState(false);
   const [diccionarioAbierto, setDiccionarioAbierto] = useState(false);
@@ -131,32 +131,44 @@ export default function NuevaSesion() {
     setFuenteActiva(id);
   }
 
-  /* ── Drag & drop ───────────────────────────────────────────── */
+  /* ── Drag & drop + selección multi-archivo ──────────────────── */
+  const MAX_ARCHIVOS = 5;
   const handleDragOver  = useCallback((e) => { e.preventDefault(); setArrastrando(true);  }, []);
   const handleDragLeave = useCallback((e) => { e.preventDefault(); setArrastrando(false); }, []);
-  const handleDrop      = useCallback((e) => {
+
+  function agregarArchivos(nuevos) {
+    const invalidos = nuevos.filter((f) => !esFormatoValido(f));
+    const validos = nuevos.filter((f) => esFormatoValido(f) && !archivos.some((a) => a.name === f.name));
+
+    if (invalidos.length > 0) {
+      setAlerta({ tipo: "error", mensaje: "Formato no permitido.", detalle: `"${invalidos[0].name}" no es compatible. Usa CSV o Excel (.xlsx, .xls).` });
+      if (validos.length === 0) return;
+    }
+
+    if (archivos.length + validos.length > MAX_ARCHIVOS) {
+      setAlerta({ tipo: "error", mensaje: `Máximo ${MAX_ARCHIVOS} archivos por sesión.` });
+      return;
+    }
+
+    setArchivos([...archivos, ...validos]);
+    if (invalidos.length === 0) setAlerta(null);
+  }
+
+  function quitarArchivo(nombre) {
+    setArchivos(archivos.filter((a) => a.name !== nombre));
+    setAlerta(null);
+  }
+
+  function handleDrop(e) {
     e.preventDefault();
     setArrastrando(false);
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-    if (!esFormatoValido(file)) {
-      setAlerta({ tipo: "error", mensaje: "Formato no permitido.", detalle: `El archivo "${file.name}" no es compatible. Usa CSV o Excel (.xlsx, .xls).` });
-      return;
-    }
-    setAlerta(null);
-    setArchivo(file);
-  }, []);
+    const files = Array.from(e.dataTransfer.files || []);
+    if (files.length > 0) agregarArchivos(files);
+  }
 
   const handleSeleccionar = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!esFormatoValido(file)) {
-      setAlerta({ tipo: "error", mensaje: "Formato no permitido.", detalle: `El archivo "${file.name}" no es compatible. Usa CSV o Excel (.xlsx, .xls).` });
-      e.target.value = "";
-      return;
-    }
-    setAlerta(null);
-    setArchivo(file);
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) agregarArchivos(files);
     e.target.value = "";
   };
 
@@ -191,15 +203,24 @@ export default function NuevaSesion() {
 
   /* ── Analizar archivo ──────────────────────────────────────── */
   async function handleAnalizar() {
-    if (!archivo) return;
+    if (archivos.length === 0) return;
     setCargando(true);
     setAlerta(null);
     try {
-      const resultado = await analizarArchivo(archivo, archivoDiccionario);
+      const resultado = await analizarArchivo(archivos, tieneDiccionario ? archivoDiccionario : null);
+      if (resultado.errores && resultado.errores.length > 0 && (!resultado.detectados || resultado.detectados.length === 0)) {
+        setAlerta({
+          tipo: "error",
+          mensaje: "No se pudieron procesar los archivos.",
+          detalle: resultado.errores.map((e) => `${e.archivo}: ${e.error}`).join("; "),
+        });
+        setCargando(false);
+        return;
+      }
       if (!resultado.detectados || resultado.detectados.length === 0) {
         setAlerta({
           tipo: "advertencia",
-          mensaje: "No se detectaron campos reconocibles en el archivo.",
+          mensaje: "No se detectaron campos reconocibles.",
           detalle: "Los encabezados parecen ser códigos técnicos. Activa la opción de diccionario de datos a continuación para mejorar la detección.",
         });
         setCargando(false);
@@ -325,59 +346,63 @@ export default function NuevaSesion() {
             <>
             <div className="ca-zona-wrapper">
               <div
-                className={`ca-zona ${arrastrando ? "ca-zona--arrastrando" : ""} ${archivo ? "ca-zona--con-archivo" : ""}`}
+                className={`ca-zona ${arrastrando ? "ca-zona--arrastrando" : ""}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                onClick={() => !archivo && inputRef.current?.click()}
+                onClick={() => archivos.length < MAX_ARCHIVOS && inputRef.current?.click()}
               >
-                <input ref={inputRef} type="file" accept=".csv,.xlsx,.xls" className="ca-input-hidden" onChange={handleSeleccionar} />
-
-                {!archivo ? (
-                  <>
-                    <div className="ca-nube-icono">
-                      <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="16 16 12 12 8 16"/>
-                        <line x1="12" y1="12" x2="12" y2="21"/>
-                        <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
-                      </svg>
-                    </div>
-                    <p className="ca-zona-texto-principal">Arrastra tu archivo aquí</p>
-                    <p className="ca-zona-texto-o">o</p>
-                    <button className="ca-btn-seleccionar" onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}>
-                      Seleccionar archivo
-                    </button>
-                  </>
-                ) : (
-                  <div className="ca-archivo-info">
-                    <div className="ca-archivo-icono">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                      </svg>
-                    </div>
-                    <div className="ca-archivo-detalles">
-                      <span className="ca-archivo-nombre">{archivo.name}</span>
-                      <span className="ca-archivo-tamano">{formatearTamano(archivo.size)}</span>
-                    </div>
-                    <button className="ca-btn-quitar" onClick={(e) => { e.stopPropagation(); setArchivo(null); setAlerta(null); }} title="Quitar archivo">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                      </svg>
-                    </button>
-                  </div>
-                )}
+                <input ref={inputRef} type="file" accept=".csv,.xlsx,.xls" multiple className="ca-input-hidden" onChange={handleSeleccionar} />
+                <div className="ca-nube-icono">
+                  <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="16 16 12 12 8 16"/>
+                    <line x1="12" y1="12" x2="12" y2="21"/>
+                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+                  </svg>
+                </div>
+                <p className="ca-zona-texto-principal">
+                  {archivos.length === 0 ? "Arrastra tus archivos aquí" : "Arrastra más archivos aquí"}
+                </p>
+                <p className="ca-zona-texto-o">o</p>
+                <button className="ca-btn-seleccionar" onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}>
+                  {archivos.length === 0 ? "Seleccionar archivos" : "Agregar archivos"}
+                </button>
               </div>
 
-              <p className="ca-formatos">Formatos aceptados: CSV, Excel (.xlsx, .xls)</p>
+              {archivos.length > 0 && (
+                <div className="ca-archivos-lista">
+                  {archivos.map((a) => (
+                    <div key={a.name} className="ca-archivo-info">
+                      <div className="ca-archivo-icono">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                      </div>
+                      <div className="ca-archivo-detalles">
+                        <span className="ca-archivo-nombre">{a.name}</span>
+                        <span className="ca-archivo-tamano">{formatearTamano(a.size)}</span>
+                      </div>
+                      <button className="ca-btn-quitar" onClick={() => quitarArchivo(a.name)} title="Quitar archivo">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                  <span className="ca-archivos-contador">{archivos.length} de {MAX_ARCHIVOS} archivos</span>
+                </div>
+              )}
+
+              <p className="ca-formatos">Formatos aceptados: CSV, Excel (.xlsx, .xls) · Máximo {MAX_ARCHIVOS} archivos</p>
 
               {alerta && <Alert tipo={alerta.tipo} mensaje={alerta.mensaje} detalle={alerta.detalle} />}
 
               <div className="ca-analizar-row">
-                <button className={`ca-btn-analizar ${!archivo || cargando ? "ca-btn-analizar--disabled" : ""}`} disabled={!archivo || cargando} onClick={handleAnalizar}>
+                <button className={`ca-btn-analizar ${archivos.length === 0 || cargando ? "ca-btn-analizar--disabled" : ""}`} disabled={archivos.length === 0 || cargando} onClick={handleAnalizar}>
                   {cargando ? (
                     <span className="ca-btn-spinner-wrap"><span className="ca-spinner" />Analizando...</span>
-                  ) : "Analizar archivo"}
+                  ) : `Analizar archivo${archivos.length > 1 ? "s" : ""}`}
                 </button>
               </div>
             </div>

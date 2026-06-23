@@ -33,7 +33,8 @@ export async function analizarArchivo(archivo, diccionario = null) {
   const formData = new FormData();
 
   if (diccionario) {
-    formData.append("archivo", Array.isArray(archivo) ? archivo[0] : archivo);
+    const listaDic = Array.isArray(archivo) ? archivo : [archivo];
+    listaDic.forEach((a) => formData.append("archivos", a));
     formData.append("diccionario", diccionario);
     const respuesta = await api.post("/analizar/diccionario", formData);
     return respuesta.data;

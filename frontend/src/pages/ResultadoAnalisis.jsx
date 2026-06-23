@@ -53,24 +53,24 @@ export default function AsignacionCampos() {
   const puedeAvanzar = actividades.length > 0 && actividades.some((a) => a.campos.length > 0);
 
   const tieneMultiTabla = useMemo(
-    () => [...detectados, ...pendientes].some((c) => c.tabla_origen),
+    () => [...detectados, ...pendientes].some((c) => c.tabla_origen || c.archivo_origen),
     [detectados, pendientes],
   );
 
   const tablasUnicas = useMemo(() => {
     if (!tieneMultiTabla) return [];
-    const set = new Set([...detectados, ...pendientes].map((c) => c.tabla_origen).filter(Boolean));
+    const set = new Set([...detectados, ...pendientes].map((c) => c.tabla_origen || c.archivo_origen).filter(Boolean));
     return [...set].sort();
   }, [tieneMultiTabla, detectados, pendientes]);
 
   const detectadosFiltrados = useMemo(() => {
     if (!tieneMultiTabla || tablaFiltro === "todos") return detectados;
-    return detectados.filter((c) => c.tabla_origen === tablaFiltro);
+    return detectados.filter((c) => (c.tabla_origen || c.archivo_origen) === tablaFiltro);
   }, [detectados, tieneMultiTabla, tablaFiltro]);
 
   const pendientesFiltrados = useMemo(() => {
     if (!tieneMultiTabla || tablaFiltro === "todos") return pendientes;
-    return pendientes.filter((c) => c.tabla_origen === tablaFiltro);
+    return pendientes.filter((c) => (c.tabla_origen || c.archivo_origen) === tablaFiltro);
   }, [pendientes, tieneMultiTabla, tablaFiltro]);
 
   if (!state) return <Navigate to="/subir-archivo" replace />;
@@ -98,7 +98,7 @@ export default function AsignacionCampos() {
     if (tabla !== "todos") {
       const camposAsignados = actividades.flatMap((a) => a.campos);
       const hayOtraTabla = camposAsignados.some(
-        (c) => c.tabla_origen && c.tabla_origen !== tabla,
+        (c) => (c.tabla_origen || c.archivo_origen) && (c.tabla_origen || c.archivo_origen) !== tabla,
       );
       if (hayOtraTabla) setToastFiltro(true);
     }
@@ -321,8 +321,8 @@ export default function AsignacionCampos() {
                       <span className={`ac-campo-badge ${esSensible ? "ac-campo-badge--sensible" : "ac-campo-badge--personal"}`}>
                         {esSensible ? "SENSIBLE" : "PERSONAL"}
                       </span>
-                      {tieneMultiTabla && campo.tabla_origen && (
-                        <span className="ac-campo-tabla">{campo.tabla_origen}</span>
+                      {tieneMultiTabla && (campo.tabla_origen || campo.archivo_origen) && (
+                        <span className="ac-campo-tabla">{campo.tabla_origen || campo.archivo_origen}</span>
                       )}
                       {estado === "compartible" && (
                         <span className="ac-campo-actividad" title={enOtras.join(", ")}>en {enOtras.length} act.</span>
@@ -358,8 +358,8 @@ export default function AsignacionCampos() {
                       >
                         <span className="ac-campo-nombre">{campo.nombre_columna}</span>
                         <span className="ac-campo-badge ac-campo-badge--pendiente">?</span>
-                        {tieneMultiTabla && campo.tabla_origen && (
-                          <span className="ac-campo-tabla">{campo.tabla_origen}</span>
+                        {tieneMultiTabla && (campo.tabla_origen || campo.archivo_origen) && (
+                          <span className="ac-campo-tabla">{campo.tabla_origen || campo.archivo_origen}</span>
                         )}
                         {estado === "compartible" && (
                           <span className="ac-campo-actividad" title={enOtras.join(", ")}>en {enOtras.length} act.</span>

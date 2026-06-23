@@ -166,20 +166,18 @@ async def analizar_archivo(
 @router.post("/diccionario")
 async def analizar_con_diccionario(
     diccionario: Annotated[UploadFile, File(...)],
-    archivo: Annotated[Optional[UploadFile], File()] = None,
+    archivos: list[UploadFile] = File(default=[]),
     _usuario=Depends(obtener_usuario_actual),
 ):
     """
     Nivel 2 — recibe un diccionario técnico (nombre_tecnico + descripcion) y,
-    opcionalmente, el archivo de datos real.
+    opcionalmente, uno o más archivos de datos reales.
 
-    Si se envía `archivo`, las columnas a clasificar son las del archivo (igual
-    que antes) y el diccionario solo se usa para las que quedan sin clasificar
-    por nombre.
+    Si se envían archivos, las columnas vienen de ellos (cada campo lleva
+    archivo_origen) y el diccionario reclasifica las que quedan pendientes.
 
-    Si NO se envía `archivo`, las columnas a clasificar son los nombres
-    técnicos del propio diccionario — permite clasificar campos sin subir
-    los datos reales.
+    Si NO se envían archivos, las columnas a clasificar son los nombres
+    técnicos del propio diccionario.
 
     Requiere autenticación JWT.
     """
@@ -207,28 +205,99 @@ async def analizar_con_diccionario(
     except Exception:
         raise HTTPException(status_code=400, detail="No se pudo leer el contenido del diccionario.")
 
-    if archivo is not None:
-        tipo_datos = _detectar_tipo_archivo(archivo.filename)
-        contenido_datos: bytes = await archivo.read()
+    # ── Con archivos de datos: clasificar por archivo + diccionario ──
+    if archivos:
+        detectados_totales: list[dict] = []
+        pendientes_totales: list[dict] = []
+        total_columnas = 0
+        errores: list[dict] = []
+        archivos_procesados: list[str] = []
 
-        if len(contenido_datos) == 0:
-            raise HTTPException(status_code=400, detail="El archivo de datos está vacío.")
-        if len(contenido_datos) > TAMANO_MAXIMO:
-            raise HTTPException(status_code=400, detail="El archivo supera el tamaño máximo permitido (5MB).")
+        for archivo in archivos:
+            nombre = archivo.filename or "sin_nombre"
+            try:
+                tipo = _detectar_tipo_archivo(nombre)
+            except HTTPException as e:
+                errores.append({"archivo": nombre, "error": e.detail})
+                continue
+            contenido: bytes = await archivo.read()
+            if len(contenido) == 0:
+                errores.append({"archivo": nombre, "error": "El archivo está vacío."})
+                continue
+            if len(contenido) > TAMANO_MAXIMO:
+                errores.append({"archivo": nombre, "error": "Supera el tamaño máximo (5 MB)."})
+                continue
+            try:
+                columnas = (
+                    leer_columnas_csv(contenido) if tipo == "csv"
+                    else leer_columnas_excel(contenido)
+                )
+            except ValueError as e:
+                errores.append({"archivo": nombre, "error": str(e)})
+                continue
 
-        try:
-            columnas_datos = leer_columnas_csv(contenido_datos) if tipo_datos == 'csv' else leer_columnas_excel(contenido_datos)
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=f"Error en archivo de datos: {e}")
-    else:
-        # Sin archivo de datos: los nombres técnicos del diccionario son las columnas a clasificar
-        columnas_datos = [str(row[col_tecnica]).strip() for _, row in df_dic.iterrows()]
+            resultado = clasificar_columnas(columnas)
+            for campo in resultado["detectados"]:
+                campo["archivo_origen"] = nombre
+            for campo in resultado["pendientes"]:
+                campo["archivo_origen"] = nombre
+            detectados_totales.extend(resultado["detectados"])
+            pendientes_totales.extend(resultado["pendientes"])
+            total_columnas += len(columnas)
+            archivos_procesados.append(nombre)
+
+        if not archivos_procesados and errores:
+            raise HTTPException(
+                status_code=400,
+                detail="Ningún archivo pudo procesarse. "
+                       + "; ".join(e["error"] for e in errores),
+            )
+
+        pendientes_reclasificados: list[dict] = []
+        for campo in pendientes_totales:
+            col = campo["nombre_columna"]
+            descripcion = mapa_dic.get(col.lower())
+            if descripcion:
+                resultado_desc = clasificar_columnas([descripcion])
+                if resultado_desc["detectados"]:
+                    clasificado = resultado_desc["detectados"][0]
+                    detectados_totales.append({
+                        "nombre_columna":    col,
+                        "tipo":              clasificado["tipo"],
+                        "categoria_tematica": clasificado.get("categoria_tematica", "Otros"),
+                        "origen":            "diccionario",
+                        "descripcion":       descripcion,
+                        "archivo_origen":    campo.get("archivo_origen"),
+                    })
+                else:
+                    pendientes_reclasificados.append(campo)
+            else:
+                pendientes_reclasificados.append(campo)
+
+        respuesta = {
+            "detectados":     detectados_totales,
+            "pendientes":     pendientes_reclasificados,
+            "total_columnas": total_columnas,
+            "resumen": {
+                "personales":     sum(1 for d in detectados_totales if d["tipo"] == "PERSONAL"),
+                "sensibles":      sum(1 for d in detectados_totales if d["tipo"] == "SENSIBLE"),
+                "sin_clasificar": len(pendientes_reclasificados),
+            },
+        }
+        if len(archivos) > 1:
+            respuesta["archivos"] = archivos_procesados
+        if errores:
+            respuesta["errores"] = errores
+        return respuesta
+
+    # ── Sin archivos: usar nombres técnicos del diccionario ──
+    columnas_datos = [str(row[col_tecnica]).strip() for _, row in df_dic.iterrows()]
 
     resultado_n1  = clasificar_columnas(columnas_datos)
     detectados    = resultado_n1["detectados"]
     pendientes_n1 = [p["nombre_columna"] for p in resultado_n1["pendientes"]]
 
-    pendientes_final = []
+    pendientes_final: list[dict] = []
     for col in pendientes_n1:
         descripcion = mapa_dic.get(col.lower())
         if descripcion:
