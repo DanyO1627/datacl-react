@@ -437,7 +437,7 @@ export default function HistorialVersiones() {
                                 >
                                   {cargandoVersion === v.numero_version ? 'Cargando...' : 'Ver'}
                                 </button>
-                                <button className="hv-btn-link" disabled title="Disponible próximamente">PDF</button>
+                                <button className="hv-btn-link" onClick={descargarPDF}>PDF</button>
                               </div>
                             </td>
                           </tr>
