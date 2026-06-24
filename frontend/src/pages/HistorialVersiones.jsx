@@ -94,11 +94,34 @@ const INFORMA_TITULARES = {
   web: "Aviso en web", correo: "Correo electrónico",
   contrato: "Contrato", mandato: "Mandato", no_informa: "No se informa",
 }
+const CRITERIO_PLAZO = {
+  legal: "Legal (normativa aplicable)", contractual: "Contractual (duración del contrato)",
+  operacional: "Operacional (necesidad del proceso)",
+}
+const METODO_ELIMINACION = {
+  digital: "Eliminación segura digital", fisica: "Destrucción física",
+  anonimizacion: "Anonimización", otro: "Otro",
+}
+const EVALUACION_PERIODICA = {
+  anual: "Anual", bienal: "Bienal (cada 2 años)",
+  ante_cambios: "Ante cambios importantes", sin_definir: "Sin definir",
+}
+
+const MAPAS_VALOR = {
+  informa_titulares: INFORMA_TITULARES,
+  criterio_plazo: CRITERIO_PLAZO,
+  metodo_eliminacion: METODO_ELIMINACION,
+  evaluacion_periodica: EVALUACION_PERIODICA,
+}
 
 function traducirValor(campo, valor) {
   if (valor == null || valor === '') return '—'
-  if (campo === 'informa_titulares') {
-    return valor.split(',').filter(Boolean).map(v => INFORMA_TITULARES[v.trim()] || v.trim()).join(', ')
+  const mapa = MAPAS_VALOR[campo]
+  if (mapa) {
+    if (valor.includes(',')) {
+      return valor.split(',').filter(Boolean).map(v => mapa[v.trim()] || v.trim()).join(', ')
+    }
+    return mapa[valor] || valor
   }
   return valor
 }

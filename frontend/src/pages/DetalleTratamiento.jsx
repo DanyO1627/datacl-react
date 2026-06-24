@@ -55,6 +55,26 @@ const INFORMA_TITULARES = {
   no_informa:  "No se informa",
 }
 
+const CRITERIO_PLAZO = {
+  legal:       "Legal (normativa aplicable)",
+  contractual: "Contractual (duración del contrato)",
+  operacional: "Operacional (necesidad del proceso)",
+}
+
+const METODO_ELIMINACION = {
+  digital:       "Eliminación segura digital",
+  fisica:        "Destrucción física",
+  anonimizacion: "Anonimización",
+  otro:          "Otro",
+}
+
+const EVALUACION_PERIODICA = {
+  anual:        "Anual",
+  bienal:       "Bienal (cada 2 años)",
+  ante_cambios: "Ante cambios importantes",
+  sin_definir:  "Sin definir",
+}
+
 const MEDIDAS = {
   cifrado:     "Cifrado de datos",
   acceso_rol:  "Control de acceso por rol",
@@ -583,10 +603,10 @@ export default function DetalleTratamiento() {
             <h2 className="detalle-columna-titulo">Principios legales</h2>
             <div className="detalle-seccion-campos">
               <Campo label="Criterio de plazo">
-                <Valor v={ext.criterio_plazo} vacio="—" />
+                <Valor v={ext.criterio_plazo} mapa={CRITERIO_PLAZO} vacio="—" />
               </Campo>
               <Campo label="Método de eliminación">
-                <Valor v={ext.metodo_eliminacion} vacio="—" />
+                <Valor v={ext.metodo_eliminacion} mapa={METODO_ELIMINACION} vacio="—" />
               </Campo>
               <Campo label="¿Se documenta la destrucción?">
                 {ext.documenta_destruccion === null || ext.documenta_destruccion === undefined
@@ -603,11 +623,8 @@ export default function DetalleTratamiento() {
               <Campo label="Mecanismos de exactitud">
                 <ValorMultilinea v={ext.mecanismos_exactitud} />
               </Campo>
-              <Campo label="¿Evaluación periódica?">
-                {ext.evaluacion_periodica === null || ext.evaluacion_periodica === undefined
-                  ? <span className="detalle-campo-pendiente">—</span>
-                  : <span className="detalle-campo-valor">{ext.evaluacion_periodica ? 'Sí' : 'No'}</span>
-                }
+              <Campo label="Evaluación periódica">
+                <Valor v={ext.evaluacion_periodica} mapa={EVALUACION_PERIODICA} vacio="—" />
               </Campo>
               <Campo label="¿Cumplimiento demostrable?">
                 {ext.cumplimiento_demostrable === null || ext.cumplimiento_demostrable === undefined
