@@ -210,9 +210,9 @@ def tratamiento_a_dict(t) -> dict:
     campos_ext = [
         "descripcion_detallada", "subarea_responsable", "procesos_relacionados",
         "finalidades_secundarias", "informa_titulares", "documento_respaldo_permiso",
-        "datos_navegacion", "incluye_nna", "nna_detalle",
+        "datos_navegacion", "datos_navegacion_detalle", "incluye_nna", "nna_detalle",
         "destinatarios_internos", "destinatarios_nacionales", "destinatarios_internacionales",
-        "terceros_son_encargados", "contratos_proteccion_datos",
+        "terceros_son_encargados", "contratos_proteccion_datos", "contratos_proteccion_datos_detalle",
         "datos_transferidos_detalle", "metodo_transferencia",
         "sistemas_origen", "sistemas_destino", "sistemas_tratamiento",
         "tipos_tratamiento_sistema", "base_datos_nombre", "proveedor_tecnologico",
@@ -402,6 +402,7 @@ def _ficha_tratamiento(d, idx, total, estilos_dict, ancho, color_header):
             ("Origen de los datos", "(Titular / Terceros / Fuente pública / Generación interna)", _val(d, "origen_datos", _ORIGEN)),
             ("¿Incluye datos sensibles?", "(Salud / Biometría / Religión / Identidad de género)", _val(d, "datos_sensibles")),
             ("Datos de navegación", "(IP, cookies, ID dispositivo, geolocalización)", _val(d, "datos_navegacion")),
+            ("Detalle datos de navegación", None, _val(d, "datos_navegacion_detalle")),
             ("Datos de NNA", "(Niños, niñas y adolescentes — menores de 18 años)", _val(d, "incluye_nna")),
             ("Detalle NNA", "(qué datos de menores se tratan y con qué justificación)", _val(d, "nna_detalle")),
         ],
@@ -419,6 +420,7 @@ def _ficha_tratamiento(d, idx, total, estilos_dict, ancho, color_header):
             ("¿Los datos salen al extranjero?", None, _val(d, "sale_extranjero")),
             ("¿Los terceros actúan como encargados?", None, _val(d, "terceros_son_encargados")),
             ("¿Existen contratos de protección de datos?", "(con terceros que reciben datos)", _val(d, "contratos_proteccion_datos")),
+            ("Detalle contratos de protección", None, _val(d, "contratos_proteccion_datos_detalle")),
             ("Datos transferidos (detalle)", None, _val(d, "datos_transferidos_detalle")),
             ("Método de transferencia", "(digital / verbal / físico)", _val(d, "metodo_transferencia")),
         ],
@@ -494,15 +496,15 @@ class _NumberedCanvas(Canvas):
 
     def showPage(self):
         self._saved_page_states.append(dict(self.__dict__))
-        super().showPage()
+        self._startPage()
 
     def save(self):
         num_pages = len(self._saved_page_states)
         for state in self._saved_page_states:
             self.__dict__.update(state)
             self.draw_page_number(num_pages)
-            super().showPage()
-        super().save()
+            Canvas.showPage(self)
+        Canvas.save(self)
 
     def draw_page_number(self, total):
         page_w, _ = A4

@@ -527,7 +527,7 @@ export default function DetalleTratamiento() {
 
         {ext && seccionExtendidaTieneData(
           ext.destinatarios_internos, ext.destinatarios_nacionales, ext.destinatarios_internacionales,
-          ext.terceros_son_encargados, ext.contratos_proteccion_datos,
+          ext.terceros_son_encargados, ext.contratos_proteccion_datos, ext.contratos_proteccion_datos_detalle,
           ext.datos_transferidos_detalle, ext.metodo_transferencia
         ) && (
           <div className="detalle-seccion">
@@ -554,6 +554,11 @@ export default function DetalleTratamiento() {
                   : <span className="detalle-campo-valor">{ext.contratos_proteccion_datos ? 'Sí' : 'No'}</span>
                 }
               </Campo>
+              {ext.contratos_proteccion_datos_detalle && (
+                <Campo label="Detalle contratos de protección">
+                  <ValorMultilinea v={ext.contratos_proteccion_datos_detalle} />
+                </Campo>
+              )}
               <Campo label="Detalle datos transferidos">
                 <ValorMultilinea v={ext.datos_transferidos_detalle} />
               </Campo>
