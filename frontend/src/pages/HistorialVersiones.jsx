@@ -90,6 +90,19 @@ function etiquetaCampo(campo) {
   return ETIQUETAS_CAMPOS[campo] || campo
 }
 
+const INFORMA_TITULARES = {
+  web: "Aviso en web", correo: "Correo electrónico",
+  contrato: "Contrato", mandato: "Mandato", no_informa: "No se informa",
+}
+
+function traducirValor(campo, valor) {
+  if (valor == null || valor === '') return '—'
+  if (campo === 'informa_titulares') {
+    return valor.split(',').filter(Boolean).map(v => INFORMA_TITULARES[v.trim()] || v.trim()).join(', ')
+  }
+  return valor
+}
+
 // ── Helpers ─────────────────────────────────────────────────────────────
 
 function getIniciales(nombre) {
@@ -404,7 +417,7 @@ export default function HistorialVersiones() {
                                     <span
                                       key={i}
                                       className="hv-campo-pill"
-                                      title={`${c.antes || '—'} → ${c.despues || '—'}`}
+                                      title={`${traducirValor(c.campo, c.antes)} → ${traducirValor(c.campo, c.despues)}`}
                                     >
                                       {etiquetaCampo(c.campo)}
                                     </span>
@@ -469,8 +482,8 @@ export default function HistorialVersiones() {
                   {versionDetalle.campos_modificados.map((c, i) => (
                     <tr key={i}>
                       <td className="hv-modal-campo">{etiquetaCampo(c.campo)}</td>
-                      <td className="hv-modal-antes">{c.antes ?? '—'}</td>
-                      <td className="hv-modal-despues">{c.despues ?? '—'}</td>
+                      <td className="hv-modal-antes">{traducirValor(c.campo, c.antes)}</td>
+                      <td className="hv-modal-despues">{traducirValor(c.campo, c.despues)}</td>
                     </tr>
                   ))}
                 </tbody>

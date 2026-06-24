@@ -47,6 +47,14 @@ const TITULARES = {
   pacientes:   "Pacientes",
 }
 
+const INFORMA_TITULARES = {
+  web:         "Aviso en web",
+  correo:      "Correo electrónico",
+  contrato:    "Contrato",
+  mandato:     "Mandato",
+  no_informa:  "No se informa",
+}
+
 const MEDIDAS = {
   cifrado:     "Cifrado de datos",
   acceso_rol:  "Control de acceso por rol",
@@ -87,6 +95,12 @@ function parsearMedidas(str) {
 function parsearTitulares(str) {
   if (!str) return []
   return str.split(",").filter(Boolean).map(id => TITULARES[id] || id)
+}
+
+function parsearInformaTitulares(str) {
+  if (!str || str === "0" || str === "false") return []
+  if (str === "1" || str === "true") return ["Sí"]
+  return str.split(",").filter(Boolean).map(id => INFORMA_TITULARES[id.trim()] || id.trim())
 }
 
 // ── Sub-componentes ────────────────────────────────────────────────────────
@@ -450,10 +464,7 @@ export default function DetalleTratamiento() {
                 <ValorMultilinea v={ext.finalidades_secundarias} />
               </Campo>
               <Campo label="¿Se informa a los titulares?">
-                {ext.informa_titulares === null || ext.informa_titulares === undefined
-                  ? <span className="detalle-campo-pendiente">—</span>
-                  : <span className="detalle-campo-valor">{ext.informa_titulares ? 'Sí' : 'No'}</span>
-                }
+                <Badges items={parsearInformaTitulares(ext.informa_titulares)} />
               </Campo>
               <Campo label="Documento de respaldo / permiso">
                 <ValorMultilinea v={ext.documento_respaldo_permiso} />

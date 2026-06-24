@@ -61,6 +61,12 @@ _ORIGEN = {
     "fuentes_publicas": "De fuentes públicas",
 }
 
+_INFORMA_TITULARES = {
+    "web": "Aviso en web", "correo": "Correo electrónico",
+    "contrato": "Contrato", "mandato": "Mandato",
+    "no_informa": "No se informa",
+}
+
 _CRITERIO_PLAZO = {
     "legal": "Legal (normativa aplicable)", "contractual": "Contractual (duración del contrato)",
     "operacional": "Operacional (necesidad del proceso)",
@@ -380,7 +386,7 @@ def _ficha_tratamiento(d, idx, total, estilos_dict, ancho, color_header):
             ("Finalidad del tratamiento", "(descripción específica, no genérica)", _val(d, "finalidad")),
             ("Finalidades secundarias", None, _val(d, "finalidades_secundarias")),
             ("Base legal", "(Consentimiento / Obligación legal / Interés legítimo / Contrato)", _val(d, "base_legal", _BASE_LEGAL)),
-            ("¿Se informa a los titulares?", "(sobre la finalidad y uso de sus datos)", _val(d, "informa_titulares")),
+            ("¿Se informa a los titulares?", "(sobre la finalidad y uso de sus datos)", _val(d, "informa_titulares", _INFORMA_TITULARES)),
             ("Documento de respaldo", "(contrato, consentimiento, mandato)", _val(d, "documento_respaldo_permiso")),
         ],
         estilos_dict, ancho, color_header,
