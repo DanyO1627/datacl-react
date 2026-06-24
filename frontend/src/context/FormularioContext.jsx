@@ -2,7 +2,7 @@ import { createContext, useContext, useState } from "react";
 
 const FormularioContext = createContext(null);
 
-const FORM_VACIO = {
+function crearFormVacio() { return {
   // ── Paso 1 ───────────────────────────────────────────────
   nombre: "", responsable: "", es_responsable: true,
   departamento: "", finalidad: "", base_legal: "",
@@ -62,10 +62,10 @@ const FORM_VACIO = {
     personalizados: {},
     inputCustom: {},
   },
-};
+}; }
 
 export function FormularioProvider({ children }) {
-  const [form, setForm] = useState(FORM_VACIO);
+  const [form, setForm] = useState(crearFormVacio);
 
   function actualizarForm(campos) {
     setForm((prev) => ({ ...prev, ...campos }));
@@ -82,7 +82,7 @@ export function FormularioProvider({ children }) {
       const siguiente = prev.actividadActual + 1;
       const sigActividad = prev.actividadesPendientes[siguiente];
       return {
-        ...FORM_VACIO,
+        ...crearFormVacio(),
         sesionActual:          prev.sesionActual,
         actividadesPendientes: prev.actividadesPendientes,
         actividadActual:       siguiente,
@@ -96,11 +96,11 @@ export function FormularioProvider({ children }) {
   }
 
   function resetForm() {
-    setForm(FORM_VACIO);
+    setForm(crearFormVacio());
   }
 
   function cargarFormCompleto(campos) {
-    setForm({ ...FORM_VACIO, ...campos });
+    setForm({ ...crearFormVacio(), ...campos });
   }
 
   return (

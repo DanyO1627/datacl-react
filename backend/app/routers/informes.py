@@ -141,6 +141,10 @@ def analizar_informe_ia(
         ids_originales = [int(k) for k in informe.versiones_snapshot.keys()]
         tratamientos = (
             db.query(models.Tratamiento)
+            .options(
+                joinedload(models.Tratamiento.detalle),
+                joinedload(models.Tratamiento.detalle_extendido),
+            )
             .filter(
                 models.Tratamiento.id.in_(ids_originales),
                 models.Tratamiento.organizacion_id == usuario.id,
@@ -150,6 +154,10 @@ def analizar_informe_ia(
     else:
         tratamientos = (
             db.query(models.Tratamiento)
+            .options(
+                joinedload(models.Tratamiento.detalle),
+                joinedload(models.Tratamiento.detalle_extendido),
+            )
             .filter(models.Tratamiento.organizacion_id == usuario.id)
             .order_by(models.Tratamiento.creado_en.desc())
             .limit(informe.num_tratamientos or 10)
