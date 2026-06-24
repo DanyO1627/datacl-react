@@ -414,6 +414,10 @@ def evaluar_riesgo(
 ) -> models.Tratamiento | None:
     tratamiento = (
         db.query(models.Tratamiento)
+        .options(
+            joinedload(models.Tratamiento.detalle),
+            joinedload(models.Tratamiento.detalle_extendido),
+        )
         .filter(
             models.Tratamiento.id == tratamiento_id,
             models.Tratamiento.organizacion_id == organizacion_id,
