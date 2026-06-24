@@ -147,6 +147,9 @@ class DetalleRatExtendidoEntrada(BaseModel):
     tipos_tratamiento_sistema: Optional[str] = None
     base_datos_nombre:         Optional[str] = None
     proveedor_tecnologico:     Optional[str] = None
+    pais_destino:              Optional[str] = None
+    categorias_sensibles:      Optional[str] = None
+    categorias_datos_seleccion: Optional[str] = None
     criterio_plazo:            Optional[str] = None
     metodo_eliminacion:        Optional[str] = None
     documenta_destruccion:     Optional[bool] = None
@@ -194,6 +197,10 @@ class DetalleRatExtendidoRespuesta(BaseModel):
     tipos_tratamiento_sistema: Optional[str] = None
     base_datos_nombre:         Optional[str] = None
     proveedor_tecnologico:     Optional[str] = None
+    # Campos calculados/seleccionados
+    pais_destino:              Optional[str] = None
+    categorias_sensibles:      Optional[str] = None
+    categorias_datos_seleccion: Optional[str] = None
     # Principios legales
     criterio_plazo:            Optional[str] = None
     metodo_eliminacion:        Optional[str] = None
@@ -317,6 +324,9 @@ class TratamientoListado(BaseModel):
     nivel_riesgo: Optional[str] = None
     estado: str
     datos_sensibles: bool = False
+    sale_extranjero: bool = False
+    decisiones_automatizadas: bool = False
+    destinatarios: Optional[str] = None
     creado_en: datetime
     model_config = {"from_attributes": True}
     

@@ -20,14 +20,13 @@ function obtenerFactoresRiesgo(t) {
   if (t.sale_extranjero)           factores.push("Transferencia al extranjero")
   if (t.decisiones_automatizadas)  factores.push("Decisiones automatizadas")
   if (t.destinatarios?.trim())     factores.push("Destinatarios externos")
-  if (t.detalle_extendido?.incluye_nna)    factores.push("NNA")
   return factores
 }
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const { usuario, token } = useAuth()
-  const { actualizarForm } = useFormulario()
+  const { actualizarForm, resetForm } = useFormulario()
 
   const [nombreOrg, setNombreOrg] = useState(usuario?.nombre || "")
   const [cargando, setCargando] = useState(true)
@@ -61,6 +60,7 @@ export default function Dashboard() {
 
         const ordenados = [...activos].sort(
           (a, b) => (PESO_RIESGO[b.nivel_riesgo] ?? 0) - (PESO_RIESGO[a.nivel_riesgo] ?? 0)
+            || new Date(b.creado_en) - new Date(a.creado_en)
         )
         setUltimos(ordenados.slice(0, 3))
       } catch {
@@ -345,7 +345,7 @@ export default function Dashboard() {
 
       <button
         className="dashboard__fab"
-        onClick={() => navigate("/nuevo-tratamiento")}
+        onClick={() => { resetForm(); navigate("/nuevo-tratamiento"); }}
         title="Nuevo tratamiento"
       >
         + Nuevo tratamiento

@@ -163,6 +163,11 @@ class DetalleRatExtendido(Base):
     base_datos_nombre          = Column(String(200), nullable=True)
     proveedor_tecnologico      = Column(String(200), nullable=True)
 
+    # ── Campos calculados/seleccionados del formulario ──
+    pais_destino               = Column(String(200), nullable=True)
+    categorias_sensibles       = Column(Text, nullable=True)
+    categorias_datos_seleccion = Column(Text, nullable=True)
+
     # ── Principios (Ley 21.719) ──
     criterio_plazo              = Column(String(50), nullable=True)
     metodo_eliminacion          = Column(String(100), nullable=True)

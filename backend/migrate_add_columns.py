@@ -40,6 +40,10 @@ MIGRATIONS = [
     "ALTER TABLE detalle_rat_extendido ADD COLUMN cumplimiento_demostrable TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN incidentes_historicos TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN cambios_futuros TEXT NULL",
+    # ── detalle_rat_extendido — campos calculados/seleccionados ──
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN pais_destino VARCHAR(200) NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN categorias_sensibles TEXT NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN categorias_datos_seleccion TEXT NULL",
     # ── detalle_rat_extendido — DPIA ───────────────────────────
     "ALTER TABLE detalle_rat_extendido ADD COLUMN requiere_dpia TINYINT(1) NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN dpia_realizada TINYINT(1) NULL",
