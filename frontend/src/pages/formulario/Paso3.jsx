@@ -345,6 +345,10 @@ export default function Paso3() {
       tipos_tratamiento_sistema:          (formularioCompleto.tipos_tratamiento_sistema || []).join(",") || null,
       base_datos_nombre:                  formularioCompleto.base_datos_nombre || null,
       proveedor_tecnologico:              formularioCompleto.proveedor_tecnologico || null,
+      // Campos calculados/seleccionados
+      pais_destino:                       formularioCompleto.pais_destino || null,
+      categorias_sensibles:               (formularioCompleto.categorias_sensibles || []).join(",") || null,
+      categorias_datos_seleccion:         (formularioCompleto.categorias_datos || []).join(",") || null,
       // Principios Ley 21.719
       criterio_plazo:              formularioCompleto.criterio_plazo              || null,
       metodo_eliminacion:          formularioCompleto.metodo_eliminacion          || null,
@@ -520,6 +524,10 @@ export default function Paso3() {
           tipos_tratamiento_sistema:          (datos.tipos_tratamiento_sistema || []).join(",") || null,
           base_datos_nombre:                  datos.base_datos_nombre || null,
           proveedor_tecnologico:              datos.proveedor_tecnologico || null,
+          // Campos calculados/seleccionados
+          pais_destino:                       datos.pais_destino || null,
+          categorias_sensibles:               (datos.categorias_sensibles || []).join(",") || null,
+          categorias_datos_seleccion:         (datos.categorias_datos || []).join(",") || null,
           // Principios Ley 21.719
           criterio_plazo:              local.criterio_plazo              || null,
           metodo_eliminacion:          local.metodo_eliminacion          || null,

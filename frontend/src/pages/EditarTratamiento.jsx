@@ -88,6 +88,10 @@ export default function EditarTratamiento() {
           tipos_tratamiento_sistema: ext.tipos_tratamiento_sistema ? ext.tipos_tratamiento_sistema.split(",").filter(Boolean) : [],
           base_datos_nombre: ext.base_datos_nombre || "",
           proveedor_tecnologico: ext.proveedor_tecnologico || "",
+          // Campos calculados
+          pais_destino: ext.pais_destino || "",
+          categorias_sensibles: ext.categorias_sensibles ? ext.categorias_sensibles.split(",").filter(Boolean) : [],
+          categorias_datos: ext.categorias_datos_seleccion ? ext.categorias_datos_seleccion.split(",").filter(Boolean) : [],
           // ── Paso 3 ──────────────────────────────────────────
           plazo_conservacion: data.plazo_conservacion || "",
           plazo_otro: data.plazo_otro || "",
