@@ -161,9 +161,9 @@ Proyecto de título — Ingeniería en Informática, DuocUC (2026).
 
 | Integrante | Rol |
 |-----------|-----|
-| Constanza Pino | Desarrollo frontend y backend, arquitectura, IA |
-| Daniel Olivares | Desarrollo backend, testing, conexión BD |
-| Evelin Calderón | Testing, QA, corrección de bugs |
+| Constanza Pino | Desarrollo backend, testing, arquitectura, IA |
+| Daniel Oliveros | Desarrollo frontend, backend, testing, conexión BD |
+| Evelin Calderón | Testing, QA, corrección de bugs, conexión bd |
 
 ## Licencia
 
