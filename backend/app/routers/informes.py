@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy import func
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, subqueryload
 from dotenv import load_dotenv
 
 from app.basededatos import get_db
@@ -48,7 +48,7 @@ def generar_informe(
         .options(
             joinedload(models.Tratamiento.detalle),
             joinedload(models.Tratamiento.detalle_extendido),
-            joinedload(models.Tratamiento.campos),
+            subqueryload(models.Tratamiento.campos),
         )
         .filter(
             models.Tratamiento.id.in_(datos.ids_tratamientos),
