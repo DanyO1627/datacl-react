@@ -300,10 +300,6 @@ export default function Dashboard() {
             <GraficoRiesgo tratamientos={todosLosTratamientos} />
           </section>
           <section className="dashboard__grafico-card">
-            <h2 className="dashboard__seccion-titulo">Bases de licitud</h2>
-            <GraficoBasesLicitud tratamientos={todosLosTratamientos} />
-          </section>
-          <section className="dashboard__grafico-card">
             <h2 className="dashboard__seccion-titulo">Estado de tratamientos</h2>
             <GraficoEstados tratamientos={todosLosTratamientos} />
           </section>
