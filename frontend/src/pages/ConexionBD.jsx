@@ -325,9 +325,9 @@ function PantallaDiccionario({ onVolver, onAnalizar }) {
     actualizarForm({ conexionBD: { ...formGlobal.conexionBD, ...cambios } });
   };
 
-  const actualizarDescripcion = (nombre, valor) => {
+  const actualizarDescripcion = (clave, valor) => {
     actualizarConexion({
-      diccionarioColumnas: { ...diccionarioColumnas, [nombre]: valor },
+      diccionarioColumnas: { ...diccionarioColumnas, [clave]: valor },
     });
   };
 
@@ -387,8 +387,8 @@ function PantallaDiccionario({ onVolver, onAnalizar }) {
                     <input
                       className="cbd-dic-input"
                       placeholder="Ej: Nombre del usuario"
-                      value={diccionarioColumnas[col.nombre] || ""}
-                      onChange={(e) => actualizarDescripcion(col.nombre, e.target.value)}
+                      value={diccionarioColumnas[`${col.tabla_origen}__${col.nombre}`] || ""}
+                      onChange={(e) => actualizarDescripcion(`${col.tabla_origen}__${col.nombre}`, e.target.value)}
                     />
                   </td>
                 </tr>
@@ -445,8 +445,10 @@ export default function ConexionBD() {
     actualizarForm({ conexionBD: { ...conexion, estado: "analizando", errorMsg: "" } });
 
     const dicLimpio = {};
-    for (const [k, v] of Object.entries(diccionarioColumnas)) {
-      if (v.trim()) dicLimpio[k] = v.trim();
+    for (const [clave, v] of Object.entries(diccionarioColumnas)) {
+      if (!v.trim()) continue;
+      const nombre = clave.includes("__") ? clave.split("__").slice(1).join("__") : clave;
+      dicLimpio[nombre] = v.trim();
     }
 
     try {
