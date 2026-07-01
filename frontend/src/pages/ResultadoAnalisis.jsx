@@ -223,7 +223,7 @@ export default function AsignacionCampos() {
       campos_pendientes: [],
       campos_sesion:     [...detectados, ...pendientes],
     });
-    navigate("/nuevo-tratamiento");
+    navigate("/nuevo-tratamiento", { state: { desdeAnalisis: true } });
   }
 
   /* ── Helper: estado visual de un campo ────────────────────── */
