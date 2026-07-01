@@ -9,3 +9,6 @@ export default function RutaProtegida({ children }) {
   return children
 }
 
+
+// esto es solo para proteger las rutas de usuarios sin admin, pero no es suficiente para 
+// proteger, obviamente, el backend tiene la verdadera seguridad en obtener_usuario_actual 

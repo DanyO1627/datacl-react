@@ -31,11 +31,13 @@ class Tratamiento(Base):
     finalidad                = Column(Text, nullable=True)
     base_legal               = Column(Text, nullable=True)
     datos_sensibles          = Column(Boolean, default=False, nullable=False)
-    # DECISIÓN DE ARQUITECTURA — destinatarios (legado) vs campos aditivos
+    
+    # DECISIÓN DE ARQUITECTURA - destinatarios (legado) vs campos aditivos
     # destinatarios es texto libre original del formulario; se conserva intacto.
     # Los campos destinatarios_internos / _nacionales / _internacionales que se
     # agreguen en B2 son ADITIVOS: se guardan en detalle_rat_extendido y no
     # reemplazan ni modifican este campo. El PDF y el RAT los muestran en conjunto.
+    
     destinatarios            = Column(Text, nullable=True)
     plazo_conservacion       = Column(String(100), nullable=True)
     plazo_otro               = Column(String(200), nullable=True)
@@ -50,7 +52,7 @@ class Tratamiento(Base):
     creado_en                = Column(DateTime, server_default=func.now(), nullable=False)
     actualizado_en           = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
-    organizacion = relationship("Organizacion", back_populates="tratamientos")
+    organizacion       = relationship("Organizacion", back_populates="tratamientos")
     campos             = relationship("CampoRat", back_populates="tratamiento", cascade="all, delete-orphan")
     detalle            = relationship("DetalleRat", back_populates="tratamiento", uselist=False, cascade="all, delete-orphan")
     detalle_extendido  = relationship("DetalleRatExtendido", back_populates="tratamiento", uselist=False, cascade="all, delete-orphan")
@@ -98,7 +100,7 @@ class CampoRat(Base):
     tratamiento = relationship("Tratamiento", back_populates="campos")
 
 
-# DECISIÓN DE ARQUITECTURA — campos adicionales del RAT (B2 en adelante)
+# DECISIÓN DE ARQUITECTURA - campos adicionales del RAT (B2 en adelante)
 # ─────────────────────────────────────────────────────────────────────────────
 # detalle_rat almacena los campos del formulario Paso 1 / Paso 2 originales.
 # Cualquier campo nuevo que se agregue en sprints futuros (ej. pais_destino,
@@ -107,6 +109,7 @@ class CampoRat(Base):
 # Razón: detalle_rat ya tiene filas reales en producción; alterar su estructura
 # implica migraciones destructivas. La tabla extendida se crea vacía y se puebla
 # solo cuando el usuario completa los nuevos campos, sin romper filas existentes.
+
 class DetalleRat(Base):
     __tablename__ = "detalle_rat"
 

@@ -470,7 +470,9 @@ export default function Paso3() {
       }
 
       const idx = datos.actividadActual ?? 0;
-      const tratId = datos.tratamientosGuardados?.[idx];
+      // En modo edición, el tratamiento a actualizar es siempre el que se está
+      // editando — tratamientosGuardados nunca se llena al entrar por "Editar".
+      const tratId = datos.modoEdicion ? datos.tratamientoEditId : datos.tratamientosGuardados?.[idx];
       const medStr = serializarMedidasSeguridad(local.medidas_seguridad, local.otras_medidas);
       const payload3 = {
         nombre: datos.nombre.trim() || "Sin nombre",

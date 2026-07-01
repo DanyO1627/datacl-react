@@ -257,6 +257,18 @@
   color: #7c3aed;
 }
 
+.detalle-badge-sensible {
+  background: #f8d7da;
+  color: #842029;
+}
+
+.detalle-campos-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
 /* Cabecera de sección con info de sesión de origen */
 .detalle-seccion-header {
   display: flex;

@@ -1,6 +1,21 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const FormularioContext = createContext(null);
+
+// Solo se persiste el "puntero" al borrador en curso (qué tratamiento ya
+// quedó guardado en la BD), no el formulario completo — evita serializar
+// los Set() de ingresoManual y evita re-hidratar texto a medio escribir.
+const STORAGE_KEY = "datacl_borrador_activo";
+
+function leerBorradorPersistido() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
 
 function crearFormVacio() { return {
   // ── Paso 1 ───────────────────────────────────────────────
@@ -65,7 +80,24 @@ function crearFormVacio() { return {
 }; }
 
 export function FormularioProvider({ children }) {
-  const [form, setForm] = useState(crearFormVacio);
+  const [form, setForm] = useState(() => {
+    const persistido = leerBorradorPersistido();
+    return persistido ? { ...crearFormVacio(), ...persistido } : crearFormVacio();
+  });
+
+  // Guarda solo el puntero al borrador (tratamientosGuardados/sesionActual/
+  // actividadActual) para que un crash o un reload accidental durante el
+  // guardado no pierda la referencia al tratamiento ya creado en la BD y
+  // termine generando un duplicado.
+  useEffect(() => {
+    const { tratamientosGuardados, sesionActual, actividadActual } = form;
+    const hayBorrador = sesionActual || Object.keys(tratamientosGuardados || {}).length > 0;
+    if (hayBorrador) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ tratamientosGuardados, sesionActual, actividadActual }));
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }, [form.tratamientosGuardados, form.sesionActual, form.actividadActual]);
 
   function actualizarForm(campos) {
     setForm((prev) => ({ ...prev, ...campos }));

@@ -316,8 +316,8 @@ export default function Paso2() {
   async function handleGuardarBorrador() {
     setGuardandoBorrador(true);
     try {
-      actualizarForm(local);
-      const datos = { ...form, ...local };
+      const datos = { ...form, ...local, origen_datos: local.origen_datos.join(",") };
+      actualizarForm(datos);
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
@@ -342,7 +342,9 @@ export default function Paso2() {
       }
 
       const idx = datos.actividadActual ?? 0;
-      const tratId = datos.tratamientosGuardados?.[idx];
+      // En modo edición, el tratamiento a actualizar es siempre el que se está
+      // editando — tratamientosGuardados nunca se llena al entrar por "Editar".
+      const tratId = datos.modoEdicion ? datos.tratamientoEditId : datos.tratamientosGuardados?.[idx];
 
       const destinatariosGenerado = [
         datos.destinatarios_internos,
@@ -367,6 +369,29 @@ export default function Paso2() {
           universo_titulares: datos.universo_titulares || null,
           origen_datos: datos.origen_datos || null,
           categoria_datos: datos.categoria_datos || null,
+        },
+        detalle_extendido: {
+          incluye_nna:                        datos.incluye_nna ? true : null,
+          nna_detalle:                        datos.nna_detalle || null,
+          datos_navegacion:                   datos.datos_navegacion ? true : null,
+          datos_navegacion_detalle:           datos.datos_navegacion_detalle || null,
+          destinatarios_internos:             datos.destinatarios_internos || null,
+          destinatarios_nacionales:           datos.destinatarios_nacionales || null,
+          destinatarios_internacionales:      datos.destinatarios_internacionales || null,
+          terceros_son_encargados:            datos.terceros_son_encargados ? true : null,
+          contratos_proteccion_datos:         datos.contratos_proteccion_datos ? true : null,
+          contratos_proteccion_datos_detalle: datos.contratos_proteccion_datos_detalle || null,
+          datos_transferidos_detalle:         datos.datos_transferidos_detalle || null,
+          metodo_transferencia:               (datos.metodo_transferencia || []).join(",") || null,
+          sistemas_origen:                    datos.sistemas_origen || null,
+          sistemas_destino:                   datos.sistemas_destino || null,
+          sistemas_tratamiento:               datos.sistemas_tratamiento || null,
+          tipos_tratamiento_sistema:          (datos.tipos_tratamiento_sistema || []).join(",") || null,
+          base_datos_nombre:                  datos.base_datos_nombre || null,
+          proveedor_tecnologico:              datos.proveedor_tecnologico || null,
+          pais_destino:                       datos.pais_destino || null,
+          categorias_sensibles:               (datos.categorias_sensibles || []).join(",") || null,
+          categorias_datos_seleccion:         (datos.categorias_datos || []).join(",") || null,
         },
       };
 

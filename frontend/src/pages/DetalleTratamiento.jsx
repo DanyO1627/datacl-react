@@ -83,6 +83,24 @@ const MEDIDAS = {
   auditoria:   "Auditoría de accesos",
 }
 
+const CAT_DATOS = {
+  nombre_apellido:    "Nombre y apellido",
+  rut_dni:            "RUT / DNI",
+  correo_electronico: "Correo electrónico",
+  telefono:           "Teléfono",
+  direccion:          "Dirección",
+  fecha_nacimiento:   "Fecha de nacimiento",
+}
+
+const CAT_SENSIBLES = {
+  datos_salud:         "Datos de salud",
+  datos_biometricos:   "Datos biométricos",
+  origen_etnico:       "Origen étnico",
+  religion_creencias:  "Religión o creencias",
+  orientacion_sexual:  "Orientación sexual",
+  opiniones_politicas: "Opiniones políticas",
+}
+
 const COLOR_RIESGO = {
   BAJO:  { clase: 'riesgo-bajo',  etiqueta: 'Riesgo bajo' },
   MEDIO: { clase: 'riesgo-medio', etiqueta: 'Riesgo medio' },
@@ -165,6 +183,7 @@ export default function DetalleTratamiento() {
   const { token } = useAuth()
 
   const [tratamiento, setTratamiento] = useState(null)
+  const [campos, setCampos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [modalEliminar, setModalEliminar] = useState(false)
@@ -178,6 +197,11 @@ export default function DetalleTratamiento() {
         })
         if (!res.ok) throw new Error('No encontrado')
         setTratamiento(await res.json())
+
+        const resCampos = await fetch(`${API}/tratamientos/${id}/campos`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (resCampos.ok) setCampos(await resCampos.json())
       } catch {
         setError('No se pudo cargar el tratamiento.')
       } finally {
@@ -285,6 +309,47 @@ export default function DetalleTratamiento() {
   const fechaFormato = new Date(tratamiento.creado_en).toLocaleDateString('es-CL', {
     year: 'numeric', month: 'long', day: 'numeric',
   })
+
+  function renderCamposSeleccionados() {
+    if (campos.length > 0) {
+      return (
+        <div className="detalle-campo-ancho">
+          <span className="detalle-campo-label">Campos seleccionados</span>
+          <div className="detalle-campos-lista">
+            {campos.map((c) => (
+              <span
+                key={c.id}
+                className={`detalle-badge ${c.es_sensible ? 'detalle-badge-sensible' : 'detalle-badge-azul'}`}
+                title={c.tipo_dato ? `Tipo: ${c.tipo_dato} · Fuente: ${c.fuente}` : `Fuente: ${c.fuente}`}
+              >
+                {c.nombre_columna}{c.es_sensible ? ' ⚠' : ''}
+              </span>
+            ))}
+          </div>
+        </div>
+      )
+    }
+    if (ext && (ext.categorias_datos_seleccion || ext.categorias_sensibles)) {
+      return (
+        <div className="detalle-campo-ancho">
+          <span className="detalle-campo-label">Categorías de datos tratados</span>
+          <div className="detalle-campos-lista">
+            {(ext.categorias_datos_seleccion || '').split(',').filter(Boolean).map(id => (
+              <span key={id} className="detalle-badge detalle-badge-azul">
+                {CAT_DATOS[id] || id}
+              </span>
+            ))}
+            {(ext.categorias_sensibles || '').split(',').filter(Boolean).map(id => (
+              <span key={id} className="detalle-badge detalle-badge-sensible">
+                {CAT_SENSIBLES[id] || id} ⚠
+              </span>
+            ))}
+          </div>
+        </div>
+      )
+    }
+    return null
+  }
 
   return (
     <div className="detalle-layout">
@@ -397,6 +462,8 @@ export default function DetalleTratamiento() {
               )}
             </Campo>
           </div>
+
+          {renderCamposSeleccionados()}
         </div>
 
         {/* ── Sección 3: Sobre los titulares ── */}

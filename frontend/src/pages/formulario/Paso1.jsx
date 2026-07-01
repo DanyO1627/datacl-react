@@ -220,7 +220,9 @@ export default function Paso1() {
       }
 
       const idx = datos.actividadActual ?? 0;
-      const tratId = datos.tratamientosGuardados?.[idx];
+      // En modo edición, el tratamiento a actualizar es siempre el que se está
+      // editando — tratamientosGuardados nunca se llena al entrar por "Editar".
+      const tratId = datos.modoEdicion ? datos.tratamientoEditId : datos.tratamientosGuardados?.[idx];
       const payload = {
         nombre: datos.nombre.trim() || "Sin nombre",
         finalidad: datos.finalidad || null,
@@ -231,6 +233,16 @@ export default function Paso1() {
           responsable_tratamiento: datos.responsable || null,
           es_responsable: datos.es_responsable ?? true,
           departamento: datos.departamento || null,
+        },
+        detalle_extendido: {
+          subarea_responsable: datos.subarea_responsable || null,
+          descripcion_detallada: datos.descripcion_detallada || null,
+          procesos_relacionados: datos.procesos_relacionados || null,
+          finalidades_secundarias: datos.finalidades_secundarias || null,
+          informa_titulares: (datos.informa_titulares || []).join(",") || null,
+          documento_respaldo_permiso: datos.documento_respaldo_tiene === true
+            ? (datos.documento_respaldo_descripcion || "Sí")
+            : datos.documento_respaldo_tiene === false ? "No" : null,
         },
       };
 

@@ -115,7 +115,10 @@ export default function EditarTratamiento() {
           dpia_detalle: ext.dpia_detalle || "",
         })
 
-        navigate('/nuevo-tratamiento', { replace: true })
+        // Pasar un state no vacío evita que el efecto de "limpiar sesión
+        // residual" de Paso1 (que solo debe correr cuando se llega ahí
+        // SIN venir de un flujo real) borre los datos que se acaban de cargar.
+        navigate('/nuevo-tratamiento', { replace: true, state: { modoEdicion: true } })
       } catch {
         setError('No se pudo cargar el tratamiento.')
       }
