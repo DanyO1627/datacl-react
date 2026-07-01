@@ -325,7 +325,12 @@ export default function AsignacionCampos() {
                         "Clic para asignar a la actividad seleccionada"
                       }
                     >
-                      <span className="ac-campo-nombre">{campo.nombre_columna}</span>
+                      <div className="ac-campo-info">
+                        <span className="ac-campo-nombre">{campo.nombre_columna}</span>
+                        {campo.descripcion && (
+                          <span className="ac-campo-desc">{campo.descripcion}</span>
+                        )}
+                      </div>
                       <span className={`ac-campo-badge ${esSensible ? "ac-campo-badge--sensible" : "ac-campo-badge--personal"}`}>
                         {esSensible ? "SENSIBLE" : "PERSONAL"}
                       </span>
@@ -364,7 +369,12 @@ export default function AsignacionCampos() {
                           "Clic para asignar a la actividad seleccionada"
                         }
                       >
-                        <span className="ac-campo-nombre">{campo.nombre_columna}</span>
+                        <div className="ac-campo-info">
+                          <span className="ac-campo-nombre">{campo.nombre_columna}</span>
+                          {campo.descripcion && (
+                            <span className="ac-campo-desc">{campo.descripcion}</span>
+                          )}
+                        </div>
                         <span className="ac-campo-badge ac-campo-badge--pendiente">?</span>
                         {tieneMultiTabla && (campo.tabla_origen || campo.archivo_origen) && (
                           <span className="ac-campo-tabla">{campo.tabla_origen || campo.archivo_origen}</span>

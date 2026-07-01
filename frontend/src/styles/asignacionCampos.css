@@ -213,13 +213,28 @@
   cursor: default;
 }
 
+.ac-campo-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
 .ac-campo-nombre {
   font-size: 13px;
   font-weight: 700;
   color: var(--navy);
   font-family: 'Courier New', monospace;
-  flex: 1;
-  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ac-campo-desc {
+  font-size: 11px;
+  color: #6b8099;
+  font-style: italic;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

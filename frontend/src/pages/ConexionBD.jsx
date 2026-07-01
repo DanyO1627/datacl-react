@@ -379,6 +379,11 @@ function PantallaDiccionario({ onVolver, onAnalizar }) {
                 <tr key={`${col.tabla_origen}-${col.nombre}-${i}`}>
                   <td className="cbd-dic-col-nombre">
                     <code>{col.nombre}</code>
+                    {diccionarioColumnas[`${col.tabla_origen}__${col.nombre}`]?.trim() && (
+                      <small className="cbd-dic-preview">
+                        {diccionarioColumnas[`${col.tabla_origen}__${col.nombre}`]}
+                      </small>
+                    )}
                   </td>
                   <td className="cbd-dic-col-tabla">
                     <span className="cbd-dic-tabla-badge">{col.tabla_origen}</span>
@@ -466,7 +471,15 @@ export default function ConexionBD() {
       });
       const data = await res.json();
       if (res.ok) {
-        handleAnalisis(data);
+        const enriquecer = (campos) => (campos ?? []).map((c) => {
+          const desc = diccionarioColumnas[`${c.tabla_origen}__${c.nombre_columna}`]?.trim();
+          return desc ? { ...c, descripcion: desc } : c;
+        });
+        handleAnalisis({
+          ...data,
+          detectados: enriquecer(data.detectados),
+          pendientes: enriquecer(data.pendientes),
+        });
       } else {
         actualizarForm({ conexionBD: { ...conexion, estado: "ok", errorMsg: data.detail ?? "Error al analizar" } });
       }

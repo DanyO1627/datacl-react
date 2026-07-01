@@ -423,6 +423,14 @@
   border-radius: 4px;
 }
 
+.cbd-dic-preview {
+  display: block;
+  font-size: 11px;
+  color: #5483b3;
+  font-style: italic;
+  margin-top: 3px;
+}
+
 .cbd-dic-tabla-badge {
   font-size: 11px;
   color: var(--dark);
