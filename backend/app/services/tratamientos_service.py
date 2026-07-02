@@ -81,13 +81,17 @@ def crear_tratamiento(
             if ext_campos:
                 db.add(models.DetalleRatExtendido(tratamiento_id=nuevo.id, **ext_campos))
 
-        # Vincular a sesión de análisis si viene sesion_id
+        # Vincular a sesión de análisis si viene sesion_id (y la sesión aún existe)
         if datos.sesion_id:
-            db.add(models.SesionActividad(
-                sesion_id=datos.sesion_id,
-                tratamiento_id=nuevo.id,
-                campos_usados=datos.campos_usados,
-            ))
+            sesion_existe = db.query(models.SesionAnalisis).filter(
+                models.SesionAnalisis.id == datos.sesion_id
+            ).first()
+            if sesion_existe:
+                db.add(models.SesionActividad(
+                    sesion_id=datos.sesion_id,
+                    tratamiento_id=nuevo.id,
+                    campos_usados=datos.campos_usados,
+                ))
 
         db.flush()
 
@@ -392,6 +396,7 @@ def editar_tratamiento(
             if ultima_version:
                 ultima_version.campos_modificados = campos_modificados
                 ultima_version.descripcion_cambio = _generar_descripcion_cambio(campos_modificados)
+                ultima_version.nivel_riesgo = tratamiento.nivel_riesgo
             siguiente_num = (ultima_version.numero_version + 1) if ultima_version else 1
             db.add(models.VersionTratamiento(
                 tratamiento_id=tratamiento.id,

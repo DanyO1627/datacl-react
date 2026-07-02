@@ -402,7 +402,23 @@ export default function Paso3() {
           medStr
         ) ? "COMPLETO" : "PENDIENTE";
 
-        await actualizarTratamiento(tratId, { ...payload, estado: estadoFinal });
+        try {
+          await actualizarTratamiento(tratId, { ...payload, estado: estadoFinal });
+        } catch (putErr) {
+          const msg = putErr.message?.toLowerCase() ?? "";
+          if (msg.includes("no encontrado") || msg.includes("not found")) {
+            actualizarForm({ tratamientosGuardados: {}, sesionActual: null });
+            const { sesion_id, campos_usados, ...payloadSinSesion } = payload;
+            const creado = await crearTratamiento({ ...payloadSinSesion, sesion_id: null, campos_usados: null });
+            if (creado?.id) {
+              await fetch(`${API}/tratamientos/${creado.id}/evaluar`, {
+                method: "POST", headers: { Authorization: `Bearer ${token}` },
+              });
+            }
+          } else {
+            throw putErr;
+          }
+        }
       } else {
         const creado = await crearTratamiento(payload);
         if (creado?.id) {

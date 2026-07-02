@@ -199,6 +199,7 @@ export default function Dashboard() {
       })
       if (res.ok || res.status === 204) {
         setSesionesBorrador((prev) => prev.filter((s) => s.id !== sesionId))
+        resetForm()
       }
     } catch { /* silencioso */ }
   }

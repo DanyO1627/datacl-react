@@ -121,10 +121,10 @@ export default function Paso1() {
   const { form, actualizarForm, resetForm } = useFormulario();
   const esEdicion = form.modoEdicion;
 
-  // Limpiar estado residual: si se llega a Paso1 directamente (sin análisis)
-  // con modoEdicion activo o actividades de una sesión anterior, resetear.
+  // Limpiar estado residual solo si hay actividades pendientes de una sesión anterior
+  // pero NO se está en modo edición (edición llega sin datosAnalisis intencionalmente).
   useEffect(() => {
-    if (!datosAnalisis && (form.modoEdicion || (!form.sesionActual && form.actividadesPendientes?.length > 0))) {
+    if (!datosAnalisis && !form.modoEdicion && !form.sesionActual && form.actividadesPendientes?.length > 0) {
       resetForm();
     }
   }, []);
