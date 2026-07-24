@@ -43,11 +43,23 @@ services:
   frontend:
     build: ./frontend
     restart: unless-stopped
+    depends_on:
+      - backend
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
     depends_on:
+      - frontend
       - backend
 
 volumes:
   db_data:
   informes:
+  caddy_data:
