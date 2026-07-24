@@ -16,3 +16,7 @@ backend/.env.prod
 backend/.env.production
 frontend/.env.prod
 frontend/.env.production
+backend/uploads/logos
+backend/.env
+backend/.env.prod
+backend/.env.production
