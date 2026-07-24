@@ -112,7 +112,7 @@ export default function NuevaSesion() {
     setCargandoSesiones(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:8000/sesiones", {
+      const res = await fetch("/api/sesiones", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) setSesiones(await res.json());

@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
  
       try {
         // vemos si el token sigue valido
-        const respuesta = await axios.get("http://localhost:8000/auth/me", {
+        const respuesta = await axios.get("/api/auth/me", {
           headers: { Authorization: `Bearer ${tokenGuardado}` },
         });
  

@@ -5,7 +5,7 @@ import BarraLateral from '../components/BarraLateral'
 import '../styles/detalleTratamiento.css'
 import BarraRiesgo from '../components/BarraRiesgo'
 
-const API = 'http://localhost:8000'
+const API = '/api'
 
 // ── Mapas de valores internos a texto legible ──────────────────────────────
 

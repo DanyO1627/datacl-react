@@ -14,7 +14,7 @@ const [form, setForm] = useState({
   nivel_riesgo: 'BAJO',
   campos_detectados: datosAnalisis?.campos_detectados ?? [],
 });
-const API = 'http://localhost:8000'
+const API = '/api'
 
 const PASOS = ['Información básica', 'Nivel de riesgo']
 

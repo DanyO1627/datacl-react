@@ -4,7 +4,7 @@
 
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8000"; // URL base del backend (si hay que cambiar, se cambia acá y queda para todo el proyecto)
+const BASE_URL = "/api"; // URL base del backend; en producción la resuelve Nginx y en local Vite la proxya.
 
 
 // Instancia de Axios con la URL base configurada, todos los métodos de acá lo usan
@@ -68,5 +68,4 @@ export async function obtenerPerfil(token) {
   });
   return respuesta.data;
 }
-
 

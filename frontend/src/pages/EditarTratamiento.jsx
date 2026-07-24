@@ -5,7 +5,7 @@ import { useFormulario } from '../context/FormularioContext'
 import BarraLateral from '../components/BarraLateral'
 import '../styles/editarTratamiento.css'
 
-const API = 'http://localhost:8000'
+const API = '/api'
 
 function parsearMedidas(str) {
   if (!str) return { medidas: [], otras: "" }

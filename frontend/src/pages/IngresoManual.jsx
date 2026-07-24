@@ -196,7 +196,7 @@ export default function IngresoManual() {
     setGuardando(true);
     const token = localStorage.getItem("token");
     try {
-      await fetch("http://localhost:8000/sesiones", {
+        await fetch("/api/sesiones", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({

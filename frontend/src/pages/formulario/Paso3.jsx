@@ -7,7 +7,7 @@ import { crearTratamiento, actualizarTratamiento } from "../../services/tratamie
 import BarraLateral from "../../components/BarraLateral";
 import "../../styles/formularioCss/paso3.css";
 
-const API = "http://localhost:8000";
+const API = "/api";
 
 function serializarMedidasSeguridad(medidas, otrasMedidas) {
   const lista = [...(medidas || [])];

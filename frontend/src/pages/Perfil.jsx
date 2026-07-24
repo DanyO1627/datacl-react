@@ -9,7 +9,7 @@ import BarraLateral from "../components/BarraLateral";
 import axios from "axios";
 import "../styles/perfil.css";
 
-const API = "http://localhost:8000";
+const API = "/api";
 
 // ── Instancia axios con JWT automático ─────────────────────────
 const api = axios.create({ baseURL: API });

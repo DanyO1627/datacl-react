@@ -5,7 +5,7 @@ import { useFormulario } from '../context/FormularioContext'
 import BarraLateral from '../components/BarraLateral'
 import '../styles/misTratamientos.css'
 
-const API = 'http://localhost:8000'
+const API = '/api'
 
 const BADGE_RIESGO = {
   ALTO:  'badge-riesgo-alto',

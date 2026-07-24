@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import BarraLateral from '../components/BarraLateral'
 import '../styles/vistaPrevia.css'
 
-const API = 'http://localhost:8000'
+const API = '/api'
 
 const BADGE_COLORES = {
   ALTO: '#e53e3e',

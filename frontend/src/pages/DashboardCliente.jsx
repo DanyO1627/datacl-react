@@ -71,7 +71,7 @@ export default function Dashboard() {
 
       // Carga borradores separado — si falla no rompe el dashboard
       try {
-        const res = await fetch("http://localhost:8000/sesiones", {
+        const res = await fetch("/api/sesiones", {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (res.ok) {
@@ -91,7 +91,7 @@ export default function Dashboard() {
   async function continuarBorrador(sesion) {
     try {
       // 1. Cargar detalle de la sesión (incluye actividades con tratamiento_id)
-      const res = await fetch(`http://localhost:8000/sesiones/${sesion.id}`, {
+      const res = await fetch(`/api/sesiones/${sesion.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) return
@@ -110,7 +110,7 @@ export default function Dashboard() {
       // 3. Cargar cada tratamiento borrador
       const tratamientos = await Promise.all(
         actividades.map(async (act) => {
-          const r = await fetch(`http://localhost:8000/tratamientos/${act.tratamiento_id}`, {
+          const r = await fetch(`/api/tratamientos/${act.tratamiento_id}`, {
             headers: { Authorization: `Bearer ${token}` },
           })
           return r.ok ? r.json() : null
@@ -193,7 +193,7 @@ export default function Dashboard() {
 
   async function descartarBorrador(sesionId) {
     try {
-      const res = await fetch(`http://localhost:8000/sesiones/${sesionId}`, {
+          const res = await fetch(`/api/sesiones/${sesionId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       })

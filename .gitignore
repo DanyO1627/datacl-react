@@ -10,3 +10,9 @@ test.db
 test.db-journal
 uploads/logos/
 Sprint7_Tarjetas_Trello_v2.md
+.env.prod
+.env.production
+backend/.env.prod
+backend/.env.production
+frontend/.env.prod
+frontend/.env.production

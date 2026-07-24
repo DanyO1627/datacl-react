@@ -4,7 +4,7 @@ import { useFormulario } from "../../context/FormularioContext";
 import BarraLateral from "../../components/BarraLateral";
 import "../../styles/formularioCss/paso2.css";
 
-const API = "http://localhost:8000";
+const API = "/api";
 
 const CATEGORIAS_TITULARES = [
   { id: "empleados",   etiqueta: "Empleados y funcionarios" },

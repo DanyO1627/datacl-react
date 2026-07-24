@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import BarraLateralAdmin from '../components/BarraLateralAdmin'
 import '../styles/detalleOrganizacion.css'
 
-const API = 'http://localhost:8000'
+const API = '/api'
 
 export default function DetalleOrganizacion() {
   const { id } = useParams()

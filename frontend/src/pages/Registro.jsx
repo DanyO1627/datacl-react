@@ -97,7 +97,7 @@ export default function Registro() {
     setServerError("");
 
     try {
-      const response = await fetch("http://localhost:8000/auth/registro", {
+      const response = await fetch("/api/auth/registro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

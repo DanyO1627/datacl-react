@@ -5,7 +5,7 @@ import BarraLateralAdmin from '../components/BarraLateralAdmin'
 import logo from '../assets/DataCLlogo.png'
 import '../styles/admin.css'
 
-const API = 'http://localhost:8000'
+const API = '/api'
 
 export default function Admin() {
   const navigate = useNavigate()

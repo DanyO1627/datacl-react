@@ -4,7 +4,7 @@ import { useFormulario } from "../../context/FormularioContext";
 import BarraLateral from "../../components/BarraLateral";
 import "../../styles/formularioCss/paso1.css";
 
-const API = "http://localhost:8000";
+const API = "/api";
 
 /* ─── Opciones base legal con artículos Ley 21.719 ──────────── */
 const BASES_LEGALES = [

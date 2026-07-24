@@ -161,13 +161,13 @@ export default function AsignacionCampos() {
       let sesionId = form.sesionActual;
 
       if (sesionId) {
-        const res = await fetch(`http://localhost:8000/sesiones/${sesionId}/estado`, {
+        const res = await fetch(`/api/sesiones/${sesionId}/estado`, {
           method: "PATCH", headers,
           body: JSON.stringify({ estado: "borrador" }),
         });
         if (!res.ok) throw new Error("sesion");
       } else {
-        const res = await fetch("http://localhost:8000/sesiones", {
+        const res = await fetch("/api/sesiones", {
           method: "POST", headers,
           body: JSON.stringify({ fuente: "archivo", estado: "borrador", columnas_json: detectados }),
         });
@@ -185,7 +185,7 @@ export default function AsignacionCampos() {
           if (existentes[i]) continue;
           const act = actividades[i];
           try {
-            const res = await fetch("http://localhost:8000/tratamientos", {
+            const res = await fetch("/api/tratamientos", {
               method: "POST", headers,
               body: JSON.stringify({
                 nombre: act.nombre,

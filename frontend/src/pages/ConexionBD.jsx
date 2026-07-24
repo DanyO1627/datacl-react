@@ -134,7 +134,7 @@ function PantallaFormulario({ onVolver, onAnalizarDirecto }) {
   const probarConexion = async () => {
     actualizarConexion({ estado: "probando", errorMsg: "" });
     try {
-      const res = await fetch("http://localhost:8000/analizar/conexion/probar", {
+      const res = await fetch("/api/analizar/conexion/probar", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -157,7 +157,7 @@ function PantallaFormulario({ onVolver, onAnalizarDirecto }) {
     if (!tablasSelec.length) return;
     actualizarConexion({ estado: "cargando_columnas", errorMsg: "" });
     try {
-      const res = await fetch("http://localhost:8000/analizar/conexion/columnas", {
+      const res = await fetch("/api/analizar/conexion/columnas", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -457,7 +457,7 @@ export default function ConexionBD() {
     }
 
     try {
-      const res = await fetch("http://localhost:8000/analizar/conexion", {
+      const res = await fetch("/api/analizar/conexion", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -492,7 +492,7 @@ export default function ConexionBD() {
     const { motor, host, puerto, base_datos, usuario, password, tablasSelec } = conexion;
     actualizarForm({ conexionBD: { ...conexion, estado: "analizando", errorMsg: "" } });
     try {
-      const res = await fetch("http://localhost:8000/analizar/conexion", {
+      const res = await fetch("/api/analizar/conexion", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

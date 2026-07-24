@@ -5,7 +5,7 @@ import BarraLateral from '../components/BarraLateral'
 import { descargarInforme } from '../services/informesService'
 import '../styles/historialVersiones.css'
 
-const API = 'http://localhost:8000'
+const API = '/api'
 
 // ── Mapas de colores (mismo criterio que DetalleTratamiento) ──────────────
 
