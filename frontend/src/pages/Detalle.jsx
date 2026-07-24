@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import BarraLateralAdmin from '../components/BarraLateralAdmin'
 import logo from '../assets/DataCLlogo.png'
-import '../styles/detalle.css'
+import '../styles/Detalle.css'
 
 const API = '/api'
 

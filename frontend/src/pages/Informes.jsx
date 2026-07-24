@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import BarraLateral from '../components/BarraLateral'
 import { obtenerInformes, descargarInforme, eliminarInforme, obtenerAnalisisIA } from '../services/informesService'
-import '../styles/informes.css'
+import '../styles/Informes.css'
 
 export default function Informes() {
   const navigate = useNavigate()

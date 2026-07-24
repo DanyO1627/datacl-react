@@ -1,4 +1,4 @@
-import "../styles/onboardingModal.css";
+import "../styles/OnboardingModal.css";
 
 const pasos = [
   {

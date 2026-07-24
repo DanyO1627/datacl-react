@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import Sidebar from '../components/Sidebar'
 import OnboardingModal from '../components/OnboardingModal'
-import '../styles/dashboard.css'
+import '../styles/Dashboard.css'
 
 const API = '/api'
 

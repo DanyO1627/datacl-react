@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import '../styles/recuperarPassword.css'
+import '../styles/RecuperarPassword.css'
 
 export default function RecuperarPassword() {
   const [correo, setCorreo] = useState('')
