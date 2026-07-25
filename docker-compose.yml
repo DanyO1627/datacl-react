@@ -6,6 +6,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
+    ports:
+      - "127.0.0.1:3306:3306"
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
@@ -17,9 +19,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-      ports: 
-      - "127.0.0.1:3306:3306"
-      
 
   backend:
     build: ./backend
