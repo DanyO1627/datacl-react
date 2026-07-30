@@ -12,7 +12,7 @@ export default function BarraLateralAdmin() {
   }
 
   return (
-    <aside className="sidebar">
+      <aside className="sidebar">
       <nav className="sidebar-nav">
         <NavLink to="/dashboardAdmin" end className={({ isActive }) => 'sidebar-link' + (isActive ? ' activo' : '')}>
           <span className="sidebar-icon">🏠</span>
@@ -20,24 +20,16 @@ export default function BarraLateralAdmin() {
         </NavLink>
         <NavLink to="/admin" className={({ isActive }) => 'sidebar-link' + (isActive ? ' activo' : '')}>
           <span className="sidebar-icon">📋</span>
-          <span>tratamientos</span>
-        </NavLink>
-        <NavLink to="/admin/archivo" className={({ isActive }) => 'sidebar-link' + (isActive ? ' activo' : '')}>
-          <span className="sidebar-icon">📁</span>
-          <span>archivo</span>
-        </NavLink>
-        <NavLink to="/admin/informes" className={({ isActive }) => 'sidebar-link' + (isActive ? ' activo' : '')}>
-          <span className="sidebar-icon">📄</span>
-          <span>Informes</span>
+          <span>Organizaciones</span>
         </NavLink>
         <NavLink to="/admin/config" className={({ isActive }) => 'sidebar-link' + (isActive ? ' activo' : '')}>
           <span className="sidebar-icon">⚙️</span>
-          <span>admin</span>
+          <span>Configuración</span>
         </NavLink>
       </nav>
 
       <div className="sidebar-footer">
-        <span className="sidebar-usuario">admin</span>
+        <span className="sidebar-usuario">Administrador</span>
         <button className="btn-cerrar-sesion" onClick={handleCerrarSesion}>
           cerrar sesión
         </button>

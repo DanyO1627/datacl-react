@@ -8,9 +8,9 @@ import RutaProtegida from "./components/RutaProtegida";
 import RutaAdmin from "./components/RutaAdmin";
 import RecuperarPassword from "./pages/RecuperarPassword";
 import Informes from "./pages/Informes";
-import Detalle from "./pages/Detalle";
 import DashboardAdmin from "./pages/DashboardAdmin";
 import Admin from "./pages/Admin";
+import AdminConfig from "./pages/AdminConfig";
 import CargaArchivo from "./pages/CargaArchivo";
 import EditarTratamiento from "./pages/EditarTratamiento";
 import DetalleTratamiento from "./pages/DetalleTratamiento";
@@ -34,87 +34,198 @@ function App() {
     <BrowserRouter>
       <FormularioProvider>
         <Routes>
-
-          {/* ── Rutas públicas ─────────────────────────────── */}
+          {/* Rutas públicas */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Registro />} />
           <Route path="/recuperar-password" element={<RecuperarPassword />} />
 
-          {/* ── Rutas admin ────────────────────────────────── */}
-          <Route path="/dashboardAdmin" element={
-            <RutaAdmin><DashboardAdmin /></RutaAdmin>
-          } />
-          <Route path="/admin" element={
-            <RutaAdmin><Admin /></RutaAdmin>
-          } />
-          <Route path="/admin/detalle/:id" element={
-            <RutaAdmin><Detalle /></RutaAdmin>
-          } />
-          <Route path="/admin/organizaciones/:id" element={
-            <RutaAdmin><DetalleOrganizacion /></RutaAdmin>
-          } />
+          {/* Rutas admin */}
+          <Route
+            path="/dashboardAdmin"
+            element={
+              <RutaAdmin>
+                <DashboardAdmin />
+              </RutaAdmin>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <RutaAdmin>
+                <Admin />
+              </RutaAdmin>
+            }
+          />
+          <Route
+            path="/admin/config"
+            element={
+              <RutaAdmin>
+                <AdminConfig />
+              </RutaAdmin>
+            }
+          />
+          <Route
+            path="/admin/detalle/:id"
+            element={
+              <RutaAdmin>
+                <DetalleOrganizacion />
+              </RutaAdmin>
+            }
+          />
+          <Route
+            path="/admin/organizaciones/:id"
+            element={
+              <RutaAdmin>
+                <DetalleOrganizacion />
+              </RutaAdmin>
+            }
+          />
 
-          {/* ── Rutas protegidas ───────────────────────────── */}
-          <Route path="/dashboard" element={
-            <RutaProtegida><DashboardCliente /></RutaProtegida>
-          } />
-          <Route path="/subir-archivo" element={
-            <RutaProtegida><CargaArchivo /></RutaProtegida>
-          } />
-          <Route path="/nueva-sesion/conexion-bd" element={
-            <RutaProtegida><ConexionBD /></RutaProtegida>
-          } />
-          <Route path="/informes" element={
-            <RutaProtegida><Informes /></RutaProtegida>
-          } />
-          <Route path="/informes/nuevo" element={
-            <RutaProtegida><VistaPrevia /></RutaProtegida>
-          } />
-          <Route path="/informes/confirmacion" element={
-            <RutaProtegida><ConfirmacionDescarga /></RutaProtegida>
-          } />
-          <Route path="/mis-tratamientos" element={
-            <RutaProtegida><MisTratamientos /></RutaProtegida>
-          } />
-          <Route path="/tratamientos/:id" element={
-            <RutaProtegida><DetalleTratamiento /></RutaProtegida>
-          } />
-          <Route path="/tratamientos/:id/editar" element={
-            <RutaProtegida><EditarTratamiento /></RutaProtegida>
-          } />
-          <Route path="/mis-tratamientos/:id/historial" element={
-            <RutaProtegida><HistorialVersiones /></RutaProtegida>
-          } />
-          <Route path="/perfil" element={
-            <RutaProtegida><Perfil /></RutaProtegida>
-          } />
-          <Route path="/riesgos" element={
-            <RutaProtegida><Riesgos /></RutaProtegida>
-          } />
-          <Route path="/resultados-analisis" element={
-            <RutaProtegida><ResultadosAnalisis /></RutaProtegida>
-          } />
+          {/* Rutas protegidas */}
+          <Route
+            path="/dashboard"
+            element={
+              <RutaProtegida>
+                <DashboardCliente />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/subir-archivo"
+            element={
+              <RutaProtegida>
+                <CargaArchivo />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/nueva-sesion/conexion-bd"
+            element={
+              <RutaProtegida>
+                <ConexionBD />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/informes"
+            element={
+              <RutaProtegida>
+                <Informes />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/informes/nuevo"
+            element={
+              <RutaProtegida>
+                <VistaPrevia />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/informes/confirmacion"
+            element={
+              <RutaProtegida>
+                <ConfirmacionDescarga />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/mis-tratamientos"
+            element={
+              <RutaProtegida>
+                <MisTratamientos />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/tratamientos/:id"
+            element={
+              <RutaProtegida>
+                <DetalleTratamiento />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/tratamientos/:id/editar"
+            element={
+              <RutaProtegida>
+                <EditarTratamiento />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/mis-tratamientos/:id/historial"
+            element={
+              <RutaProtegida>
+                <HistorialVersiones />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/perfil"
+            element={
+              <RutaProtegida>
+                <Perfil />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/riesgos"
+            element={
+              <RutaProtegida>
+                <Riesgos />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/resultados-analisis"
+            element={
+              <RutaProtegida>
+                <ResultadosAnalisis />
+              </RutaProtegida>
+            }
+          />
 
-          {/* ── Ingreso manual ─────────────────────────────── */}
-          <Route path="/nueva-sesion/manual" element={
-            <RutaProtegida><IngresoManual /></RutaProtegida>
-          } />
+          {/* Ingreso manual */}
+          <Route
+            path="/nueva-sesion/manual"
+            element={
+              <RutaProtegida>
+                <IngresoManual />
+              </RutaProtegida>
+            }
+          />
 
-          {/* ── Formulario RAT — 3 pasos ───────────────────── */}
-          <Route path="/nuevo-tratamiento" element={
-            <RutaProtegida><Paso1 /></RutaProtegida>
-          } />
-          <Route path="/nuevo-tratamiento/paso2" element={
-            <RutaProtegida><Paso2 /></RutaProtegida>
-          } />
-          <Route path="/nuevo-tratamiento/paso3" element={
-            <RutaProtegida><Paso3 /></RutaProtegida>
-          } />
+          {/* Formulario RAT */}
+          <Route
+            path="/nuevo-tratamiento"
+            element={
+              <RutaProtegida>
+                <Paso1 />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/nuevo-tratamiento/paso2"
+            element={
+              <RutaProtegida>
+                <Paso2 />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/nuevo-tratamiento/paso3"
+            element={
+              <RutaProtegida>
+                <Paso3 />
+              </RutaProtegida>
+            }
+          />
 
-          {/* ── 404 ────────────────────────────────────────── */}
+          {/* 404 */}
           <Route path="*" element={<Error404 />} />
-
         </Routes>
       </FormularioProvider>
     </BrowserRouter>

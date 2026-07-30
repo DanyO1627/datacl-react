@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import BarraLateralAdmin from '../components/BarraLateralAdmin'
+import { formatearFechaHora } from '../utils/formatoFechaHora'
 import '../styles/dashboardAdmin.css'
 
 const API = '/api'
@@ -10,9 +11,24 @@ export default function DashboardAdmin() {
   const { token } = useAuth()
   const navigate = useNavigate()
 
-  const [stats, setStats] = useState({ total: '—', completos: '—', pendientes: '—' })
-  const [orgs, setOrgs] = useState([])
-  const [busqueda, setBusqueda] = useState('')
+  const [stats, setStats] = useState({
+    total_organizaciones: 0,
+    total_tratamientos: 0,
+    completos: 0,
+    pendientes: 0,
+    borradores: 0,
+    total_informes: 0,
+    riesgo_distribucion: {
+      ALTO: 0,
+      MEDIO: 0,
+      BAJO: 0,
+      SIN_CLASIFICAR: 0,
+    },
+    tratamientos_por_mes: [],
+    organizaciones_mas_activas: [],
+    organizaciones_menos_activas: [],
+    ultima_actividad: null,
+  })
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
@@ -20,54 +36,27 @@ export default function DashboardAdmin() {
   }, [token])
 
   async function cargar() {
+    setCargando(true)
     try {
-      const [resStats, resOrgs] = await Promise.all([
-        fetch(`${API}/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API}/admin/organizaciones`, { headers: { Authorization: `Bearer ${token}` } }),
-      ])
-      if (resStats.ok) setStats(await resStats.json())
-      if (resOrgs.ok) {
-        const filas = await resOrgs.json()
-        setOrgs(agruparPorOrg(filas))
-      }
-    } catch (e) {
-      console.error('Error al cargar dashboard admin:', e)
+      const res = await fetch(`${API}/admin/stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) setStats(await res.json())
+    } catch (error) {
+      console.error('Error al cargar dashboard admin:', error)
     } finally {
       setCargando(false)
     }
   }
 
-  // El endpoint devuelve una fila por tratamiento → agrupar por org id
-  function agruparPorOrg(filas) {
-    const mapa = {}
-    for (const f of filas) {
-      if (!mapa[f.id]) {
-        mapa[f.id] = {
-          id: f.id,
-          nombre: f.nombre,
-          rut: f.rut,
-          correo: f.correo,
-          creado_en: f.creado_en,
-          total_tratamientos: 0,
-        }
-      }
-      if (f.tratamiento !== null) mapa[f.id].total_tratamientos++
-    }
-    return Object.values(mapa)
-  }
+  const maxMes = useMemo(() => {
+    return Math.max(1, ...stats.tratamientos_por_mes.map(item => item.total))
+  }, [stats.tratamientos_por_mes])
 
-  const orgsFiltradas = orgs.filter(o =>
-    o.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-    o.rut.toLowerCase().includes(busqueda.toLowerCase()) ||
-    o.correo.toLowerCase().includes(busqueda.toLowerCase())
-  )
-
-  function formatFecha(fecha) {
-    if (!fecha) return '—'
-    return new Date(fecha).toLocaleDateString('es-CL', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-    })
-  }
+  const maxRiesgo = useMemo(() => {
+    const valores = Object.values(stats.riesgo_distribucion || {})
+    return Math.max(1, ...valores)
+  }, [stats.riesgo_distribucion])
 
   return (
     <div className="dadmin-layout">
@@ -77,88 +66,164 @@ export default function DashboardAdmin() {
         <div className="dadmin-header">
           <div>
             <h1 className="dadmin-titulo">Panel de administración</h1>
-            <p className="dadmin-subtitulo">Resumen de la plataforma</p>
+            <p className="dadmin-subtitulo">
+              Actividad general, adopción del sistema y riesgo/compliance
+            </p>
+          </div>
+          <div className="dadmin-fecha">
+            Última actividad: {formatearFechaHora(stats.ultima_actividad, false)}
           </div>
         </div>
 
-        {/* Tarjetas métricas */}
-        <div className="dadmin-metricas">
-          <div className="dadmin-card">
-            <span className="dadmin-card-numero">{stats.total}</span>
-            <span className="dadmin-card-label">Organizaciones registradas</span>
-          </div>
-          <div className="dadmin-card dadmin-card--completo">
+        <section className="dadmin-metricas">
+          <article className="dadmin-card">
+            <span className="dadmin-card-numero">{stats.total_organizaciones}</span>
+            <span className="dadmin-card-label">Organizaciones</span>
+          </article>
+          <article className="dadmin-card">
+            <span className="dadmin-card-numero">{stats.total_tratamientos}</span>
+            <span className="dadmin-card-label">Tratamientos</span>
+          </article>
+          <article className="dadmin-card dadmin-card--completo">
             <span className="dadmin-card-numero">{stats.completos}</span>
-            <span className="dadmin-card-label">Tratamientos completos</span>
-          </div>
-          <div className="dadmin-card dadmin-card--pendiente">
+            <span className="dadmin-card-label">Completos</span>
+          </article>
+          <article className="dadmin-card dadmin-card--pendiente">
             <span className="dadmin-card-numero">{stats.pendientes}</span>
-            <span className="dadmin-card-label">Tratamientos pendientes</span>
+            <span className="dadmin-card-label">Pendientes</span>
+          </article>
+          <article className="dadmin-card dadmin-card--borrador">
+            <span className="dadmin-card-numero">{stats.borradores}</span>
+            <span className="dadmin-card-label">Borradores</span>
+          </article>
+          <article className="dadmin-card">
+            <span className="dadmin-card-numero">{stats.total_informes}</span>
+            <span className="dadmin-card-label">Informes</span>
+          </article>
+        </section>
+
+        <section className="dadmin-grid">
+          <article className="dadmin-panel">
+            <div className="dadmin-panel-header">
+              <h2>Tratamientos por mes</h2>
+              <p>Lectura rápida de crecimiento y actividad reciente.</p>
+            </div>
+            <div className="dadmin-chart">
+              {cargando ? (
+                <p className="dadmin-cargando">Cargando...</p>
+              ) : (
+                stats.tratamientos_por_mes.map(item => (
+                  <div key={item.mes} className="dadmin-chart-row">
+                    <div className="dadmin-chart-label">{item.label}</div>
+                    <div className="dadmin-chart-track">
+                      <div
+                        className="dadmin-chart-fill"
+                        style={{ width: `${(item.total / maxMes) * 100}%` }}
+                      />
+                    </div>
+                    <div className="dadmin-chart-value">{item.total}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </article>
+
+          <article className="dadmin-panel">
+            <div className="dadmin-panel-header">
+              <h2>Distribución de riesgo</h2>
+              <p>Sirve para leer si la plataforma se está usando en casos exigentes.</p>
+            </div>
+            <div className="dadmin-chart">
+              {Object.entries(stats.riesgo_distribucion || {}).map(([riesgo, total]) => (
+                <div key={riesgo} className="dadmin-chart-row">
+                  <div className="dadmin-chart-label">{riesgo}</div>
+                  <div className="dadmin-chart-track">
+                    <div
+                      className={`dadmin-chart-fill dadmin-chart-fill--${riesgo.toLowerCase()}`}
+                      style={{ width: `${(total / maxRiesgo) * 100}%` }}
+                    />
+                  </div>
+                  <div className="dadmin-chart-value">{total}</div>
+                </div>
+              ))}
+            </div>
+          </article>
+        </section>
+
+        <section className="dadmin-grid">
+          <article className="dadmin-panel">
+            <div className="dadmin-panel-header">
+              <h2>Adopción del sistema</h2>
+              <p>Qué tan activas están las organizaciones con funciones clave.</p>
+            </div>
+            <ul className="dadmin-lista-metricas">
+              <li>
+                <span>Organizaciones con informes</span>
+                <strong>{stats.organizaciones_con_informes ?? 0}</strong>
+              </li>
+              <li>
+                <span>Con logo cargado</span>
+                <strong>{stats.organizaciones_con_logo ?? 0}</strong>
+              </li>
+              <li>
+                <span>Con color institucional</span>
+                <strong>{stats.organizaciones_con_color ?? 0}</strong>
+              </li>
+            </ul>
+          </article>
+
+          <article className="dadmin-panel">
+            <div className="dadmin-panel-header">
+              <h2>Actividad por organización</h2>
+              <p>Más y menos activas según tratamientos, informes, sesiones y versiones.</p>
+            </div>
+            <div className="dadmin-doble-lista">
+              <div>
+                <h3>Más activas</h3>
+                <ul className="dadmin-ranking">
+                  {stats.organizaciones_mas_activas.map(org => (
+                    <li key={org.id}>
+                      <div>
+                        <strong>{org.nombre}</strong>
+                        <span>{org.rut}</span>
+                      </div>
+                      <span>{org.indice_actividad}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3>Menos activas</h3>
+                <ul className="dadmin-ranking">
+                  {stats.organizaciones_menos_activas.map(org => (
+                    <li key={org.id}>
+                      <div>
+                        <strong>{org.nombre}</strong>
+                        <span>{org.rut}</span>
+                      </div>
+                      <span>{org.indice_actividad}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section className="dadmin-panel">
+          <div className="dadmin-panel-header">
+            <h2>Atajos</h2>
+            <p>Acceso directo a la revisión operativa.</p>
           </div>
-        </div>
-
-        {/* Barra de búsqueda */}
-        <div className="dadmin-busqueda-wrap">
-          <svg className="dadmin-busqueda-icono" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input
-            className="dadmin-busqueda"
-            type="text"
-            placeholder="Buscar por nombre, RUT o correo..."
-            value={busqueda}
-            onChange={e => setBusqueda(e.target.value)}
-          />
-        </div>
-
-        {/* Tabla */}
-        <div className="dadmin-tabla-wrap">
-          {cargando ? (
-            <p className="dadmin-cargando">Cargando...</p>
-          ) : (
-            <table className="dadmin-tabla">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>RUT</th>
-                  <th>Correo</th>
-                  <th>Fecha registro</th>
-                  <th>Tratamientos</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {orgsFiltradas.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="dadmin-vacio">
-                      {busqueda ? 'Sin resultados para esa búsqueda' : 'No hay organizaciones registradas'}
-                    </td>
-                  </tr>
-                ) : (
-                  orgsFiltradas.map(org => (
-                    <tr key={org.id}>
-                      <td className="dadmin-td-nombre">{org.nombre}</td>
-                      <td>{org.rut}</td>
-                      <td>{org.correo}</td>
-                      <td>{formatFecha(org.creado_en)}</td>
-                      <td>
-                        <span className="dadmin-badge-trat">{org.total_tratamientos}</span>
-                      </td>
-                      <td>
-                        <button
-                          className="btn-ver-detalle"
-                          onClick={() => navigate(`/admin/organizaciones/${org.id}`)}
-                        >
-                          Ver detalle
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
+          <div className="dadmin-atajos">
+            <button className="dadmin-atajo" onClick={() => navigate('/admin')}>
+              Ver organizaciones
+            </button>
+            <button className="dadmin-atajo" onClick={() => navigate('/perfil')}>
+              Configurar perfil
+            </button>
+          </div>
+        </section>
       </main>
     </div>
   )

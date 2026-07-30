@@ -55,6 +55,7 @@ class OrganizacionRespuesta(BaseModel):
     rut: str
     correo: str
     rol: str
+    activo: bool = True
     color_institucional: Optional[str] = None
     logo_ruta: Optional[str] = None
     model_config = {"from_attributes": True}
@@ -84,6 +85,41 @@ class OrganizacionEditarPerfil(BaseModel):
 # Para cambiar la contraseña (requiere verificar la actual primero)
 class OrganizacionCambiarPassword(BaseModel):
     password_actual: str
+    password_nueva: str
+    confirmar_password: str
+
+    @field_validator("password_nueva")
+    @classmethod
+    def password_minimo(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("La contraseña debe tener al menos 8 caracteres")
+        if len(v) > 72:
+            raise ValueError("La contraseña no puede tener más de 72 caracteres")
+        return v
+
+    @field_validator("confirmar_password")
+    @classmethod
+    def passwords_coinciden(cls, v: str, info) -> str:
+        nueva = info.data.get("password_nueva")
+        if nueva and v != nueva:
+            raise ValueError("Las contraseñas no coinciden")
+        return v
+
+
+class OrganizacionAdminActualizar(BaseModel):
+    nombre: Optional[str] = None
+    correo: Optional[EmailStr] = None
+    activo: Optional[bool] = None
+
+    @field_validator("nombre")
+    @classmethod
+    def nombre_no_vacio(cls, v: str) -> str:
+        if v is not None and not v.strip():
+            raise ValueError("El nombre no puede estar vacío")
+        return v.strip() if v else v
+
+
+class OrganizacionAdminResetPassword(BaseModel):
     password_nueva: str
     confirmar_password: str
 

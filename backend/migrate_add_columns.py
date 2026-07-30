@@ -6,10 +6,9 @@ from app.basededatos import engine
 from sqlalchemy import text
 
 MIGRATIONS = [
-    # ── organizaciones ─────────────────────────────────────────
+    "ALTER TABLE organizaciones ADD COLUMN activo TINYINT(1) NOT NULL DEFAULT 1",
     "ALTER TABLE organizaciones ADD COLUMN color_institucional VARCHAR(7) NULL",
     "ALTER TABLE organizaciones ADD COLUMN logo_ruta VARCHAR(500) NULL",
-    # ── detalle_rat_extendido — B2-05 datos y transferencias ───
     "ALTER TABLE detalle_rat_extendido ADD COLUMN incluye_nna TINYINT(1) NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN nna_detalle TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN datos_navegacion TINYINT(1) NULL",
@@ -22,14 +21,12 @@ MIGRATIONS = [
     "ALTER TABLE detalle_rat_extendido ADD COLUMN contratos_proteccion_datos_detalle TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN datos_transferidos_detalle TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN metodo_transferencia TEXT NULL",
-    # ── detalle_rat_extendido — sistemas ───────────────────────
     "ALTER TABLE detalle_rat_extendido ADD COLUMN sistemas_origen TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN sistemas_destino TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN sistemas_tratamiento TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN tipos_tratamiento_sistema TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN base_datos_nombre VARCHAR(200) NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN proveedor_tecnologico VARCHAR(200) NULL",
-    # ── detalle_rat_extendido — principios Ley 21.719 ──────────
     "ALTER TABLE detalle_rat_extendido ADD COLUMN criterio_plazo VARCHAR(50) NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN metodo_eliminacion VARCHAR(100) NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN documenta_destruccion TINYINT(1) NULL",
@@ -40,15 +37,14 @@ MIGRATIONS = [
     "ALTER TABLE detalle_rat_extendido ADD COLUMN cumplimiento_demostrable TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN incidentes_historicos TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN cambios_futuros TEXT NULL",
-    # ── detalle_rat_extendido — campos calculados/seleccionados ──
     "ALTER TABLE detalle_rat_extendido ADD COLUMN pais_destino VARCHAR(200) NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN categorias_sensibles TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN categorias_datos_seleccion TEXT NULL",
-    # ── detalle_rat_extendido — DPIA ───────────────────────────
     "ALTER TABLE detalle_rat_extendido ADD COLUMN requiere_dpia TINYINT(1) NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN dpia_realizada TINYINT(1) NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN dpia_detalle TEXT NULL",
 ]
+
 
 def main():
     with engine.connect() as conn:
@@ -65,6 +61,7 @@ def main():
                 else:
                     print(f"  ERROR: {e}")
     print("\nMigración completada.")
+
 
 if __name__ == "__main__":
     main()
