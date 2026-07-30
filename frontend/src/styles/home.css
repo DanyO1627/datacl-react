@@ -147,7 +147,7 @@
 }
 
 .hero__subtitulo {
-  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  font-size: clamp(1.0rem, 1.8vw, 1.1rem);
   font-family: var(--fuente-cuerpo);
   color: #3b5998;
   max-width: 560px;
