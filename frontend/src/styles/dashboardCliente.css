@@ -13,7 +13,7 @@
   display: flex;
   min-height: 100vh;
   background: #f0f6ff;
-  font-family: "Source Sans 3", "Georgia", sans-serif;
+  font-family: "Inter", sans-serif;
 }
  
 /* ── Contenido principal ── */
@@ -35,7 +35,7 @@
 }
  
 .dashboard__saludo {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Inter", sans-serif;
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 700;
   color: var(--navy);
@@ -110,7 +110,7 @@
  
 /* El número "0" grande */
 .dashboard__tarjeta-valor {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Inter", sans-serif;
   font-size: 2.4rem;
   font-weight: 700;
   color: var(--navy);
@@ -129,7 +129,7 @@
   border: none;
   border-radius: 50px;
   font-size: 0.95rem;
-  font-family: "Source Sans 3", sans-serif;
+  font-family: "Inter", sans-serif;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 4px 20px rgba(5, 38, 89, 0.3);
@@ -283,5 +283,5 @@
   font-weight: 700;
   color: #021024;
   margin: 0 0 1rem;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
 }

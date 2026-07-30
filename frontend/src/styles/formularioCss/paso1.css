@@ -16,7 +16,7 @@
 .p1-main {
   margin-left: 220px;
   padding: 2.8rem 3rem;
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: "Inter", sans-serif;
   min-height: 100vh;
 }
 
@@ -194,7 +194,7 @@
   padding: 11px 14px;
   border-radius: 10px;
   border: 1.5px solid #c8dcee;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   font-size: 14px;
   color: var(--navy);
   background: #f9fcff;
@@ -220,7 +220,7 @@
   padding: 11px 14px;
   border-radius: 10px;
   border: 1.5px solid #c8dcee;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   font-size: 14px;
   color: var(--navy);
   background: #f9fcff;
@@ -255,7 +255,7 @@
   padding: 11px 14px;
   border-radius: 10px;
   border: 1.5px solid #c8dcee;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   font-size: 14px;
   color: var(--navy);
   background: #f9fcff;
@@ -375,7 +375,7 @@
   border-radius: 50px;
   font-size: 14px;
   font-weight: 700;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   cursor: pointer;
   border: none;
   transition: opacity 0.15s, transform 0.12s;
@@ -498,7 +498,7 @@
 .p1-banner-chip {
   font-size: 11px;
   font-weight: 600;
-  font-family: 'Courier New', monospace;
+  font-family: "Inter", sans-serif;
   padding: 3px 8px;
   border-radius: 20px;
   background: #dbeafe;
@@ -609,7 +609,7 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--dark);
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   text-align: left;
   transition: background 0.15s;
 }

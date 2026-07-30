@@ -18,7 +18,7 @@ function TooltipBase({ active, payload, total }) {
   return (
     <div style={{
       background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10,
-      padding: '8px 14px', fontSize: 12, fontFamily: 'Georgia, serif',
+      padding: '8px 14px', fontSize: 12, fontFamily: 'Inter, sans-serif',
       boxShadow: '0 2px 8px rgba(0,0,0,0.08)', maxWidth: 200,
     }}>
       <strong style={{ color: '#021024' }}>{name}</strong>
@@ -34,7 +34,7 @@ function Leyenda({ payload }) {
       display: 'flex', flexWrap: 'wrap', gap: '6px 14px', justifyContent: 'center',
     }}>
       {payload.map((e) => (
-        <li key={e.value} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontFamily: 'Georgia, serif', color: '#052659' }}>
+        <li key={e.value} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontFamily: 'Inter, sans-serif', color: '#052659' }}>
           <span style={{ width: 10, height: 10, borderRadius: '50%', background: e.color, display: 'inline-block', flexShrink: 0 }} />
           {e.value}: <strong>{e.payload.value}</strong>
         </li>
@@ -53,7 +53,7 @@ export default function GraficoBasesLicitud({ tratamientos = [] }) {
 
   if (activos.length === 0) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 200, color: '#9ab5cc', fontFamily: 'Georgia, serif', fontSize: 13, gap: 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 200, color: '#9ab5cc', fontFamily: 'Inter, sans-serif', fontSize: 13, gap: 8 }}>
         <span style={{ fontSize: 28 }}>⚖️</span>
         <span>Sin tratamientos registrados</span>
       </div>
@@ -62,7 +62,7 @@ export default function GraficoBasesLicitud({ tratamientos = [] }) {
 
   if (datos.length === 0) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: '#9ab5cc', fontFamily: 'Georgia, serif', fontSize: 13 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: '#9ab5cc', fontFamily: 'Inter, sans-serif', fontSize: 13 }}>
         Sin base legal registrada aún
       </div>
     )

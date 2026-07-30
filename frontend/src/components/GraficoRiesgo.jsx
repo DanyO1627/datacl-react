@@ -23,7 +23,7 @@ function TooltipPersonalizado({ active, payload, total }) {
       borderRadius: 10,
       padding: '8px 14px',
       fontSize: 13,
-      fontFamily: 'Georgia, serif',
+      fontFamily: 'Inter, sans-serif',
       boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
     }}>
       <strong style={{ color: '#021024' }}>{name}</strong>
@@ -51,7 +51,7 @@ function LeyendaPersonalizada({ payload }) {
           alignItems: 'center',
           gap: 6,
           fontSize: 13,
-          fontFamily: 'Georgia, serif',
+          fontFamily: 'Inter, sans-serif',
           color: '#052659',
         }}>
           <span style={{
@@ -91,7 +91,7 @@ export default function GraficoRiesgo({ tratamientos = [] }) {
         justifyContent: 'center',
         height: 200,
         color: '#9ab5cc',
-        fontFamily: 'Georgia, serif',
+        fontFamily: 'Inter, sans-serif',
         fontSize: 14,
         gap: 8,
       }}>
@@ -110,7 +110,7 @@ export default function GraficoRiesgo({ tratamientos = [] }) {
         justifyContent: 'center',
         height: 200,
         color: '#9ab5cc',
-        fontFamily: 'Georgia, serif',
+        fontFamily: 'Inter, sans-serif',
         fontSize: 14,
       }}>
         Sin datos de riesgo aún

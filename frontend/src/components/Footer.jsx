@@ -9,7 +9,7 @@ export default function Footer() {
             <span className="footer__logo">DataCL</span>
 
             <p className="footer__texto">
-                Proyecto académico - Duoc UC 2026
+                Proyecto DataCL 2026
             </p>
 
             <div className="footer__links">

@@ -17,7 +17,7 @@
   margin-left: 220px;
   padding: 2.4rem 2.4rem 6rem;
   min-height: 100vh;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
@@ -241,7 +241,7 @@
   border: 1.5px solid #dcedf8;
   border-radius: 8px;
   font-size: 13px;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   color: var(--navy);
   outline: none;
   transition: border-color 0.15s;
@@ -266,7 +266,7 @@
   color: #fff;
   font-size: 13px;
   font-weight: 600;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s;
@@ -305,7 +305,7 @@
   color: var(--dark);
   font-size: 13px;
   font-weight: 600;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
@@ -324,7 +324,7 @@
   color: #fff;
   font-size: 14px;
   font-weight: 700;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   cursor: pointer;
   transition: opacity 0.15s, transform 0.12s;
 }

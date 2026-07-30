@@ -29,7 +29,7 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: "Inter", sans-serif;
   padding: 2rem 1rem;
 }
 
@@ -108,7 +108,7 @@ html, body, #root {
   font-size: 14px;
   color: var(--navy);
   transition: background 0.18s, box-shadow 0.18s;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   display: block;
 }
 
@@ -158,7 +158,7 @@ html, body, #root {
   cursor: pointer;
   margin-top: 1.4rem;
   letter-spacing: 0.03em;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   transition: opacity 0.18s, transform 0.12s;
   display: block;
 }
@@ -190,7 +190,7 @@ html, body, #root {
   background: none;
   border: none;
   font-size: 13px;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   padding: 0;
 }
 

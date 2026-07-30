@@ -9,7 +9,7 @@
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 50%, #e0f2fe 100%);
-  font-family: "Source Sans 3", "Segoe UI", sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 /* ── Header ── */
@@ -18,7 +18,7 @@
 }
 
 .e404__logo {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Inter", sans-serif;
   font-size: 1.4rem;
   font-weight: 700;
   color: #0b2545;
@@ -47,7 +47,7 @@
 
 /* El 404 grande — primera cosa que ve el usuario */
 .e404__numero {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Inter", sans-serif;
   font-size: clamp(6rem, 20vw, 12rem);
   font-weight: 700;
   color: #1b3a6b;
@@ -78,7 +78,7 @@
 }
 
 .e404__titulo {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Inter", sans-serif;
   font-size: clamp(1.2rem, 3vw, 2.1rem);
   font-weight: 700;
   color: #0b2545;
@@ -101,7 +101,7 @@
   border: none;
   border-radius: 50px; /* muy redondeado como en el registro de Dani */
   font-size: 1rem;
-  font-family: "Source Sans 3", "Segoe UI", sans-serif;
+  font-family: "Inter", sans-serif;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.25s ease;

@@ -1,4 +1,4 @@
-import logoImg from "../assets/DataCLlogo.png";
+import logoImg from "../assets/logo_blanco.png";
 import "../styles/logo.css";
  
 export default function Logo({ size = "md", theme = "dark", onClick }) {

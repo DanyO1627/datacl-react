@@ -17,7 +17,7 @@
   margin-left: 220px;
   padding: 2.4rem 2.4rem 6rem;
   min-height: 100vh;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
@@ -225,7 +225,7 @@
   font-size: 13px;
   font-weight: 700;
   color: var(--navy);
-  font-family: 'Courier New', monospace;
+  font-family: "Inter", sans-serif;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -314,7 +314,7 @@
   color: #5e7f9a;
   border: none;
   background: transparent;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   padding: 0;
   outline: none;
   min-width: 0;
@@ -363,7 +363,7 @@
   color: #1e40af;
   font-size: 11px;
   font-weight: 600;
-  font-family: 'Courier New', monospace;
+  font-family: "Inter", sans-serif;
 }
 
 .ac-chip--sensible {
@@ -405,7 +405,7 @@
   color: var(--mid);
   font-size: 13px;
   font-weight: 600;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
@@ -446,7 +446,7 @@
   color: var(--dark);
   font-size: 13px;
   font-weight: 600;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
@@ -494,7 +494,7 @@
   color: #fff;
   font-size: 14px;
   font-weight: 700;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   cursor: pointer;
   transition: opacity 0.15s, transform 0.12s;
 }
@@ -636,7 +636,7 @@
   color: var(--dark);
   font-size: 12px;
   font-weight: 600;
-  font-family: 'Courier New', monospace;
+  font-family: "Inter", sans-serif;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, color 0.15s;
 }
@@ -663,5 +663,5 @@
   border: 1px solid #c8dcee;
   white-space: nowrap;
   flex-shrink: 0;
-  font-family: 'Courier New', monospace;
+  font-family: "Inter", sans-serif;
 }

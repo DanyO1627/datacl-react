@@ -31,8 +31,8 @@
   --azul-muted:      #6b8cc7;   /* texto muy secundario */
   --azul-claro-txt:  #93b4d8;   /* texto sobre fondo oscuro */
 
-  --fuente-titulo: "Playfair Display", Georgia, serif;
-  --fuente-cuerpo: "Source Sans 3", sans-serif;
+  --fuente-titulo: "Inter", sans-serif;
+  --fuente-cuerpo: "Inter", sans-serif;
 
   --radio: 12px;
   --radio-pill: 20px;

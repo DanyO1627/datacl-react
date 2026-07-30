@@ -16,7 +16,7 @@
 .ra-main {
   margin-left: 220px;
   padding: 2.8rem 3rem;
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: "Inter", sans-serif;
   min-height: 100vh;
   overflow-y: auto;
 }
@@ -218,13 +218,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: 'Courier New', monospace;
+  font-family: "Inter", sans-serif;
 }
 
 .ra-badge-tipo {
   font-size: 11px;
   color: var(--mid);
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
 }
 
 /* Etiqueta derecha */
@@ -315,7 +315,7 @@
   border-radius: 50px;
   font-size: 14px;
   font-weight: 700;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   cursor: pointer;
   transition: opacity 0.15s, transform 0.12s;
   border: none;

@@ -16,7 +16,7 @@
 .p3-main {
   margin-left: 220px;
   padding: 2.8rem 3rem;
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: "Inter", sans-serif;
   min-height: 100vh;
 }
 
@@ -167,7 +167,7 @@
   padding: 8px 10px;
   border-radius: 8px;
   border: 1.5px solid #c8dcee;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   font-size: 13px;
   color: var(--navy);
   background: #fff;
@@ -187,7 +187,7 @@
   padding: 8px 10px;
   border-radius: 8px;
   border: 1.5px solid #c8dcee;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   font-size: 13px;
   color: var(--navy);
   background: #fff;
@@ -318,7 +318,7 @@
   background: #f4f9ff;
   border: none;
   cursor: pointer;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   font-size: 14px;
   font-weight: 700;
   color: var(--navy);
@@ -406,7 +406,7 @@
 
 .p3-campo-nombre {
   flex: 1;
-  font-family: 'Courier New', monospace;
+  font-family: "Inter", sans-serif;
   color: var(--navy);
 }
 
@@ -458,7 +458,7 @@
   border-radius: 50px;
   font-size: 14px;
   font-weight: 700;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   cursor: pointer;
   border: none;
   transition: opacity 0.15s, transform 0.12s;
@@ -541,7 +541,7 @@
   background: #f4f9ff;
   border: none;
   cursor: pointer;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   text-align: left;
   transition: background 0.18s;
 }
@@ -622,7 +622,7 @@
   padding: 9px 12px;
   border: 1.5px solid #c8dcee;
   border-radius: 8px;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   font-size: 13px;
   color: var(--navy);
   background: #fff;
@@ -641,7 +641,7 @@
   padding: 8px 10px;
   border: 1.5px solid #c8dcee;
   border-radius: 8px;
-  font-family: 'Georgia', serif;
+  font-family: "Inter", sans-serif;
   font-size: 13px;
   color: var(--navy);
   background: #fff;
