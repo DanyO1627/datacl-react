@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/registro.css";
 import Logo from "../components/Logo";
+import Logo_negro from "../assets/GobData_logo.png"
 
 function validarRut(rut) {
   const patron = /^\d{7,8}-[\dKk]$/;
@@ -136,9 +137,10 @@ export default function Registro() {
     <div className="registro-page">
       <div className="registro-wrapper">
 
-        <div className="registro-logo" onClick={() => navigate("/")}>
-          <Logo size="sm" />
-          <span className="registro-logo-text">DataCL</span>
+        {/* Logo */}
+        <div className="login-logo">
+          <Logo size="sm" src={Logo_negro} onClick={() => navigate("/")} />
+          <span className="login-logo-text">DataCL</span>
         </div>
 
         <div className="registro-card">

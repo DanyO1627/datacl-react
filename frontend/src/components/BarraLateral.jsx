@@ -2,6 +2,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Logo from "../components/Logo";
 import "../styles/barraLateral.css";
+import Logo_negro from "../assets/GobData_logo.png"
+import miniBlanco from "../assets/mini blanco.png"
+import Logo_blanco from "../assets/logo_blanco.png"
+
 
 // LINKS DE NAVEGACIÓN
 const LINKS = [
@@ -99,10 +103,12 @@ export default function BarraLateral() {
   return (
     <aside className="barra-lateral">
 
-      {/* LOGO */}
-      <div className="barra-lateral__logo">
-        <Logo size="lg" onClick={() => navigate("/dashboard")} />
-      </div>
+      
+      {/* Logo */}
+        <div className="barra-lateral__logo">
+          <Logo size="sm" src={Logo_blanco} onClick={() => navigate("/dashboard")} />
+          <span className="login-logo-text"></span>
+        </div>
 
       {/* los links */}
       <nav className="barra-lateral__nav">

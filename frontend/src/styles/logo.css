@@ -1,8 +1,7 @@
 .logo {
-  display: flex;          /* mejor que inline-flex */
+  display: flex;
   align-items: center;
-  justify-content: flex-start;
-  padding-left: 16px;     /* 👈 aire a la izquierda */
+  justify-content: center;
 }
  
 .logo--clickeable {
@@ -19,10 +18,7 @@
 .logo--md .logo__imagen { height: 172px; }
 .logo--lg .logo__imagen { height: 280px; }
  
-.logo--lg .logo__imagen { 
-  height: auto;
-  width: 290px;  
-}
+.logo--sm .logo__imagen { height: 70px; }
  
 /* En fondos oscuros se ve normal,
    en fondos claros se puede ajustar brillo si hace falta */

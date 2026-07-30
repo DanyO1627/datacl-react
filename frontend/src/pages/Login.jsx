@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/login.css";
 import Logo from "../components/Logo"
+import miniLogo from "../assets/miniGobData.png"
+import Logo_negro from "../assets/GobData_logo.png"
 
 // Ícono de ojo abierto
 function IconoOjoAbierto() {
@@ -110,7 +112,7 @@ export default function Login() {
 
         {/* Logo */}
         <div className="login-logo">
-          <Logo size="sm" onClick={() => navigate("/")} />
+          <Logo size="sm" src={Logo_negro} onClick={() => navigate("/")} />
           <span className="login-logo-text">DataCL</span>
         </div>
 

@@ -29,7 +29,7 @@
 .navbar__logo {
   color: #ffffff;
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 500;
   font-family: var(--fuente-titulo);
   letter-spacing: 0.03em;
   /* punto decorativo después del logo */
