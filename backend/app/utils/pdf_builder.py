@@ -176,6 +176,26 @@ def _titulares_legibles(cats_str):
     return ", ".join(_TITULARES.get(c.strip(), c.strip()) for c in cats_str.split(",") if c.strip())
 
 
+def _bloques_datos_texto(bloques):
+    """
+    Formatea los bloques de datos_tratados (R8.4) como texto único para una
+    celda: "{categoria} — Se tratan: X / ¿Para qué?: Y / ¿Cómo?: Z", separados
+    por una línea divisoria simple, igual que en el documento RAT CEDCA.
+    Devuelve None si no hay bloques (RATs viejos sin este dato).
+    """
+    if not bloques:
+        return None
+    partes = []
+    for b in bloques:
+        cat       = (b.get("categoria_dato") or "Sin categoría").replace("\n", "<br/>")
+        se_tratan = (b.get("se_tratan") or "No especificado").replace("\n", "<br/>")
+        para_que  = (b.get("para_que") or "No especificado").replace("\n", "<br/>")
+        como      = (b.get("como") or "No especificado").replace("\n", "<br/>")
+        partes.append(f"<b>{cat}</b> — Se tratan: {se_tratan} / ¿Para qué?: {para_que} / ¿Cómo?: {como}")
+    divisor = "<br/>" + "─" * 46 + "<br/>"
+    return divisor.join(partes)
+
+
 # ── Conversión ORM → dict plano ──────────────────────────────────────────
 
 def tratamiento_a_dict(t) -> dict:
@@ -197,7 +217,6 @@ def tratamiento_a_dict(t) -> dict:
         "fecha_evaluacion": getattr(t, "fecha_evaluacion", None),
         "responsable_tratamiento": d.responsable_tratamiento if d else None,
         "es_responsable": d.es_responsable if d else None,
-        "departamento": d.departamento if d else None,
         "categorias_titulares": d.categorias_titulares if d else None,
         "universo_titulares": d.universo_titulares if d else None,
         "origen_datos": d.origen_datos if d else None,
@@ -208,6 +227,7 @@ def tratamiento_a_dict(t) -> dict:
     }
 
     campos_ext = [
+        "proceso_asociado",
         "descripcion_detallada", "subarea_responsable", "procesos_relacionados",
         "finalidades_secundarias", "informa_titulares", "documento_respaldo_permiso",
         "datos_navegacion", "datos_navegacion_detalle", "incluye_nna", "nna_detalle",
@@ -223,6 +243,18 @@ def tratamiento_a_dict(t) -> dict:
     ]
     for campo in campos_ext:
         resultado[campo] = getattr(ext, campo, None) if ext else None
+
+    # Bloques repetibles de "descripción detallada" (R8.4) — ya vienen
+    # ordenados por `orden` gracias al order_by de la relación en models.py.
+    resultado["datos_tratados"] = [
+        {
+            "categoria_dato": b.categoria_dato,
+            "se_tratan": b.se_tratan,
+            "para_que": b.para_que,
+            "como": b.como,
+        }
+        for b in (getattr(t, "datos_tratados", None) or [])
+    ]
 
     return resultado
 
@@ -367,14 +399,24 @@ def _ficha_tratamiento(d, idx, total, estilos_dict, ancho, color_header):
     elementos.append(Spacer(1, 0.3 * cm))
 
     # ── Sección 1: Identificación ─────────────────────────────────
+    # Cuadro combinado nombre + proceso asociado (R8.6, formato RAT CEDCA):
+    # nombre en negrita arriba, proceso asociado como párrafo debajo, misma celda.
+    proceso_texto = (d.get("proceso_asociado") or "No especificado").replace("\n", "<br/>")
+    nombre_proceso_valor = f'<font color="#052659"><b>{nombre}</b></font><br/><br/>{proceso_texto}'
+
+    # Bloques de "descripción detallada" por categoría de dato (R8.4). Si el
+    # tratamiento es de antes de R8.4 y no tiene bloques, se cae al texto
+    # libre viejo (descripcion_detallada) para no perder esa información.
+    descripcion_texto = _bloques_datos_texto(d.get("datos_tratados")) or _val(d, "descripcion_detallada")
+
     elementos.extend(_tabla_seccion(
-        f"Identificación de actividades de tratamiento — {nombre}",
+        "Identificación de actividades de tratamiento",
         [
             ("Responsable del tratamiento", "(persona o cargo a cargo del proceso)", resp_texto),
-            ("Departamento / Área", "(unidad dueña del tratamiento)", _val(d, "departamento")),
-            ("Subárea responsable", None, _val(d, "subarea_responsable")),
-            ("Descripción detallada", "(¿Qué datos se tratan?; ¿Para qué?; ¿Cómo?)", _val(d, "descripcion_detallada")),
-            ("Procesos relacionados", "(relación con otros procesos internos)", _val(d, "procesos_relacionados")),
+            ("Nombre del tratamiento y proceso asociado", "(Denominación clara y entendible)", nombre_proceso_valor),
+            ("Descripción detallada", "(por categoría de dato: qué se trata, para qué, cómo)", descripcion_texto),
+            ("Área responsable", None, _val(d, "subarea_responsable")),
+            ("Relación con otros procesos internos", None, _val(d, "procesos_relacionados")),
         ],
         estilos_dict, ancho, color_header,
     ))

@@ -23,6 +23,18 @@ function serializarMedidasSeguridad(medidas, otrasMedidas) {
   return base.length > 0 ? base.join(",") : null;
 }
 
+// descarta bloques de "descripción detallada" (R8.4) que quedaron vacíos
+function limpiarBloquesDatos(bloques) {
+  return (bloques || [])
+    .filter((b) => (b.categoria_dato || b.se_tratan || b.para_que || b.como || "").trim())
+    .map((b) => ({
+      categoria_dato: b.categoria_dato || null,
+      se_tratan:      b.se_tratan      || null,
+      para_que:       b.para_que       || null,
+      como:           b.como           || null,
+    }));
+}
+
 function formatearErrorApi(detail) {
   if (!detail) return "Error al guardar el tratamiento";
   if (typeof detail === "string") return detail;
@@ -301,12 +313,12 @@ export default function Paso3() {
       campos_usados:            formularioCompleto.sesionActual
         ? (formularioCompleto.campos_detectados || []).map((c) => c.nombre_columna)
         : null,
+      datos_tratados:           limpiarBloquesDatos(formularioCompleto.datos_tratados),
 
       // Objeto detalle — va a la tabla detalle_rat con los nombres del schema
       detalle: {
         responsable_tratamiento: formularioCompleto.responsable    || null,
         es_responsable:          formularioCompleto.es_responsable ?? true,
-        departamento:            formularioCompleto.departamento   || null,
         // el backend espera string; el frontend lo tiene como array
         categorias_titulares: (formularioCompleto.categorias_titulares || []).join(",") || null,
         universo_titulares:   formularioCompleto.universo_titulares || null,
@@ -318,7 +330,7 @@ export default function Paso3() {
 
     // Solo incluir detalle_extendido si tiene al menos un campo con valor
     const _ext = {
-      descripcion_detallada:       formularioCompleto.descripcion_detallada       || null,
+      proceso_asociado:            formularioCompleto.proceso_asociado            || null,
       subarea_responsable:         formularioCompleto.subarea_responsable         || null,
       procesos_relacionados:       formularioCompleto.procesos_relacionados       || null,
       finalidades_secundarias:     formularioCompleto.finalidades_secundarias     || null,
@@ -506,17 +518,17 @@ export default function Paso3() {
         decisiones_automatizadas: local.decisiones_automatizadas ?? false,
         campos_detectados: datos.campos_detectados || [],
         campos_usados: datos.campos_detectados || [],
+        datos_tratados: limpiarBloquesDatos(datos.datos_tratados),
         detalle: {
           responsable_tratamiento: datos.responsable || null,
           es_responsable: datos.es_responsable ?? true,
-          departamento: datos.departamento || null,
           categorias_titulares: (datos.categorias_titulares || []).join(",") || null,
           universo_titulares: datos.universo_titulares || null,
           origen_datos: datos.origen_datos || null,
           categoria_datos: datos.categoria_datos || null,
         },
         detalle_extendido: {
-          descripcion_detallada:      datos.descripcion_detallada       || null,
+          proceso_asociado:           datos.proceso_asociado            || null,
           subarea_responsable:        datos.subarea_responsable         || null,
           procesos_relacionados:      datos.procesos_relacionados       || null,
           finalidades_secundarias:    datos.finalidades_secundarias     || null,
@@ -874,11 +886,16 @@ export default function Paso3() {
                 <div className="p3-revision-seccion">
                   <h4 className="p3-revision-titulo">Paso 1 — Identificación</h4>
                   <FilaRevision label="Nombre" valor={form.nombre} />
+                  <FilaRevision label="Proceso asociado" valor={form.proceso_asociado} />
                   <FilaRevision label="Responsable" valor={form.responsable} />
-                  <FilaRevision label="Departamento" valor={form.departamento} />
-                  <FilaRevision label="Sub-área responsable" valor={form.subarea_responsable} />
+                  <FilaRevision label="Área responsable" valor={form.subarea_responsable} />
                   <FilaRevision label="Finalidad" valor={form.finalidad} />
-                  <FilaRevision label="Descripción detallada" valor={form.descripcion_detallada} />
+                  <FilaRevision
+                    label="Descripción detallada"
+                    valor={(form.datos_tratados || []).filter((b) => b.categoria_dato || b.se_tratan || b.para_que || b.como).length > 0
+                      ? `${form.datos_tratados.length} bloque(s): ${form.datos_tratados.map((b) => b.categoria_dato || "sin categoría").join(", ")}`
+                      : null}
+                  />
                   <FilaRevision label="Base legal" valor={(form.base_legal || "").split(",").filter(Boolean).map((v) => ETIQ_BASE_LEGAL[v] || v).join(", ")} />
                   <FilaRevision label="Procesos relacionados" valor={form.procesos_relacionados} />
                   <FilaRevision label="Finalidades secundarias" valor={form.finalidades_secundarias} />

@@ -159,7 +159,6 @@ export default function Dashboard() {
         nombre:        t.nombre || "",
         responsable:   t.detalle?.responsable_tratamiento || "",
         es_responsable: t.detalle?.es_responsable ?? true,
-        departamento:  t.detalle?.departamento || "",
         finalidad:     t.finalidad || "",
         base_legal:    t.base_legal || "",
         // Paso 2

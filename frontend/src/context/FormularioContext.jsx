@@ -20,12 +20,16 @@ function leerBorradorPersistido() {
 function crearFormVacio() { return {
   // ── Paso 1 ───────────────────────────────────────────────
   nombre: "", responsable: "", es_responsable: true,
-  departamento: "", finalidad: "", base_legal: "",
+  finalidad: "", base_legal: "",
   // Campos extendidos Paso 1 (B2-03)
   descripcion_detallada: "", subarea_responsable: "",
   procesos_relacionados: "", finalidades_secundarias: "",
   informa_titulares: [], documento_respaldo_tiene: null,
   documento_respaldo_descripcion: "",
+  // Paso 1 — R8.3 (orden CEDCA)
+  proceso_asociado: "",
+  // Paso 1 — R8.4: bloques repetibles que reemplazan descripcion_detallada
+  datos_tratados: [],
   // ── Paso 2 ───────────────────────────────────────────────
   categorias_titulares: [], universo_titulares: "", origen_datos: "",
   categorias_datos: [], datos_sensibles: false, categorias_sensibles: [],

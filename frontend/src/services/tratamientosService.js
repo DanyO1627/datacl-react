@@ -139,6 +139,42 @@ export async function recalcularRiesgo(id) {
 }
 
 
+// ── Imagen del proceso asociado (R8.2/R8.3) ────────────────────
+// El tratamiento debe existir (tener id) antes de poder subirle una imagen.
+
+export async function subirImagenProceso(id, archivo) {
+  try {
+    const formData = new FormData();
+    formData.append("archivo", archivo);
+    const res = await api.post(`/tratamientos/${id}/imagen-proceso`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data;
+  } catch (err) {
+    const detail = err.response?.data?.detail;
+    throw new Error(typeof detail === "string" ? detail : "Error al subir la imagen del proceso.");
+  }
+}
+
+export async function eliminarImagenProceso(id) {
+  const res = await api.delete(`/tratamientos/${id}/imagen-proceso`);
+  return res.data;
+}
+
+// Devuelve el blob de la imagen (o null si no hay ninguna configurada) para
+// armar un object URL — el endpoint requiere JWT, así que no sirve un <img src>
+// directo sin pasar por axios (que sí agrega el header Authorization).
+export async function obtenerImagenProcesoBlob(id) {
+  try {
+    const res = await api.get(`/tratamientos/${id}/imagen-proceso`, { responseType: "blob" });
+    return res.data;
+  } catch (err) {
+    if (err.response?.status === 404) return null;
+    throw err;
+  }
+}
+
+
 // ── Helper interno ─────────────────────────────────────────────
 // Convierte el array de errores de validación de FastAPI (422)
 // en un mensaje legible para mostrar al usuario.

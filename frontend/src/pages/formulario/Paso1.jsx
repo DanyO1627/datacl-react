@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useFormulario } from "../../context/FormularioContext";
 import BarraLateral from "../../components/BarraLateral";
+import BloqueDatoTratado from "../../components/BloqueDatoTratado";
+import { subirImagenProceso, eliminarImagenProceso, obtenerImagenProcesoBlob } from "../../services/tratamientosService";
 import "../../styles/formularioCss/paso1.css";
 
 const API = "/api";
@@ -114,6 +116,19 @@ function contarPalabras(texto) {
   return texto.trim() === "" ? 0 : texto.trim().split(/\s+/).length;
 }
 
+// descarta bloques que quedaron completamente vacíos (se agregó el bloque
+// pero no se llenó ningún campo) antes de mandarlos al backend
+function limpiarBloquesDatos(bloques) {
+  return (bloques || [])
+    .filter((b) => (b.categoria_dato || b.se_tratan || b.para_que || b.como || "").trim())
+    .map((b) => ({
+      categoria_dato: b.categoria_dato || null,
+      se_tratan:      b.se_tratan      || null,
+      para_que:       b.para_que       || null,
+      como:           b.como           || null,
+    }));
+}
+
 /* ─── Componente principal ───────────────────────────────────── */
 export default function Paso1() {
   const navigate = useNavigate();
@@ -143,22 +158,88 @@ export default function Paso1() {
     nombre:         form.nombre         || "",
     responsable:    form.responsable    || "",
     es_responsable: form.es_responsable ?? true,
-    departamento:   form.departamento   || "",
     finalidad:      form.finalidad      || "",
     base_legal:     form.base_legal ? form.base_legal.split(",").filter(Boolean) : [],
     // Campos extendidos B2-03
-    descripcion_detallada:       form.descripcion_detallada       || "",
     subarea_responsable:         form.subarea_responsable         || "",
     procesos_relacionados:       form.procesos_relacionados       || "",
     finalidades_secundarias:     form.finalidades_secundarias     || "",
     informa_titulares:           form.informa_titulares           || [],
     documento_respaldo_tiene:    form.documento_respaldo_tiene    ?? null,
     documento_respaldo_descripcion: form.documento_respaldo_descripcion || "",
+    // R8.3 — orden CEDCA
+    proceso_asociado:            form.proceso_asociado            || "",
+    // R8.4 — bloques repetibles que reemplazan descripcion_detallada
+    datos_tratados:              form.datos_tratados               || [],
   });
 
   const [guardandoBorrador, setGuardandoBorrador] = useState(false);
   const [borradorOk, setBorradorOk] = useState(false);
   const [abiertaAdicional, setAbiertaAdicional] = useState(false);
+
+  // ── Imagen del proceso asociado (R8.2/R8.3) ──────────────────
+  // Solo se puede subir/ver una vez que el tratamiento tiene id: en edición
+  // ya existe (tratamientoEditId); en creación, recién después de guardar
+  // un borrador (tratamientosGuardados[actividadActual]).
+  const idxActividad = form.actividadActual ?? 0;
+  const tratId = esEdicion ? form.tratamientoEditId : form.tratamientosGuardados?.[idxActividad];
+
+  const [imagenPreview, setImagenPreview] = useState(null);
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
+  const [errorImagen, setErrorImagen] = useState("");
+
+  useEffect(() => {
+    let urlCreada = null;
+    async function cargarImagen() {
+      if (!tratId) { setImagenPreview(null); return; }
+      const blob = await obtenerImagenProcesoBlob(tratId).catch(() => null);
+      if (blob) {
+        urlCreada = URL.createObjectURL(blob);
+        setImagenPreview(urlCreada);
+      } else {
+        setImagenPreview(null);
+      }
+    }
+    cargarImagen();
+    return () => { if (urlCreada) URL.revokeObjectURL(urlCreada); };
+  }, [tratId]);
+
+  async function handleSubirImagenProceso(e) {
+    const archivo = e.target.files?.[0];
+    e.target.value = "";
+    if (!archivo || !tratId) return;
+
+    const ext = archivo.name.split(".").pop().toLowerCase();
+    if (!["png", "jpg", "jpeg"].includes(ext)) {
+      setErrorImagen("Formato no válido. Usa PNG o JPG.");
+      return;
+    }
+    if (archivo.size > 2 * 1024 * 1024) {
+      setErrorImagen("El archivo excede 2 MB.");
+      return;
+    }
+
+    setSubiendoImagen(true);
+    setErrorImagen("");
+    try {
+      await subirImagenProceso(tratId, archivo);
+      setImagenPreview(URL.createObjectURL(archivo));
+    } catch (err) {
+      setErrorImagen(err.message || "Error al subir la imagen.");
+    } finally {
+      setSubiendoImagen(false);
+    }
+  }
+
+  async function handleEliminarImagenProceso() {
+    if (!tratId) return;
+    try {
+      await eliminarImagenProceso(tratId);
+      setImagenPreview(null);
+    } catch {
+      setErrorImagen("Error al eliminar la imagen.");
+    }
+  }
 
   function toggleBaseLegal(valor) {
     setLocal((prev) => {
@@ -176,6 +257,29 @@ export default function Paso1() {
     const { name, value } = e.target;
     if (name === "finalidad" && contarPalabras(value) > 1000) return;
     setLocal((prev) => ({ ...prev, [name]: value }));
+  }
+
+  // ── Bloques dinámicos "descripción detallada" (R8.4) ──────────
+  function agregarBloqueDato() {
+    setLocal((prev) => ({
+      ...prev,
+      datos_tratados: [...prev.datos_tratados, { categoria_dato: "", se_tratan: "", para_que: "", como: "" }],
+    }));
+  }
+
+  function actualizarBloqueDato(index, campo, valor) {
+    setLocal((prev) => {
+      const lista = [...prev.datos_tratados];
+      lista[index] = { ...lista[index], [campo]: valor };
+      return { ...prev, datos_tratados: lista };
+    });
+  }
+
+  function eliminarBloqueDato(index) {
+    setLocal((prev) => ({
+      ...prev,
+      datos_tratados: prev.datos_tratados.filter((_, i) => i !== index),
+    }));
   }
 
   function toggleInformaTitulares(valor) {
@@ -229,20 +333,20 @@ export default function Paso1() {
         base_legal: datos.base_legal || null,
         campos_detectados: datos.campos_detectados || [],
         campos_usados: datos.campos_detectados || [],
+        datos_tratados: limpiarBloquesDatos(datos.datos_tratados),
         detalle: {
           responsable_tratamiento: datos.responsable || null,
           es_responsable: datos.es_responsable ?? true,
-          departamento: datos.departamento || null,
         },
         detalle_extendido: {
           subarea_responsable: datos.subarea_responsable || null,
-          descripcion_detallada: datos.descripcion_detallada || null,
           procesos_relacionados: datos.procesos_relacionados || null,
           finalidades_secundarias: datos.finalidades_secundarias || null,
           informa_titulares: (datos.informa_titulares || []).join(",") || null,
           documento_respaldo_permiso: datos.documento_respaldo_tiene === true
             ? (datos.documento_respaldo_descripcion || "Sí")
             : datos.documento_respaldo_tiene === false ? "No" : null,
+          proceso_asociado: datos.proceso_asociado || null,
         },
       };
 
@@ -292,6 +396,7 @@ export default function Paso1() {
   const puedeAvanzar =
     local.nombre.trim().length > 0 &&
     local.responsable.trim().length > 0 &&
+    local.proceso_asociado.trim().length > 0 &&
     local.finalidad.trim().length > 0 &&
     local.base_legal.length > 0;
 
@@ -384,28 +489,7 @@ export default function Paso1() {
               Identifica el tratamiento, su responsable y la base legal que lo justifica según la Ley 21.719.
             </p>
 
-            {/* Nombre del tratamiento */}
-            <div className="p1-campo">
-              <label className="p1-label" htmlFor="nombre">
-                Nombre del tratamiento <span className="p1-requerido">*</span>
-              </label>
-              <input
-                id="nombre"
-                name="nombre"
-                type="text"
-                className={`p1-input ${!local.nombre.trim() ? "p1-input--vacio" : ""}`}
-                placeholder="Ej: Gestión de nómina de empleados"
-                value={local.nombre}
-                onChange={handleChange}
-                maxLength={200}
-                autoFocus
-              />
-              {!local.nombre.trim() && (
-                <span className="p1-campo-hint">Este campo es obligatorio para continuar.</span>
-              )}
-            </div>
-
-            {/* Responsable y departamento — fila de dos columnas */}
+            {/* Responsable / Líder del proceso + imagen opcional — fila de dos columnas */}
             <div className="p1-fila-dos">
               <div className="p1-campo">
                 <label className="p1-label" htmlFor="responsable">
@@ -420,6 +504,7 @@ export default function Paso1() {
                   value={local.responsable}
                   onChange={handleChange}
                   maxLength={150}
+                  autoFocus
                 />
                 <div className="p1-rol-row">
                   <label className="p1-rol-opcion">
@@ -447,27 +532,108 @@ export default function Paso1() {
                     : "Encargado/mandatario: quien trata datos por cuenta del responsable (Art. 2° x) Ley 21.719)."}
                 </p>
               </div>
+
               <div className="p1-campo">
-                <label className="p1-label" htmlFor="departamento">
-                  Departamento, área o Dominio
-                </label>
-                <input
-                  id="departamento"
-                  name="departamento"
-                  type="text"
-                  className="p1-input"
-                  placeholder="Ej: Recursos Humanos"
-                  value={local.departamento}
-                  onChange={handleChange}
-                  maxLength={150}
-                />
+                <label className="p1-label">Imagen del proceso (opcional)</label>
+                <span className="p1-campo-hint p1-campo-hint--info">PNG o JPG · Máx. 2 MB</span>
+
+                {imagenPreview && (
+                  <img src={imagenPreview} alt="Imagen del proceso" className="p1-imagen-preview" />
+                )}
+
+                <div className="p1-imagen-acciones">
+                  <label
+                    className="p1-btn p1-btn--borrador p1-btn--sm"
+                    style={!tratId || subiendoImagen ? { opacity: 0.5, cursor: "not-allowed" } : { cursor: "pointer" }}
+                  >
+                    {subiendoImagen ? "Subiendo..." : imagenPreview ? "Reemplazar" : "Subir imagen"}
+                    <input
+                      type="file"
+                      accept=".png,.jpg,.jpeg"
+                      onChange={handleSubirImagenProceso}
+                      disabled={!tratId || subiendoImagen}
+                      style={{ display: "none" }}
+                    />
+                  </label>
+                  {imagenPreview && (
+                    <button type="button" className="p1-btn p1-btn--cancelar p1-btn--sm" onClick={handleEliminarImagenProceso}>
+                      Quitar
+                    </button>
+                  )}
+                </div>
+
+                {!tratId && (
+                  <span className="p1-campo-hint p1-campo-hint--info">Guarda un borrador primero para poder subir una imagen.</span>
+                )}
+                {errorImagen && <span className="p1-campo-hint">{errorImagen}</span>}
               </div>
             </div>
 
-            {/* Subárea responsable */}
+            {/* Nombre del tratamiento */}
+            <div className="p1-campo">
+              <label className="p1-label" htmlFor="nombre">
+                Nombre del tratamiento <span className="p1-requerido">*</span>
+              </label>
+              <input
+                id="nombre"
+                name="nombre"
+                type="text"
+                className={`p1-input ${!local.nombre.trim() ? "p1-input--vacio" : ""}`}
+                placeholder="Ej: Gestión de nómina de empleados"
+                value={local.nombre}
+                onChange={handleChange}
+                maxLength={200}
+              />
+              {!local.nombre.trim() && (
+                <span className="p1-campo-hint">Este campo es obligatorio para continuar.</span>
+              )}
+            </div>
+
+            {/* Proceso asociado */}
+            <div className="p1-campo">
+              <label className="p1-label" htmlFor="proceso_asociado">
+                Proceso asociado <span className="p1-requerido">*</span>
+              </label>
+              <textarea
+                id="proceso_asociado"
+                name="proceso_asociado"
+                className={`p1-textarea ${!local.proceso_asociado.trim() ? "p1-input--vacio" : ""}`}
+                placeholder="Denominación clara y entendible del proceso al que pertenece este tratamiento — ¿en qué consiste la organización/programa/servicio?"
+                value={local.proceso_asociado}
+                onChange={handleChange}
+                rows={3}
+              />
+              {!local.proceso_asociado.trim() && (
+                <span className="p1-campo-hint">Este campo es obligatorio para continuar.</span>
+              )}
+            </div>
+
+            {/* Descripción detallada — bloques dinámicos por categoría de dato (R8.4) */}
+            <div className="p1-campo">
+              <label className="p1-label">Descripción detallada del tratamiento</label>
+              <p className="p1-campo-hint p1-campo-hint--info" style={{ marginBottom: 8 }}>
+                Agrega un bloque por cada categoría de dato que trata este proceso.
+              </p>
+
+              {local.datos_tratados.map((bloque, index) => (
+                <BloqueDatoTratado
+                  key={index}
+                  bloque={bloque}
+                  index={index}
+                  onChange={actualizarBloqueDato}
+                  onEliminar={eliminarBloqueDato}
+                />
+              ))}
+
+              <button type="button" className="p1-bloque-dato-agregar" onClick={agregarBloqueDato}>
+                + Agregar otra categoría de dato
+              </button>
+            </div>
+
+            {/* Área responsable */}
             <div className="p1-campo">
               <label className="p1-label" htmlFor="subarea_responsable">
-                Área específica
+                Área responsable
               </label>
               <input
                 id="subarea_responsable"
@@ -481,19 +647,19 @@ export default function Paso1() {
               />
             </div>
 
-            {/* Descripción detallada — siempre visible */}
+            {/* Relación del proceso con otros procesos internos — siempre visible */}
             <div className="p1-campo">
-              <label className="p1-label" htmlFor="descripcion_detallada">
-                Descripción detallada del tratamiento
+              <label className="p1-label" htmlFor="procesos_relacionados">
+                Relación con otros procesos internos
               </label>
               <textarea
-                id="descripcion_detallada"
-                name="descripcion_detallada"
+                id="procesos_relacionados"
+                name="procesos_relacionados"
                 className="p1-textarea"
-                placeholder="¿Qué datos se tratan? ¿Para qué? ¿Cómo?"
-                value={local.descripcion_detallada}
+                placeholder="¿Se relaciona con otros procesos internos? Ej: BackOffice, Contabilidad, TI"
+                value={local.procesos_relacionados}
                 onChange={handleChange}
-                rows={4}
+                rows={3}
               />
             </div>
 
@@ -573,22 +739,6 @@ export default function Paso1() {
 
               {abiertaAdicional && (
                 <div className="p1-adicional-contenido">
-
-                  {/* Procesos relacionados */}
-                  <div className="p1-campo">
-                    <label className="p1-label" htmlFor="procesos_relacionados">
-                      Procesos relacionados
-                    </label>
-                    <textarea
-                      id="procesos_relacionados"
-                      name="procesos_relacionados"
-                      className="p1-textarea"
-                      placeholder="¿Se relaciona con otros procesos internos? Ej: BackOffice, Contabilidad, TI"
-                      value={local.procesos_relacionados}
-                      onChange={handleChange}
-                      rows={3}
-                    />
-                  </div>
 
                   {/* Finalidades secundarias */}
                   <div className="p1-campo">

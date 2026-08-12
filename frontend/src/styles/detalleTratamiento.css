@@ -308,6 +308,39 @@
   display: block;
 }
 
+/* Imagen del proceso asociado (R8.3/R8.5) */
+.detalle-imagen-proceso {
+  display: block;
+  max-width: 100%;
+  max-height: 180px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  object-fit: contain;
+  margin-top: 4px;
+}
+
+/* Bloques de "descripción detallada" por categoría de dato (R8.4/R8.5) */
+.detalle-bloques-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.detalle-bloque-dato {
+  background: #fafcfe;
+  border: 1px solid #f0f0f5;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.detalle-bloque-dato-titulo {
+  display: block;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 4px;
+}
+
 /* DPIA dentro de sección principios */
 .detalle-dpia {
   margin-top: 20px;

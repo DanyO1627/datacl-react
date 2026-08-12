@@ -145,7 +145,6 @@ class OrganizacionAdminResetPassword(BaseModel):
 class DetalleRatBase(BaseModel):
     responsable_tratamiento: Optional[str] = None
     es_responsable:          bool = True
-    departamento:            Optional[str] = None
     categorias_titulares:    Optional[str] = None
     universo_titulares:      Optional[str] = None
     origen_datos:            Optional[str] = None

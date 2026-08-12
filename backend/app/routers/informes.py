@@ -49,6 +49,7 @@ def generar_informe(
             joinedload(models.Tratamiento.detalle),
             joinedload(models.Tratamiento.detalle_extendido),
             subqueryload(models.Tratamiento.campos),
+            subqueryload(models.Tratamiento.datos_tratados),
         )
         .filter(
             models.Tratamiento.id.in_(datos.ids_tratamientos),

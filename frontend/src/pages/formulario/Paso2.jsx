@@ -364,7 +364,6 @@ export default function Paso2() {
         detalle: {
           responsable_tratamiento: datos.responsable || null,
           es_responsable: datos.es_responsable ?? true,
-          departamento: datos.departamento || null,
           categorias_titulares: (datos.categorias_titulares || []).join(",") || null,
           universo_titulares: datos.universo_titulares || null,
           origen_datos: datos.origen_datos || null,

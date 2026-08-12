@@ -429,6 +429,84 @@
   cursor: not-allowed;
 }
 
+.p1-btn--sm {
+  padding: 7px 16px;
+  font-size: 13px;
+}
+
+/* ─── Imagen del proceso asociado ─────────────────────────────── */
+.p1-imagen-preview {
+  display: block;
+  max-width: 100%;
+  max-height: 140px;
+  border-radius: 8px;
+  border: 1.5px solid #c8dcee;
+  margin: 8px 0;
+  object-fit: contain;
+}
+
+.p1-imagen-acciones {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* ─── Bloques dinámicos "descripción detallada" (R8.4) ────────── */
+.p1-bloque-dato {
+  border: 1.5px solid #dce7f2;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #fafcfe;
+}
+
+.p1-bloque-dato-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.p1-bloque-dato-numero {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.p1-bloque-dato-eliminar {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.p1-bloque-dato-eliminar:hover {
+  text-decoration: underline;
+}
+
+.p1-bloque-dato-agregar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1.5px dashed #a8c5e0;
+  border-radius: 8px;
+  color: var(--mid);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 16px;
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
+}
+
+.p1-bloque-dato-agregar:hover {
+  background: #eef4fb;
+}
+
 /* ─── Radio Responsable / Encargado ──────────────────────────── */
 .p1-rol-row {
   display: flex;

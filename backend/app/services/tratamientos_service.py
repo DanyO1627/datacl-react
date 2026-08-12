@@ -175,7 +175,7 @@ _CAMPOS_SNAPSHOT_TRATAMIENTO = [
 ]
 
 _CAMPOS_SNAPSHOT_DETALLE = [
-    "responsable_tratamiento", "es_responsable", "departamento",
+    "responsable_tratamiento", "es_responsable",
     "categorias_titulares", "universo_titulares", "origen_datos", "categoria_datos",
 ]
 
@@ -257,7 +257,6 @@ _ETIQUETAS_CAMPOS = {
     "universo_titulares": "Universo de titulares",
     "origen_datos": "Origen de los datos",
     "responsable_tratamiento": "Responsable",
-    "departamento": "Departamento",
     "es_responsable": "Rol del responsable",
     # Detalle extendido
     "descripcion_detallada": "Descripción detallada",

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import BarraLateral from '../components/BarraLateral'
 import '../styles/detalleTratamiento.css'
 import BarraRiesgo from '../components/BarraRiesgo'
+import { obtenerImagenProcesoBlob } from '../services/tratamientosService'
 
 const API = '/api'
 
@@ -188,6 +189,7 @@ export default function DetalleTratamiento() {
   const [error, setError] = useState('')
   const [modalEliminar, setModalEliminar] = useState(false)
   const [eliminando, setEliminando] = useState(false)
+  const [imagenProceso, setImagenProceso] = useState(null)
 
   useEffect(() => {
     async function cargar() {
@@ -210,6 +212,22 @@ export default function DetalleTratamiento() {
     }
     cargar()
   }, [id, token])
+
+  // Imagen del proceso asociado (R8.2/R8.3) — el endpoint exige JWT, por eso
+  // se trae como blob vía axios en vez de un <img src> directo.
+  useEffect(() => {
+    let urlCreada = null
+    async function cargarImagen() {
+      if (!tratamiento?.detalle_extendido?.imagen_proceso) { setImagenProceso(null); return }
+      const blob = await obtenerImagenProcesoBlob(id).catch(() => null)
+      if (blob) {
+        urlCreada = URL.createObjectURL(blob)
+        setImagenProceso(urlCreada)
+      }
+    }
+    cargarImagen()
+    return () => { if (urlCreada) URL.revokeObjectURL(urlCreada) }
+  }, [id, tratamiento?.detalle_extendido?.imagen_proceso])
 
   async function confirmarEliminar() {
     setEliminando(true)
@@ -449,9 +467,6 @@ export default function DetalleTratamiento() {
             <Campo label="Responsable">
               <Valor v={d?.responsable_tratamiento} vacio="—" />
             </Campo>
-            <Campo label="Departamento o área">
-              <Valor v={d?.departamento} vacio="—" />
-            </Campo>
             <Campo label="Rol">
               {d ? (
                 <span className={`detalle-badge ${d.es_responsable ? 'detalle-badge-azul' : 'detalle-badge-morado'}`}>
@@ -526,17 +541,58 @@ export default function DetalleTratamiento() {
 
         {/* ── Secciones extendidas B2 (visibles solo si hay datos) ── */}
 
-        {ext && seccionExtendidaTieneData(ext.descripcion_detallada, ext.subarea_responsable, ext.procesos_relacionados) && (
+        {ext && seccionExtendidaTieneData(ext.proceso_asociado, ext.imagen_proceso, ext.descripcion_detallada) && (
           <div className="detalle-seccion">
             <h2 className="detalle-columna-titulo">Identificación detallada</h2>
             <div className="detalle-seccion-campos">
+              <Campo label="Proceso asociado">
+                <ValorMultilinea v={ext.proceso_asociado} />
+              </Campo>
+              {ext.imagen_proceso && (
+                <Campo label="Imagen del proceso">
+                  {imagenProceso
+                    ? <img src={imagenProceso} alt="Imagen del proceso" className="detalle-imagen-proceso" />
+                    : <span className="detalle-campo-pendiente">Cargando imagen…</span>}
+                </Campo>
+              )}
               <Campo label="Descripción detallada">
                 <ValorMultilinea v={ext.descripcion_detallada} />
               </Campo>
-              <Campo label="Subárea responsable">
+            </div>
+          </div>
+        )}
+
+        {tratamiento.datos_tratados?.length > 0 && (
+          <div className="detalle-seccion">
+            <h2 className="detalle-columna-titulo">Descripción detallada por categoría de dato</h2>
+            <div className="detalle-bloques-datos">
+              {tratamiento.datos_tratados.map((bloque) => (
+                <div key={bloque.id} className="detalle-bloque-dato">
+                  <span className="detalle-bloque-dato-titulo">{bloque.categoria_dato || "Sin categoría"}</span>
+                  <div className="detalle-seccion-campos">
+                    <Campo label="¿Qué se trata?">
+                      <ValorMultilinea v={bloque.se_tratan} />
+                    </Campo>
+                    <Campo label="¿Para qué?">
+                      <ValorMultilinea v={bloque.para_que} />
+                    </Campo>
+                    <Campo label="¿Cómo?">
+                      <ValorMultilinea v={bloque.como} />
+                    </Campo>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {ext && seccionExtendidaTieneData(ext.subarea_responsable, ext.procesos_relacionados) && (
+          <div className="detalle-seccion">
+            <div className="detalle-seccion-campos">
+              <Campo label="Área responsable">
                 <Valor v={ext.subarea_responsable} vacio="—" />
               </Campo>
-              <Campo label="Procesos relacionados">
+              <Campo label="Relación con otros procesos internos">
                 <ValorMultilinea v={ext.procesos_relacionados} />
               </Campo>
             </div>

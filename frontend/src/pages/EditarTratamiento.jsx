@@ -50,11 +50,17 @@ export default function EditarTratamiento() {
           nombre: data.nombre || "",
           responsable: det.responsable_tratamiento || "",
           es_responsable: det.es_responsable ?? true,
-          departamento: det.departamento || "",
           finalidad: data.finalidad || "",
           base_legal: data.base_legal || "",
           // Paso 1 extendidos
           descripcion_detallada: ext.descripcion_detallada || "",
+          proceso_asociado: ext.proceso_asociado || "",
+          datos_tratados: (data.datos_tratados || []).map((b) => ({
+            categoria_dato: b.categoria_dato || "",
+            se_tratan: b.se_tratan || "",
+            para_que: b.para_que || "",
+            como: b.como || "",
+          })),
           subarea_responsable: ext.subarea_responsable || "",
           procesos_relacionados: ext.procesos_relacionados || "",
           finalidades_secundarias: ext.finalidades_secundarias || "",
