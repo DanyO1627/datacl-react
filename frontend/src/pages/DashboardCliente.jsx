@@ -342,7 +342,7 @@ export default function Dashboard() {
 
       <button
         className="dashboard__fab"
-        onClick={() => { resetForm(); navigate("/nuevo-tratamiento"); }}
+        onClick={() => { resetForm(); navigate("/subir-archivo"); }}
         title="Nuevo tratamiento"
       >
         + Nuevo tratamiento
