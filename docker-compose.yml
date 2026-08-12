@@ -41,7 +41,8 @@ services:
         condition: service_healthy
     volumes:
       - informes:/app/informes_generados
-
+      - uploads:/app/uploads # esto va a subir los logos que se suban a la app y como quedaran
+                               # en volumenes, no desaparecerán aunque se reescriba el servidor
   frontend:
     build: ./frontend
     restart: unless-stopped
@@ -65,3 +66,5 @@ volumes:
   db_data:
   informes:
   caddy_data:
+  uploads: # esto va a subir los logos que se suban a la app y como quedaran
+            # en volumenes, no desaparecerán aunque se reescriba el servidor
