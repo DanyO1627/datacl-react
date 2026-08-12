@@ -43,6 +43,8 @@ MIGRATIONS = [
     "ALTER TABLE detalle_rat_extendido ADD COLUMN requiere_dpia TINYINT(1) NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN dpia_realizada TINYINT(1) NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN dpia_detalle TEXT NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN proceso_asociado TEXT NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN imagen_proceso VARCHAR(300) NULL",
 ]
 
 

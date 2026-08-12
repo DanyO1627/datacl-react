@@ -57,6 +57,7 @@ class Tratamiento(Base):
     campos             = relationship("CampoRat", back_populates="tratamiento", cascade="all, delete-orphan")
     detalle            = relationship("DetalleRat", back_populates="tratamiento", uselist=False, cascade="all, delete-orphan")
     detalle_extendido  = relationship("DetalleRatExtendido", back_populates="tratamiento", uselist=False, cascade="all, delete-orphan")
+    detalle_datos_tratados = relationship("DetalleDatoTratado", back_populates="tratamiento", cascade="all, delete-orphan", order_by="DetalleDatoTratado.orden")
     sesiones_actividad = relationship("SesionActividad", back_populates="tratamiento", cascade="all, delete-orphan")
     versiones          = relationship("VersionTratamiento", back_populates="tratamiento", cascade="all, delete-orphan")
 
@@ -144,6 +145,8 @@ class DetalleRatExtendido(Base):
     finalidades_secundarias    = Column(Text, nullable=True)
     informa_titulares          = Column(Text, nullable=True)
     documento_respaldo_permiso = Column(Text, nullable=True)
+    proceso_asociado           = Column(Text, nullable=True)
+    imagen_proceso             = Column(String(300), nullable=True)
 
     # ── Datos y transferencias ──
     incluye_nna                     = Column(Boolean, default=False, nullable=True)
@@ -193,6 +196,26 @@ class DetalleRatExtendido(Base):
     actualizado_en = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
     tratamiento = relationship("Tratamiento", back_populates="detalle_extendido")
+
+
+# Bloques repetibles de "descripción detallada" del RAT CEDCA (bloque
+# Identificación, fila "Descripción detallada"): un tratamiento puede tener
+# varios bloques, cada uno con su propia categoría de dato / para qué / cómo.
+# Relación 1-a-N con tratamiento_id (a diferencia de DetalleRat y
+# DetalleRatExtendido, que son 1-a-1).
+class DetalleDatoTratado(Base):
+    __tablename__ = "detalle_datos_tratados"
+
+    id             = Column(Integer, primary_key=True, index=True)
+    tratamiento_id = Column(Integer, ForeignKey("tratamientos.id", ondelete="CASCADE"), nullable=False)
+    categoria_dato = Column(String(200), nullable=True)
+    se_tratan      = Column(Text, nullable=True)
+    para_que       = Column(Text, nullable=True)
+    como           = Column(Text, nullable=True)
+    orden          = Column(Integer, default=0, nullable=False)
+    creado_en      = Column(DateTime, server_default=func.now(), nullable=False)
+
+    tratamiento = relationship("Tratamiento", back_populates="detalle_datos_tratados")
 
 
 class Informe(Base):
