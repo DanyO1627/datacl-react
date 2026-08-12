@@ -57,7 +57,12 @@ class Tratamiento(Base):
     campos             = relationship("CampoRat", back_populates="tratamiento", cascade="all, delete-orphan")
     detalle            = relationship("DetalleRat", back_populates="tratamiento", uselist=False, cascade="all, delete-orphan")
     detalle_extendido  = relationship("DetalleRatExtendido", back_populates="tratamiento", uselist=False, cascade="all, delete-orphan")
-    detalle_datos_tratados = relationship("DetalleDatoTratado", back_populates="tratamiento", cascade="all, delete-orphan", order_by="DetalleDatoTratado.orden")
+    
+    # OJO: el atributo se llama "datos_tratados" (no "detalle_datos_tratados",
+    # que es el nombre de la TABLA) a propósito, para que coincida con el
+    # campo del mismo nombre en TratamientoRespuesta, Pydantic empareja por
+    # nombre exacto de atributo, si no coinciden la respuesta queda vacía en silencio
+    datos_tratados = relationship("DetalleDatoTratado", back_populates="tratamiento", cascade="all, delete-orphan", order_by="DetalleDatoTratado.orden")
     sesiones_actividad = relationship("SesionActividad", back_populates="tratamiento", cascade="all, delete-orphan")
     versiones          = relationship("VersionTratamiento", back_populates="tratamiento", cascade="all, delete-orphan")
 
@@ -215,7 +220,7 @@ class DetalleDatoTratado(Base):
     orden          = Column(Integer, default=0, nullable=False)
     creado_en      = Column(DateTime, server_default=func.now(), nullable=False)
 
-    tratamiento = relationship("Tratamiento", back_populates="detalle_datos_tratados")
+    tratamiento = relationship("Tratamiento", back_populates="datos_tratados")
 
 
 class Informe(Base):

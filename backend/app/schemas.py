@@ -165,6 +165,7 @@ class DetalleRatExtendidoEntrada(BaseModel):
     finalidades_secundarias:    Optional[str] = None
     informa_titulares:          Optional[str] = None
     documento_respaldo_permiso: Optional[str] = None
+    proceso_asociado:           Optional[str] = None
     incluye_nna:                    Optional[bool] = None
     nna_detalle:                    Optional[str] = None
     datos_navegacion:               Optional[bool] = None
@@ -212,6 +213,8 @@ class DetalleRatExtendidoRespuesta(BaseModel):
     finalidades_secundarias:     Optional[str] = None
     informa_titulares:           Optional[str] = None
     documento_respaldo_permiso:  Optional[str] = None
+    proceso_asociado:            Optional[str] = None
+    imagen_proceso:              Optional[str] = None
     # Datos especiales
     incluye_nna:                    Optional[bool] = None
     nna_detalle:                    Optional[str] = None
@@ -255,6 +258,29 @@ class DetalleRatExtendidoRespuesta(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# Bloques repetibles de "descripción detallada" (R8.1/R8.2 — detalle_datos_tratados).
+# Sin id/orden en la entrada a propósito: en cada guardado se manda la lista
+# completa tal como está en pantalla y el backend la reemplaza entera
+# (borrar-y-recrear), el orden queda dado por la posición en la lista.
+class DatoTratadoEntrada(BaseModel):
+    categoria_dato: Optional[str] = None
+    se_tratan:      Optional[str] = None
+    para_que:       Optional[str] = None
+    como:           Optional[str] = None
+
+
+class DatoTratadoRespuesta(BaseModel):
+    id:             int
+    tratamiento_id: int
+    categoria_dato: Optional[str] = None
+    se_tratan:      Optional[str] = None
+    para_que:       Optional[str] = None
+    como:           Optional[str] = None
+    orden:          int
+    creado_en:      datetime
+    model_config = {"from_attributes": True}
+
+
 # ── Schemas de tratamientos ────────────────────────────────────────────────
 
 # Schema para cada campo que llega desde el análisis de Python
@@ -281,6 +307,7 @@ class TratamientoCrear(BaseModel):
     campos_detectados: list[CampoRatEntrada] = []
     detalle: Optional[DetalleRatBase] = None
     detalle_extendido: Optional[DetalleRatExtendidoEntrada] = None
+    datos_tratados: list[DatoTratadoEntrada] = []
     sesion_id: Optional[int] = None
     campos_usados: Optional[list] = None
 
@@ -306,6 +333,7 @@ class TratamientoEditar(BaseModel):
     estado: Optional[str] = None
     detalle: Optional[DetalleRatBase] = None
     detalle_extendido: Optional[DetalleRatExtendidoEntrada] = None
+    datos_tratados: list[DatoTratadoEntrada] = []
     modificado_por: Optional[str] = None
 
     @field_validator("nombre")
@@ -351,6 +379,7 @@ class TratamientoRespuesta(BaseModel):
     fecha_evaluacion: Optional[datetime] = None
     detalle:    Optional[DetalleRatRespuesta] = None
     detalle_extendido:  Optional[DetalleRatExtendidoRespuesta] = None
+    datos_tratados: list[DatoTratadoRespuesta] = []
     sesion_origen: Optional[str] = None
     model_config = {"from_attributes": True}
 

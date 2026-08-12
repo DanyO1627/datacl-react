@@ -81,6 +81,16 @@ def crear_tratamiento(
             if ext_campos:
                 db.add(models.DetalleRatExtendido(tratamiento_id=nuevo.id, **ext_campos))
 
+        # Bloques repetibles de "descripción detallada" (R8.1/R8.2). El orden
+        # queda dado por la posición en la lista que mandó el frontend, no se
+        # confía en ningún índice que venga del cliente.
+        for orden, bloque in enumerate(datos.datos_tratados):
+            db.add(models.DetalleDatoTratado(
+                tratamiento_id=nuevo.id,
+                orden=orden,
+                **bloque.model_dump(),
+            ))
+
         # Vincular a sesión de análisis si viene sesion_id (y la sesión aún existe)
         if datos.sesion_id:
             sesion_existe = db.query(models.SesionAnalisis).filter(
@@ -141,6 +151,7 @@ def obtener_tratamiento_por_id(
         .options(
             joinedload(models.Tratamiento.detalle),
             joinedload(models.Tratamiento.detalle_extendido),
+            joinedload(models.Tratamiento.datos_tratados),
             joinedload(models.Tratamiento.sesiones_actividad)
             .joinedload(models.SesionActividad.sesion),
         )
@@ -171,6 +182,7 @@ _CAMPOS_SNAPSHOT_DETALLE = [
 _CAMPOS_SNAPSHOT_EXTENDIDO = [
     "descripcion_detallada", "subarea_responsable", "procesos_relacionados",
     "finalidades_secundarias", "informa_titulares", "documento_respaldo_permiso",
+    "proceso_asociado",
     "incluye_nna", "nna_detalle", "datos_navegacion", "datos_navegacion_detalle",
     "destinatarios_internos", "destinatarios_nacionales", "destinatarios_internacionales",
     "terceros_son_encargados", "contratos_proteccion_datos", "contratos_proteccion_datos_detalle",
@@ -254,6 +266,7 @@ _ETIQUETAS_CAMPOS = {
     "finalidades_secundarias": "Finalidades secundarias",
     "informa_titulares": "Información a titulares",
     "documento_respaldo_permiso": "Documento de respaldo",
+    "proceso_asociado": "Proceso asociado",
     "incluye_nna": "Incluye datos de menores (NNA)",
     "nna_detalle": "Detalle NNA",
     "datos_navegacion": "Datos de navegación",
@@ -361,6 +374,20 @@ def editar_tratamiento(
             else:
                 for campo, valor in ext_campos.items():
                     setattr(tratamiento.detalle_extendido, campo, valor)
+
+        # Bloques de "descripción detallada" (R8.2): solo se tocan si el campo
+        # vino en el request (distinto de "vino vacío", que sí borra todo).
+        # Se reemplazan enteros, ver decisión de borrar-y-recrear
+        if "datos_tratados" in datos.model_fields_set:
+            db.query(models.DetalleDatoTratado).filter(
+                models.DetalleDatoTratado.tratamiento_id == tratamiento.id
+            ).delete()
+            for orden, bloque in enumerate(datos.datos_tratados):
+                db.add(models.DetalleDatoTratado(
+                    tratamiento_id=tratamiento.id,
+                    orden=orden,
+                    **bloque.model_dump(),
+                ))
 
         # Recalcular riesgo DESPUÉS de actualizar detalle y detalle_extendido
         tratamiento.probabilidad = calcular_probabilidad(tratamiento)

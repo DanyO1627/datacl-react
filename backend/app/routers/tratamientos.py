@@ -1,5 +1,7 @@
+from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.basededatos import get_db
@@ -17,6 +19,13 @@ from app.schemas import (
 from app.services import tratamientos_service as svc
 
 router = APIRouter(prefix="/tratamientos", tags=["Tratamientos"])
+
+# Imagen del proceso asociado (R8.2), mismo patrón de validación que el
+# logo de organizaciones.py, carpeta hermana dentro del mismo volumen de R8.0.
+CARPETA_PROCESOS = Path("uploads/procesos")
+CARPETA_PROCESOS.mkdir(parents=True, exist_ok=True)
+EXTENSIONES_VALIDAS = {".png", ".jpg", ".jpeg"}
+TAMANO_MAX = 2 * 1024 * 1024  # 2 MB
 
 
 @router.post(
@@ -129,7 +138,7 @@ def obtener_version_tratamiento(
     usuario=Depends(obtener_usuario_actual),
     db: Session = Depends(get_db),
 ):
-    # Mismo chequeo de pertenencia que en el listado, antes de ir a buscar la versión que busca
+    # Misma revisión de pertenencia que en el listado, antes de ir a buscar la versión que busca
     tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, usuario.id)
     if not tratamiento:
         raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
@@ -137,3 +146,79 @@ def obtener_version_tratamiento(
     if not version:
         raise HTTPException(status_code=404, detail="Versión no encontrada.")
     return version
+
+
+# Imagen del proceso asociado R8.2
+# A diferencia del logo de organizaciones.py (siempre del usuario logueado),
+# acá hay que verificar que el tratamiento sea de la organización que llama
+# antes de dejarla subir/ver/borrar la imagen, porque si no, cualquiera podría
+# tocar la imagen de un tratamiento ajeno adivinando el id.
+
+@router.post("/{tratamiento_id}/imagen-proceso", summary="Subir imagen del proceso asociado")
+def subir_imagen_proceso(
+    tratamiento_id: int,
+    archivo: UploadFile = File(...),
+    usuario=Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db),
+):
+    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, usuario.id)
+    if not tratamiento:
+        raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
+
+    ext = Path(archivo.filename).suffix.lower()
+    if ext not in EXTENSIONES_VALIDAS:
+        raise HTTPException(400, "Formato no válido. Usa PNG o JPG.")
+
+    contenido = archivo.file.read()
+    if len(contenido) > TAMANO_MAX:
+        raise HTTPException(400, "El archivo excede el tamaño máximo de 2 MB.")
+
+    nombre_archivo = f"{tratamiento_id}{ext}"
+    ruta = CARPETA_PROCESOS / nombre_archivo
+    ruta.write_bytes(contenido)
+
+    if tratamiento.detalle_extendido is None:
+        tratamiento.detalle_extendido = models.DetalleRatExtendido(
+            tratamiento_id=tratamiento.id, imagen_proceso=str(ruta)
+        )
+    else:
+        tratamiento.detalle_extendido.imagen_proceso = str(ruta)
+    db.commit()
+
+    return {"mensaje": "Imagen subida correctamente.", "imagen_proceso": str(ruta)}
+
+
+@router.delete("/{tratamiento_id}/imagen-proceso", summary="Eliminar imagen del proceso asociado")
+def eliminar_imagen_proceso(
+    tratamiento_id: int,
+    usuario=Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db),
+):
+    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, usuario.id)
+    if not tratamiento:
+        raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
+
+    if tratamiento.detalle_extendido and tratamiento.detalle_extendido.imagen_proceso:
+        ruta = Path(tratamiento.detalle_extendido.imagen_proceso)
+        if ruta.exists():
+            ruta.unlink()
+        tratamiento.detalle_extendido.imagen_proceso = None
+        db.commit()
+
+    return {"mensaje": "Imagen eliminada."}
+
+
+@router.get("/{tratamiento_id}/imagen-proceso", summary="Obtener imagen del proceso asociado")
+def obtener_imagen_proceso(
+    tratamiento_id: int,
+    usuario=Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db),
+):
+    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, usuario.id)
+    if not tratamiento:
+        raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
+
+    ruta_str = tratamiento.detalle_extendido.imagen_proceso if tratamiento.detalle_extendido else None
+    if not ruta_str or not Path(ruta_str).exists():
+        raise HTTPException(status_code=404, detail="No hay imagen de proceso configurada.")
+    return FileResponse(ruta_str)
