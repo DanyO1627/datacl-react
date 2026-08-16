@@ -91,6 +91,16 @@ def crear_tratamiento(
                 **bloque.model_dump(),
             ))
 
+        # Lista dinámica de base legal adicional (R9.1/R9.2/R9.6), mismo
+        # patrón que datos_tratados de arriba — no reemplaza el checklist de
+        # artículos de Tratamiento.base_legal.
+        for orden, bloque in enumerate(datos.base_legal_detalle):
+            db.add(models.DetalleBaseLegal(
+                tratamiento_id=nuevo.id,
+                orden=orden,
+                **bloque.model_dump(),
+            ))
+
         # Vincular a sesión de análisis si viene sesion_id (y la sesión aún existe)
         if datos.sesion_id:
             sesion_existe = db.query(models.SesionAnalisis).filter(
@@ -152,6 +162,7 @@ def obtener_tratamiento_por_id(
             joinedload(models.Tratamiento.detalle),
             joinedload(models.Tratamiento.detalle_extendido),
             joinedload(models.Tratamiento.datos_tratados),
+            joinedload(models.Tratamiento.base_legal_detalle),
             joinedload(models.Tratamiento.sesiones_actividad)
             .joinedload(models.SesionActividad.sesion),
         )
@@ -194,6 +205,17 @@ _CAMPOS_SNAPSHOT_EXTENDIDO = [
     "minimizacion_justificacion", "mecanismos_exactitud", "evaluacion_periodica",
     "cumplimiento_demostrable", "incidentes_historicos", "cambios_futuros",
     "requiere_dpia", "dpia_realizada", "dpia_detalle",
+    
+    # R9.1/R9.2 - Paso 2 datos ampliados, Paso 3 transferencias, Paso 4 Principios 1 y 2.
+    # OJO: todo campo nuevo que se agregue a DetalleRatExtendido en el futuro
+    # necesita agregarse acá A MANO (y su etiqueta en _ETIQUETAS_CAMPOS) para
+    # que el historial de versiones lo detecte, a diferencia del resto del
+    # flujo de detalle_extendido, esta lista NO se llena sola.
+    "datos_academicos_laborales", "datos_financieros_patrimoniales",
+    "origen_sistemico_datos", "datos_sensibles_descripcion",
+    "base_legal_transferencia_internacional", "metodo_transferencia_detalle",
+    "finalidad_todos_necesarios", "finalidad_misma", "informa_titulares_si_no",
+    "usa_solo_fines_declarados", "asegura_transparencia_detalle", "minimizacion_si_no",
 ]
 
 
@@ -300,6 +322,19 @@ _ETIQUETAS_CAMPOS = {
     "requiere_dpia": "Requiere DPIA",
     "dpia_realizada": "DPIA realizada",
     "dpia_detalle": "Detalle DPIA",
+    # R9.1/R9.2
+    "datos_academicos_laborales": "Datos académicos / laborales",
+    "datos_financieros_patrimoniales": "Datos financieros y patrimoniales",
+    "origen_sistemico_datos": "Origen sistémico de los datos",
+    "datos_sensibles_descripcion": "Descripción de los datos sensibles",
+    "base_legal_transferencia_internacional": "Base legal de la transferencia internacional",
+    "metodo_transferencia_detalle": "Detalle del método de transferencia",
+    "finalidad_todos_necesarios": "¿Todos los datos tienen finalidad y son necesarios?",
+    "finalidad_misma": "Todos los datos tienen la misma finalidad",
+    "informa_titulares_si_no": "¿Se informa a los titulares?",
+    "usa_solo_fines_declarados": "¿Los datos se usan solo para fines declarados?",
+    "asegura_transparencia_detalle": "Cómo se asegura la licitud y transparencia",
+    "minimizacion_si_no": "¿Se aplica minimización de datos?",
 }
 
 
@@ -383,6 +418,18 @@ def editar_tratamiento(
             ).delete()
             for orden, bloque in enumerate(datos.datos_tratados):
                 db.add(models.DetalleDatoTratado(
+                    tratamiento_id=tratamiento.id,
+                    orden=orden,
+                    **bloque.model_dump(),
+                ))
+
+        # Base legal adicional (R9.2): mismo patrón borrar-y-recrear de arriba.
+        if "base_legal_detalle" in datos.model_fields_set:
+            db.query(models.DetalleBaseLegal).filter(
+                models.DetalleBaseLegal.tratamiento_id == tratamiento.id
+            ).delete()
+            for orden, bloque in enumerate(datos.base_legal_detalle):
+                db.add(models.DetalleBaseLegal(
                     tratamiento_id=tratamiento.id,
                     orden=orden,
                     **bloque.model_dump(),

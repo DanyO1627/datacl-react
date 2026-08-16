@@ -199,6 +199,19 @@ class DetalleRatExtendidoEntrada(BaseModel):
     requiere_dpia:  Optional[bool] = None
     dpia_realizada: Optional[bool] = None
     dpia_detalle:   Optional[str] = None
+    # Paso 2 datos ampliados, Paso 3 transferencias, Paso 4 Principios 1 y 2 (R9.1)
+    datos_academicos_laborales:             Optional[str] = None
+    datos_financieros_patrimoniales:        Optional[str] = None
+    origen_sistemico_datos:                 Optional[str] = None
+    datos_sensibles_descripcion:            Optional[str] = None
+    base_legal_transferencia_internacional: Optional[str] = None
+    metodo_transferencia_detalle:           Optional[str] = None
+    finalidad_todos_necesarios:             Optional[bool] = None
+    finalidad_misma:                        Optional[bool] = None
+    informa_titulares_si_no:                Optional[bool] = None
+    usa_solo_fines_declarados:              Optional[bool] = None
+    asegura_transparencia_detalle:          Optional[str] = None
+    minimizacion_si_no:                     Optional[bool] = None
 
 
 class DetalleRatExtendidoRespuesta(BaseModel):
@@ -254,6 +267,19 @@ class DetalleRatExtendidoRespuesta(BaseModel):
     requiere_dpia:  Optional[bool] = None
     dpia_realizada: Optional[bool] = None
     dpia_detalle:   Optional[str] = None
+    # Paso 2 datos ampliados, Paso 3 transferencias, Paso 4 Principios 1 y 2 (R9.1)
+    datos_academicos_laborales:             Optional[str] = None
+    datos_financieros_patrimoniales:        Optional[str] = None
+    origen_sistemico_datos:                 Optional[str] = None
+    datos_sensibles_descripcion:            Optional[str] = None
+    base_legal_transferencia_internacional: Optional[str] = None
+    metodo_transferencia_detalle:           Optional[str] = None
+    finalidad_todos_necesarios:             Optional[bool] = None
+    finalidad_misma:                        Optional[bool] = None
+    informa_titulares_si_no:                Optional[bool] = None
+    usa_solo_fines_declarados:              Optional[bool] = None
+    asegura_transparencia_detalle:          Optional[str] = None
+    minimizacion_si_no:                     Optional[bool] = None
     model_config = {"from_attributes": True}
 
 
@@ -275,6 +301,24 @@ class DatoTratadoRespuesta(BaseModel):
     se_tratan:      Optional[str] = None
     para_que:       Optional[str] = None
     como:           Optional[str] = None
+    orden:          int
+    creado_en:      datetime
+    model_config = {"from_attributes": True}
+
+
+# Lista dinámica de "Base Legal de la Actividad de tratamiento" (R9.1/R9.2/R9.6)
+# declaraciones de base legal en texto libre, mismo patrón borrar-y-recrear
+# que DatoTratadoEntrada/Respuesta de arriba. Es ADITIVA al checklist de
+# artículos de la Ley 21.719 que ya existe en Tratamiento.base_legal, no lo
+# reemplaza.
+class BaseLegalEntrada(BaseModel):
+    descripcion: Optional[str] = None
+
+
+class BaseLegalRespuesta(BaseModel):
+    id:             int
+    tratamiento_id: int
+    descripcion:    Optional[str] = None
     orden:          int
     creado_en:      datetime
     model_config = {"from_attributes": True}
@@ -307,6 +351,7 @@ class TratamientoCrear(BaseModel):
     detalle: Optional[DetalleRatBase] = None
     detalle_extendido: Optional[DetalleRatExtendidoEntrada] = None
     datos_tratados: list[DatoTratadoEntrada] = []
+    base_legal_detalle: list[BaseLegalEntrada] = []
     sesion_id: Optional[int] = None
     campos_usados: Optional[list] = None
 
@@ -333,6 +378,7 @@ class TratamientoEditar(BaseModel):
     detalle: Optional[DetalleRatBase] = None
     detalle_extendido: Optional[DetalleRatExtendidoEntrada] = None
     datos_tratados: list[DatoTratadoEntrada] = []
+    base_legal_detalle: list[BaseLegalEntrada] = []
     modificado_por: Optional[str] = None
 
     @field_validator("nombre")
@@ -379,6 +425,7 @@ class TratamientoRespuesta(BaseModel):
     detalle:    Optional[DetalleRatRespuesta] = None
     detalle_extendido:  Optional[DetalleRatExtendidoRespuesta] = None
     datos_tratados: list[DatoTratadoRespuesta] = []
+    base_legal_detalle: list[BaseLegalRespuesta] = []
     sesion_origen: Optional[str] = None
     model_config = {"from_attributes": True}
 
