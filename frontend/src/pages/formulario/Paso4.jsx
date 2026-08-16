@@ -301,7 +301,6 @@ export default function Paso4() {
         categorias_titulares: (formularioCompleto.categorias_titulares || []).join(",") || null,
         universo_titulares:   formularioCompleto.universo_titulares || null,
         origen_datos:         formularioCompleto.origen_datos || null,
-        categoria_datos:      formularioCompleto.categoria_datos || null,
       },
 
     };
@@ -503,7 +502,6 @@ export default function Paso4() {
           categorias_titulares: (datos.categorias_titulares || []).join(",") || null,
           universo_titulares: datos.universo_titulares || null,
           origen_datos: datos.origen_datos || null,
-          categoria_datos: datos.categoria_datos || null,
         },
         detalle_extendido: {
           proceso_asociado:           datos.proceso_asociado            || null,

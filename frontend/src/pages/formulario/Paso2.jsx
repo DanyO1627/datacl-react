@@ -18,19 +18,33 @@ const CATEGORIAS_TITULARES = [
 ];
 
 const ORIGENES_DATOS = [
-  { valor: "titular",          etiqueta: "Del propio titular" },
-  { valor: "terceros",         etiqueta: "De terceros" },
-  { valor: "fuentes_publicas", etiqueta: "De fuentes públicas" },
+  { valor: "titular",             etiqueta: "Del propio titular" },
+  { valor: "terceros",            etiqueta: "De terceros" },
+  { valor: "fuentes_publicas",    etiqueta: "De fuentes públicas" },
+  { valor: "generacion_interna",  etiqueta: "Generación interna" },
 ];
 
-const CATEGORIAS_DATOS = [
+// Datos de identificación (R9.3: se agregan imagen facial/firma/huella/pasaporte)
+const CATEGORIAS_DATOS_IDENTIFICACION = [
   { id: "nombre_apellido",    etiqueta: "Nombre y apellido",   keywords: ["nombre", "apellido", "name", "lastname", "first_name", "last_name"] },
   { id: "rut_dni",            etiqueta: "RUT / DNI",           keywords: ["rut", "dni", "documento", "cedula", "id_number"] },
   { id: "correo_electronico", etiqueta: "Correo electrónico",  keywords: ["correo", "email", "mail", "e_mail"] },
-  { id: "telefono",           etiqueta: "Teléfono",            keywords: ["telefono", "phone", "celular", "movil", "fono", "tel"] },
-  { id: "direccion",          etiqueta: "Dirección",           keywords: ["direccion", "address", "domicilio", "calle"] },
   { id: "fecha_nacimiento",   etiqueta: "Fecha de nacimiento", keywords: ["fecha_nacimiento", "birthdate", "birth_date", "nacimiento"] },
+  { id: "imagen_facial",      etiqueta: "Imagen facial",       keywords: ["imagen_facial", "foto_rostro", "facial", "selfie", "rostro"] },
+  { id: "firma",              etiqueta: "Firma",               keywords: ["firma", "signature"] },
+  { id: "huella_dactilar",    etiqueta: "Huella dactilar",     keywords: ["huella", "huella_dactilar", "fingerprint"] },
+  { id: "numero_pasaporte",   etiqueta: "Número de pasaporte", keywords: ["pasaporte", "passport", "numero_pasaporte"] },
 ];
+
+// Datos de contacto (R9.3: se separan visualmente de "identificación", mismo array de datos por debajo)
+const CATEGORIAS_DATOS_CONTACTO = [
+  { id: "telefono",  etiqueta: "Teléfono",  keywords: ["telefono", "phone", "celular", "movil", "fono", "tel"] },
+  { id: "direccion", etiqueta: "Dirección", keywords: ["direccion", "address", "domicilio", "calle"] },
+];
+
+// Array combinado — lo sigue usando la detección automática (detectadas, más
+// abajo) y toggleCategoria, que no necesitan saber de la separación visual.
+const CATEGORIAS_DATOS = [...CATEGORIAS_DATOS_IDENTIFICACION, ...CATEGORIAS_DATOS_CONTACTO];
 
 const CATEGORIAS_SENSIBLES = [
   { id: "datos_salud",         etiqueta: "Datos de salud",       tooltip: "Diagnósticos, medicamentos, fichas médicas.",          keywords: ["salud", "health", "medico", "diagnostico", "enfermedad"] },
@@ -39,6 +53,8 @@ const CATEGORIAS_SENSIBLES = [
   { id: "religion_creencias",  etiqueta: "Religión o creencias", tooltip: "Creencias religiosas, filosóficas o morales.",          keywords: ["religion", "creencia", "faith"] },
   { id: "orientacion_sexual",  etiqueta: "Orientación sexual",   tooltip: "Orientación o identidad sexual o de género.",           keywords: ["sexual", "orientacion", "genero", "lgbtq"] },
   { id: "opiniones_politicas", etiqueta: "Opiniones políticas",  tooltip: "Afiliación o posturas políticas.",                      keywords: ["politico", "politica", "partido", "ideologia"] },
+  { id: "identidad_genero",    etiqueta: "Identidad de género",  tooltip: "Identidad de género autopercibida.",                    keywords: ["identidad_genero", "identidad_de_genero"] },
+  { id: "habitos_personales",  etiqueta: "Hábitos personales",   tooltip: "Hábitos, costumbres o estilo de vida personal.",        keywords: ["habitos", "habitos_personales", "lifestyle"] },
 ];
 
 const TIPOS_TRATAMIENTO_SISTEMA = [
@@ -56,43 +72,6 @@ const METODOS_TRANSFERENCIA = [
   { id: "verbal",  etiqueta: "Verbal" },
   { id: "fisico",  etiqueta: "Físico" },
 ];
-
-const ORDEN_CATEGORIAS_TEMATICAS = [
-  "Datos identificatorios", "Datos de contacto", "Datos de salud",
-  "Datos financieros", "Datos laborales", "Datos académicos",
-  "Datos biométricos", "Otros",
-];
-
-function generarTextoCategoria(campos) {
-  const grupos = {};
-  campos.forEach((campo) => {
-    const categoria = campo.categoria_tematica || "Otros";
-    const nombre = campo.nombre_columna
-      .replace(/_/g, " ")
-      .split(" ")
-      .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
-      .join(" ");
-    (grupos[categoria] ??= []).push(nombre);
-  });
-  return ORDEN_CATEGORIAS_TEMATICAS
-    .filter((c) => grupos[c])
-    .map((c) => `${c} — ${grupos[c].join(", ")}.`)
-    .join("\n");
-}
-
-function generarTextoCategoriaManual(idsDatos, idsSensibles) {
-  return [
-    ...idsDatos.map((id) => CATEGORIAS_DATOS.find((c) => c.id === id)?.etiqueta || id),
-    ...idsSensibles.map((id) => CATEGORIAS_SENSIBLES.find((c) => c.id === id)?.etiqueta || id),
-  ].join(", ");
-}
-
-function sincronizarOtrosEnCategoria(categoriaActual, textoOtros) {
-  const base = (categoriaActual || "").replace(/\n?Otros — .*\.?$/, "").replace(/\s+$/, "");
-  const otros = (textoOtros || "").trim();
-  if (!otros) return base;
-  return base ? `${base}\nOtros — ${otros}.` : `Otros — ${otros}.`;
-}
 
 function ModalDesmarcar({ categoria, onConfirmar, onCancelar }) {
   return (
@@ -167,12 +146,6 @@ export default function Paso2() {
     ? [...detectadas].filter((id) => CATEGORIAS_SENSIBLES.some((c) => c.id === id))
     : form.categorias_sensibles;
 
-  const categoriaDatosInicial = form.categoria_datos || (
-    form.campos_detectados.length > 0
-      ? generarTextoCategoria(form.campos_detectados)
-      : generarTextoCategoriaManual(categoriasDatosIniciales, categoriasSensiblesIniciales)
-  );
-
   const [local, setLocal] = useState({
     // Campos existentes
     categorias_titulares: form.categorias_titulares || [],
@@ -181,11 +154,15 @@ export default function Paso2() {
     categorias_datos:     categoriasDatosIniciales,
     datos_sensibles:      primeraVezEnPaso2 ? haySensiblesDetectados : form.datos_sensibles,
     categorias_sensibles: categoriasSensiblesIniciales,
-    categoria_datos:      categoriaDatosInicial,
+    datos_sensibles_descripcion: form.datos_sensibles_descripcion || "",
     destinatarios:        form.destinatarios || "",
     sale_extranjero:      form.sale_extranjero ?? false,
     pais_destino:         form.pais_destino || "",
     otros_datos:          form.otros_datos || "",
+    // R9.3: secciones nuevas
+    datos_academicos_laborales:      form.datos_academicos_laborales      || "",
+    datos_financieros_patrimoniales: form.datos_financieros_patrimoniales || "",
+    origen_sistemico_datos:          form.origen_sistemico_datos          || "",
     // B2-05: nuevos campos
     incluye_nna:                        form.incluye_nna                        ?? false,
     nna_detalle:                        form.nna_detalle                        || "",
@@ -346,9 +323,12 @@ export default function Paso2() {
           categorias_titulares: (datos.categorias_titulares || []).join(",") || null,
           universo_titulares: datos.universo_titulares || null,
           origen_datos: datos.origen_datos || null,
-          categoria_datos: datos.categoria_datos || null,
         },
         detalle_extendido: {
+          datos_sensibles_descripcion:        datos.datos_sensibles_descripcion        || null,
+          datos_academicos_laborales:         datos.datos_academicos_laborales         || null,
+          datos_financieros_patrimoniales:    datos.datos_financieros_patrimoniales    || null,
+          origen_sistemico_datos:             datos.origen_sistemico_datos             || null,
           incluye_nna:                        datos.incluye_nna ? true : null,
           nna_detalle:                        datos.nna_detalle || null,
           datos_navegacion:                   datos.datos_navegacion ? true : null,
@@ -493,7 +473,7 @@ export default function Paso2() {
             <div className="p2-columna">
               <h3 className="p2-col-titulo">Categoría de datos personales</h3>
               <div className="p2-checkboxes">
-                {CATEGORIAS_DATOS.map((cat) => {
+                {CATEGORIAS_DATOS_IDENTIFICACION.map((cat) => {
                   const marcado    = local.categorias_datos.includes(cat.id);
                   const detectado  = detectadas.has(cat.id);
                   const desmarcado = desmarcadas.has(cat.id);
@@ -519,30 +499,50 @@ export default function Paso2() {
                   <textarea className="p2-otros-textarea"
                     placeholder="Especifica otros tipos de datos personales..."
                     value={local.otros_datos}
-                    onChange={(e) => {
-                      const texto = e.target.value;
-                      setLocal((prev) => ({
-                        ...prev,
-                        otros_datos: texto,
-                        categoria_datos: sincronizarOtrosEnCategoria(prev.categoria_datos, texto),
-                      }));
-                    }}
+                    onChange={(e) => setLocal((prev) => ({ ...prev, otros_datos: e.target.value }))}
                     rows={2} maxLength={300}
                   />
                   <span className="p2-campo-contador">{local.otros_datos.length}/300</span>
                 </div>
               </div>
 
+              {/* Datos de contacto — bloque propio (R9.3), mismo dato (categorias_datos) por debajo */}
+              <div className="p2-separador" />
+              <label className="p2-campo-label">Datos de contacto</label>
+              <div className="p2-checkboxes">
+                {CATEGORIAS_DATOS_CONTACTO.map((cat) => {
+                  const marcado    = local.categorias_datos.includes(cat.id);
+                  const detectado  = detectadas.has(cat.id);
+                  const desmarcado = desmarcadas.has(cat.id);
+                  return (
+                    <label key={cat.id}
+                      className={`p2-check-item
+                        ${detectado && marcado    ? " p2-check-item--verde" : ""}
+                        ${detectado && desmarcado ? " p2-check-item--gris"  : ""}
+                      `}
+                    >
+                      <input type="checkbox" className="p2-check-input"
+                        checked={marcado}
+                        onChange={() => toggleCategoria(cat, "categorias_datos")}
+                      />
+                      <span className="p2-check-texto">{cat.etiqueta}</span>
+                      {detectado && marcado    && <span className="p2-icono-python" title="Detectado por Python">🐍</span>}
+                      {detectado && desmarcado && <span className="p2-texto-desmarcado">Desmarcado manualmente</span>}
+                    </label>
+                  );
+                })}
+              </div>
+
               <div className="p2-campo-grupo">
-                <label className="p2-campo-label">Categoría de datos (formato RAT)</label>
-                <p className="p2-campo-ayuda">Generado automáticamente. Puedes editarlo.</p>
+                <label className="p2-campo-label">Datos académicos / laborales</label>
+                <p className="p2-campo-ayuda">Grado académico, título profesional, cargo o función, certificaciones...</p>
                 <textarea className="p2-textarea"
-                  placeholder="Ej: Datos identificatorios — Rut Alumno, Nombre Apoderado."
-                  value={local.categoria_datos}
-                  onChange={(e) => setLocal((prev) => ({ ...prev, categoria_datos: e.target.value }))}
-                  rows={5} maxLength={1500}
+                  placeholder="Ej: Título profesional, cargo actual, certificaciones vigentes..."
+                  value={local.datos_academicos_laborales}
+                  onChange={(e) => setLocal((prev) => ({ ...prev, datos_academicos_laborales: e.target.value }))}
+                  rows={3} maxLength={500}
                 />
-                <span className="p2-campo-contador">{local.categoria_datos.length}/1500</span>
+                <span className="p2-campo-contador">{local.datos_academicos_laborales.length}/500</span>
               </div>
             </div>
 
@@ -588,6 +588,16 @@ export default function Paso2() {
                       </label>
                     );
                   })}
+                  <div className="p2-campo-grupo">
+                    <label className="p2-campo-label">Descripción de los datos sensibles</label>
+                    <textarea className="p2-textarea"
+                      placeholder="Describe con tus palabras los datos sensibles que se tratan..."
+                      value={local.datos_sensibles_descripcion}
+                      onChange={(e) => setLocal((prev) => ({ ...prev, datos_sensibles_descripcion: e.target.value }))}
+                      rows={3} maxLength={500}
+                    />
+                    <span className="p2-campo-contador">{local.datos_sensibles_descripcion.length}/500</span>
+                  </div>
                 </div>
               )}
 
@@ -701,6 +711,19 @@ export default function Paso2() {
                       style={{ marginTop: 6 }}
                     />
                   )}
+                </div>
+
+                <div className="p2-toggle-item">
+                  <div className="p2-campo-grupo">
+                    <label className="p2-campo-label">Datos financieros y patrimoniales</label>
+                    <p className="p2-campo-ayuda">Ingresos, cuenta corriente, historial bancario, bienes muebles e inmuebles...</p>
+                    <textarea className="p2-textarea" rows={3} maxLength={500}
+                      placeholder="Ej: Ingresos mensuales, cuenta corriente, historial crediticio..."
+                      value={local.datos_financieros_patrimoniales}
+                      onChange={(e) => setLocal((p) => ({ ...p, datos_financieros_patrimoniales: e.target.value }))}
+                    />
+                    <span className="p2-campo-contador">{local.datos_financieros_patrimoniales.length}/500</span>
+                  </div>
                 </div>
 
               </div>
@@ -843,6 +866,18 @@ export default function Paso2() {
                 </div>
 
               </div>
+            </div>
+
+            {/* Origen sistémico de los datos (R9.3) */}
+            <div className="p2-seccion-extra">
+              <h3 className="p2-seccion-extra-titulo">¿Cuál es el origen sistémico de los datos?</h3>
+              <p className="p2-campo-ayuda">Sistemas o bases de datos desde donde se originan estos datos, en términos generales.</p>
+              <textarea className="p2-textarea" rows={3} maxLength={500}
+                placeholder="Ej: Los datos se generan y almacenan directamente en el sistema interno de gestión..."
+                value={local.origen_sistemico_datos}
+                onChange={(e) => setLocal((p) => ({ ...p, origen_sistemico_datos: e.target.value }))}
+              />
+              <span className="p2-campo-contador">{local.origen_sistemico_datos.length}/500</span>
             </div>
 
           </div>{/* fin secciones-extra */}

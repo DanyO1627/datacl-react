@@ -33,8 +33,10 @@ function crearFormVacio() { return {
   // ── Paso 2 ───────────────────────────────────────────────
   categorias_titulares: [], universo_titulares: "", origen_datos: "",
   categorias_datos: [], datos_sensibles: false, categorias_sensibles: [],
-  categoria_datos: "",
   destinatarios: "", sale_extranjero: false, pais_destino: "", otros_datos: "",
+  // R9.3: descripción de datos sensibles + 3 secciones nuevas de Paso 2
+  datos_sensibles_descripcion: "",
+  datos_academicos_laborales: "", datos_financieros_patrimoniales: "", origen_sistemico_datos: "",
   // B2-05: campos extendidos Paso 2
   incluye_nna: false, nna_detalle: "",
   datos_navegacion: false, datos_navegacion_detalle: "",

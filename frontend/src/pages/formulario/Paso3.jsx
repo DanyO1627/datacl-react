@@ -85,7 +85,6 @@ export default function Paso3() {
           categorias_titulares: (datos.categorias_titulares || []).join(",") || null,
           universo_titulares: datos.universo_titulares || null,
           origen_datos: datos.origen_datos || null,
-          categoria_datos: datos.categoria_datos || null,
         },
         detalle_extendido: {
           incluye_nna:                        datos.incluye_nna ? true : null,
