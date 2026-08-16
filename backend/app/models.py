@@ -63,6 +63,12 @@ class Tratamiento(Base):
     # campo del mismo nombre en TratamientoRespuesta, Pydantic empareja por
     # nombre exacto de atributo, si no coinciden la respuesta queda vacía en silencio
     datos_tratados = relationship("DetalleDatoTratado", back_populates="tratamiento", cascade="all, delete-orphan", order_by="DetalleDatoTratado.orden")
+
+    # Mismo motivo que datos_tratados de arriba: el nombre del atributo debe
+    # calzar exacto con el campo del schema Pydantic (base_legal_detalle) para
+    # que la respuesta no quede vacía en silencio.
+    base_legal_detalle = relationship("DetalleBaseLegal", back_populates="tratamiento", cascade="all, delete-orphan", order_by="DetalleBaseLegal.orden")
+
     sesiones_actividad = relationship("SesionActividad", back_populates="tratamiento", cascade="all, delete-orphan")
     versiones          = relationship("VersionTratamiento", back_populates="tratamiento", cascade="all, delete-orphan")
 
@@ -197,6 +203,24 @@ class DetalleRatExtendido(Base):
     dpia_realizada = Column(Boolean, default=False, nullable=True)
     dpia_detalle   = Column(Text, nullable=True)
 
+    # ── Paso 2 — datos ampliados (R9.1) ──
+    datos_academicos_laborales      = Column(Text, nullable=True)
+    datos_financieros_patrimoniales = Column(Text, nullable=True)
+    origen_sistemico_datos          = Column(Text, nullable=True)
+    datos_sensibles_descripcion     = Column(Text, nullable=True)
+
+    # ── Paso 3 — transferencias (R9.1) ──
+    base_legal_transferencia_internacional = Column(Text, nullable=True)
+    metodo_transferencia_detalle           = Column(Text, nullable=True)
+
+    # ── Paso 4 — Principios 1 y 2 (R9.1) ──
+    finalidad_todos_necesarios    = Column(Boolean, nullable=True)
+    finalidad_misma               = Column(Boolean, nullable=True)
+    informa_titulares_si_no       = Column(Boolean, nullable=True)
+    usa_solo_fines_declarados     = Column(Boolean, nullable=True)
+    asegura_transparencia_detalle = Column(Text, nullable=True)
+    minimizacion_si_no            = Column(Boolean, nullable=True)
+
     creado_en      = Column(DateTime, server_default=func.now(), nullable=False)
     actualizado_en = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
@@ -221,6 +245,22 @@ class DetalleDatoTratado(Base):
     creado_en      = Column(DateTime, server_default=func.now(), nullable=False)
 
     tratamiento = relationship("Tratamiento", back_populates="datos_tratados")
+
+
+# Lista dinámica de "Base Legal de la Actividad de tratamiento" (R9.1/R9.6) —
+# declaraciones de base legal en texto libre, adicional al checklist de
+# artículos de la Ley 21.719 que ya existe en Tratamiento.base_legal (ese
+# checklist se queda igual, sin tocar, esto no lo reemplaza).
+class DetalleBaseLegal(Base):
+    __tablename__ = "detalle_base_legal"
+
+    id             = Column(Integer, primary_key=True, index=True)
+    tratamiento_id = Column(Integer, ForeignKey("tratamientos.id", ondelete="CASCADE"), nullable=False)
+    descripcion    = Column(Text, nullable=True)
+    orden          = Column(Integer, default=0, nullable=False)
+    creado_en      = Column(DateTime, server_default=func.now(), nullable=False)
+
+    tratamiento = relationship("Tratamiento", back_populates="base_legal_detalle")
 
 
 class Informe(Base):

@@ -45,6 +45,21 @@ MIGRATIONS = [
     "ALTER TABLE detalle_rat_extendido ADD COLUMN dpia_detalle TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN proceso_asociado TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN imagen_proceso VARCHAR(300) NULL",
+    # R9.1 — Paso 2 datos ampliados
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN datos_academicos_laborales TEXT NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN datos_financieros_patrimoniales TEXT NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN origen_sistemico_datos TEXT NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN datos_sensibles_descripcion TEXT NULL",
+    # R9.1 — Paso 3 transferencias
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN base_legal_transferencia_internacional TEXT NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN metodo_transferencia_detalle TEXT NULL",
+    # R9.1 — Paso 4 Principios 1 y 2
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN finalidad_todos_necesarios TINYINT(1) NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN finalidad_misma TINYINT(1) NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN informa_titulares_si_no TINYINT(1) NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN usa_solo_fines_declarados TINYINT(1) NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN asegura_transparencia_detalle TEXT NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN minimizacion_si_no TINYINT(1) NULL",
 ]
 
 
