@@ -57,22 +57,6 @@ const CATEGORIAS_SENSIBLES = [
   { id: "habitos_personales",  etiqueta: "Hábitos personales",   tooltip: "Hábitos, costumbres o estilo de vida personal.",        keywords: ["habitos", "habitos_personales", "lifestyle"] },
 ];
 
-const TIPOS_TRATAMIENTO_SISTEMA = [
-  { id: "captura",                  etiqueta: "Captura" },
-  { id: "consulta",                 etiqueta: "Consulta / visualización" },
-  { id: "modificacion",             etiqueta: "Modificación" },
-  { id: "perfilamiento",            etiqueta: "Perfilamiento" },
-  { id: "reportes",                 etiqueta: "Generación de reportes" },
-  { id: "decisiones_automatizadas", etiqueta: "Decisiones automatizadas" },
-  { id: "comunicacion_terceros",    etiqueta: "Comunicación a terceros" },
-];
-
-const METODOS_TRANSFERENCIA = [
-  { id: "digital", etiqueta: "Digital" },
-  { id: "verbal",  etiqueta: "Verbal" },
-  { id: "fisico",  etiqueta: "Físico" },
-];
-
 function ModalDesmarcar({ categoria, onConfirmar, onCancelar }) {
   return (
     <div className="p2-modal-overlay" onClick={onCancelar}>
@@ -155,9 +139,6 @@ export default function Paso2() {
     datos_sensibles:      primeraVezEnPaso2 ? haySensiblesDetectados : form.datos_sensibles,
     categorias_sensibles: categoriasSensiblesIniciales,
     datos_sensibles_descripcion: form.datos_sensibles_descripcion || "",
-    destinatarios:        form.destinatarios || "",
-    sale_extranjero:      form.sale_extranjero ?? false,
-    pais_destino:         form.pais_destino || "",
     otros_datos:          form.otros_datos || "",
     // R9.3: secciones nuevas
     datos_academicos_laborales:      form.datos_academicos_laborales      || "",
@@ -168,20 +149,6 @@ export default function Paso2() {
     nna_detalle:                        form.nna_detalle                        || "",
     datos_navegacion:                   form.datos_navegacion                   ?? false,
     datos_navegacion_detalle:           form.datos_navegacion_detalle           || "",
-    destinatarios_internos:             form.destinatarios_internos             || "",
-    destinatarios_nacionales:           form.destinatarios_nacionales           || "",
-    destinatarios_internacionales:      form.destinatarios_internacionales      || "",
-    terceros_son_encargados:            form.terceros_son_encargados            ?? false,
-    contratos_proteccion_datos:         form.contratos_proteccion_datos         ?? false,
-    contratos_proteccion_datos_detalle: form.contratos_proteccion_datos_detalle || "",
-    datos_transferidos_detalle:         form.datos_transferidos_detalle         || "",
-    metodo_transferencia:               form.metodo_transferencia               || [],
-    sistemas_origen:                    form.sistemas_origen                    || "",
-    sistemas_destino:                   form.sistemas_destino                   || "",
-    sistemas_tratamiento:               form.sistemas_tratamiento               || "",
-    tipos_tratamiento_sistema:          form.tipos_tratamiento_sistema          || [],
-    base_datos_nombre:                  form.base_datos_nombre                  || "",
-    proveedor_tecnologico:              form.proveedor_tecnologico              || "",
   });
 
   const [pendiente, setPendiente] = useState(null);
@@ -225,32 +192,6 @@ export default function Paso2() {
       ...prev,
       datos_sensibles: valor,
       categorias_sensibles: valor ? prev.categorias_sensibles : [],
-    }));
-  }
-
-  function toggleExtranjero(valor) {
-    setLocal((prev) => ({ ...prev, sale_extranjero: valor, pais_destino: valor ? prev.pais_destino : "" }));
-  }
-
-  function toggleMetodoTransferencia(id) {
-    setLocal((prev) => {
-      const lista = prev.metodo_transferencia;
-      return { ...prev, metodo_transferencia: lista.includes(id) ? lista.filter((x) => x !== id) : [...lista, id] };
-    });
-  }
-
-  function toggleTiposTratamiento(id) {
-    setLocal((prev) => {
-      const lista = prev.tipos_tratamiento_sistema;
-      return { ...prev, tipos_tratamiento_sistema: lista.includes(id) ? lista.filter((x) => x !== id) : [...lista, id] };
-    });
-  }
-
-  function handleInternacionales(texto) {
-    setLocal((prev) => ({
-      ...prev,
-      destinatarios_internacionales: texto,
-      sale_extranjero: texto.trim() !== "" ? true : prev.sale_extranjero,
     }));
   }
 
@@ -333,21 +274,6 @@ export default function Paso2() {
           nna_detalle:                        datos.nna_detalle || null,
           datos_navegacion:                   datos.datos_navegacion ? true : null,
           datos_navegacion_detalle:           datos.datos_navegacion_detalle || null,
-          destinatarios_internos:             datos.destinatarios_internos || null,
-          destinatarios_nacionales:           datos.destinatarios_nacionales || null,
-          destinatarios_internacionales:      datos.destinatarios_internacionales || null,
-          terceros_son_encargados:            datos.terceros_son_encargados ? true : null,
-          contratos_proteccion_datos:         datos.contratos_proteccion_datos ? true : null,
-          contratos_proteccion_datos_detalle: datos.contratos_proteccion_datos_detalle || null,
-          datos_transferidos_detalle:         datos.datos_transferidos_detalle || null,
-          metodo_transferencia:               (datos.metodo_transferencia || []).join(",") || null,
-          sistemas_origen:                    datos.sistemas_origen || null,
-          sistemas_destino:                   datos.sistemas_destino || null,
-          sistemas_tratamiento:               datos.sistemas_tratamiento || null,
-          tipos_tratamiento_sistema:          (datos.tipos_tratamiento_sistema || []).join(",") || null,
-          base_datos_nombre:                  datos.base_datos_nombre || null,
-          proveedor_tecnologico:              datos.proveedor_tecnologico || null,
-          pais_destino:                       datos.pais_destino || null,
           categorias_sensibles:               (datos.categorias_sensibles || []).join(",") || null,
           categorias_datos_seleccion:         (datos.categorias_datos || []).join(",") || null,
         },
@@ -600,63 +526,6 @@ export default function Paso2() {
                   </div>
                 </div>
               )}
-
-              <div className="p2-separador" />
-
-              <h3 className="p2-col-titulo">Destinatarios de los datos</h3>
-
-              <div className="p2-campo-grupo">
-                <label className="p2-campo-label">Internos</label>
-                <p className="p2-campo-ayuda">Áreas o unidades internas que acceden a los datos</p>
-                <textarea className="p2-textarea"
-                  placeholder="Ej: RRHH, Contabilidad, TI..."
-                  value={local.destinatarios_internos}
-                  onChange={(e) => setLocal((p) => ({ ...p, destinatarios_internos: e.target.value }))}
-                  rows={2} maxLength={300}
-                />
-              </div>
-
-              <div className="p2-campo-grupo">
-                <label className="p2-campo-label">Nacionales</label>
-                <p className="p2-campo-ayuda">Empresas o entidades externas en Chile</p>
-                <textarea className="p2-textarea"
-                  placeholder="Ej: AFP Provida, SII, proveedor de nómina..."
-                  value={local.destinatarios_nacionales}
-                  onChange={(e) => setLocal((p) => ({ ...p, destinatarios_nacionales: e.target.value }))}
-                  rows={2} maxLength={300}
-                />
-              </div>
-
-              <div className="p2-campo-grupo">
-                <label className="p2-campo-label">Internacionales</label>
-                <p className="p2-campo-ayuda">Terceros fuera de Chile — activa «sale al extranjero» automáticamente</p>
-                <textarea className="p2-textarea"
-                  placeholder="Ej: Salesforce EE.UU., Google Ireland..."
-                  value={local.destinatarios_internacionales}
-                  onChange={(e) => handleInternacionales(e.target.value)}
-                  rows={2} maxLength={300}
-                />
-              </div>
-
-              <div className="p2-extranjero">
-                <div className="p2-extranjero-row">
-                  <span className="p2-extranjero-label">¿Los datos salen al extranjero?</span>
-                  <button type="button" role="switch" aria-checked={local.sale_extranjero}
-                    className={`p2-switch ${local.sale_extranjero ? "p2-switch--on" : ""}`}
-                    onClick={() => toggleExtranjero(!local.sale_extranjero)}
-                  >
-                    <span className="p2-switch-thumb" />
-                  </button>
-                </div>
-                {local.sale_extranjero && (
-                  <input type="text" className="p2-input-pais"
-                    placeholder="¿A qué país o región?"
-                    value={local.pais_destino}
-                    onChange={(e) => setLocal((prev) => ({ ...prev, pais_destino: e.target.value }))}
-                    maxLength={100}
-                  />
-                )}
-              </div>
             </div>
 
           </div>{/* fin grid */}
@@ -723,145 +592,6 @@ export default function Paso2() {
                       onChange={(e) => setLocal((p) => ({ ...p, datos_financieros_patrimoniales: e.target.value }))}
                     />
                     <span className="p2-campo-contador">{local.datos_financieros_patrimoniales.length}/500</span>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Terceros y transferencias */}
-            <div className="p2-seccion-extra">
-              <h3 className="p2-seccion-extra-titulo">Terceros y transferencias</h3>
-              <div className="p2-extra-grid">
-
-                <div className="p2-extra-checks">
-                  <label className="p2-check-item">
-                    <input type="checkbox" className="p2-check-input"
-                      checked={local.terceros_son_encargados}
-                      onChange={(e) => setLocal((p) => ({ ...p, terceros_son_encargados: e.target.checked }))}
-                    />
-                    <span className="p2-check-texto">¿Los terceros actúan como encargados del tratamiento?</span>
-                  </label>
-
-                  <div>
-                    <label className="p2-check-item">
-                      <input type="checkbox" className="p2-check-input"
-                        checked={local.contratos_proteccion_datos}
-                        onChange={(e) => setLocal((p) => ({
-                          ...p,
-                          contratos_proteccion_datos: e.target.checked,
-                          contratos_proteccion_datos_detalle: e.target.checked ? p.contratos_proteccion_datos_detalle : "",
-                        }))}
-                      />
-                      <span className="p2-check-texto">¿Existen contratos de protección de datos firmados con terceros?</span>
-                    </label>
-                    {local.contratos_proteccion_datos && (
-                      <textarea className="p2-textarea" rows={2} maxLength={400}
-                        placeholder="Describe los contratos existentes..."
-                        value={local.contratos_proteccion_datos_detalle}
-                        onChange={(e) => setLocal((p) => ({ ...p, contratos_proteccion_datos_detalle: e.target.value }))}
-                        style={{ marginTop: 6 }}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="p2-campo-grupo">
-                    <label className="p2-campo-label">¿Qué datos se transfieren a terceros?</label>
-                    <textarea className="p2-textarea" rows={3} maxLength={500}
-                      placeholder="Ej: Nombre, RUT, correo y sueldo base..."
-                      value={local.datos_transferidos_detalle}
-                      onChange={(e) => setLocal((p) => ({ ...p, datos_transferidos_detalle: e.target.value }))}
-                    />
-                  </div>
-                  <div className="p2-campo-grupo">
-                    <label className="p2-campo-label">¿Cómo se transfieren?</label>
-                    <div className="p2-checkboxes">
-                      {METODOS_TRANSFERENCIA.map((m) => (
-                        <label key={m.id} className={`p2-check-item ${local.metodo_transferencia.includes(m.id) ? "p2-check-item--marcado" : ""}`}>
-                          <input type="checkbox" className="p2-check-input"
-                            checked={local.metodo_transferencia.includes(m.id)}
-                            onChange={() => toggleMetodoTransferencia(m.id)}
-                          />
-                          <span className="p2-check-texto">{m.etiqueta}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Sistemas y tecnología */}
-            <div className="p2-seccion-extra">
-              <h3 className="p2-seccion-extra-titulo">Sistemas y tecnología</h3>
-              <div className="p2-extra-grid">
-
-                <div className="p2-campo-grupo">
-                  <label className="p2-campo-label">Sistemas origen</label>
-                  <p className="p2-campo-ayuda">Sistemas donde se originan o capturan los datos</p>
-                  <textarea className="p2-textarea" rows={2} maxLength={400}
-                    placeholder="Ej: CRM Salesforce, formulario web..."
-                    value={local.sistemas_origen}
-                    onChange={(e) => setLocal((p) => ({ ...p, sistemas_origen: e.target.value }))}
-                  />
-                </div>
-
-                <div className="p2-campo-grupo">
-                  <label className="p2-campo-label">Sistemas destino</label>
-                  <p className="p2-campo-ayuda">Sistemas donde se almacenan o envían los datos</p>
-                  <textarea className="p2-textarea" rows={2} maxLength={400}
-                    placeholder="Ej: ERP SAP, servidor propio, nube AWS..."
-                    value={local.sistemas_destino}
-                    onChange={(e) => setLocal((p) => ({ ...p, sistemas_destino: e.target.value }))}
-                  />
-                </div>
-
-                <div className="p2-campo-grupo">
-                  <label className="p2-campo-label">Sistemas de tratamiento</label>
-                  <p className="p2-campo-ayuda">Sistemas que procesan activamente los datos</p>
-                  <textarea className="p2-textarea" rows={2} maxLength={400}
-                    placeholder="Ej: Software de RRHH, plataforma e-commerce..."
-                    value={local.sistemas_tratamiento}
-                    onChange={(e) => setLocal((p) => ({ ...p, sistemas_tratamiento: e.target.value }))}
-                  />
-                </div>
-
-                <div className="p2-campo-grupo">
-                  <label className="p2-campo-label">Tipos de tratamiento en los sistemas</label>
-                  <div className="p2-checkboxes p2-checkboxes--horizontal">
-                    {TIPOS_TRATAMIENTO_SISTEMA.map((t) => (
-                      <label key={t.id} className={`p2-check-item ${local.tipos_tratamiento_sistema.includes(t.id) ? "p2-check-item--marcado" : ""}`}>
-                        <input type="checkbox" className="p2-check-input"
-                          checked={local.tipos_tratamiento_sistema.includes(t.id)}
-                          onChange={() => toggleTiposTratamiento(t.id)}
-                        />
-                        <span className="p2-check-texto">{t.etiqueta}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="p2-fila-dos-items">
-                  <div className="p2-campo-grupo">
-                    <label className="p2-campo-label">Nombre de la base de datos</label>
-                    <input type="text" className="p2-input-bd"
-                      placeholder="Ej: BD_CLIENTES_PRODUCCION"
-                      value={local.base_datos_nombre}
-                      onChange={(e) => setLocal((p) => ({ ...p, base_datos_nombre: e.target.value }))}
-                      maxLength={200}
-                    />
-                  </div>
-                  <div className="p2-campo-grupo">
-                    <label className="p2-campo-label">Proveedor tecnológico</label>
-                    <input type="text" className="p2-input-bd"
-                      placeholder="Ej: Microsoft Azure, Amazon AWS..."
-                      value={local.proveedor_tecnologico}
-                      onChange={(e) => setLocal((p) => ({ ...p, proveedor_tecnologico: e.target.value }))}
-                      maxLength={200}
-                    />
                   </div>
                 </div>
 

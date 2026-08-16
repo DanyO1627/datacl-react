@@ -165,6 +165,19 @@ const ETIQ_METODO_TRANSFERENCIA = {
   fisico: "Físico",
 };
 
+// R9.4 — mismo patrón que ETIQ_METODO_TRANSFERENCIA, para el acordeón de revisión.
+const ETIQ_TIPOS_TRATAMIENTO = {
+  captura: "Captura",
+  consulta: "Consulta / visualización",
+  modificacion: "Modificación",
+  perfilamiento: "Perfilamiento",
+  reportes: "Generación de reportes",
+  decisiones_automatizadas: "Decisiones automatizadas",
+  comunicacion_terceros: "Comunicación a terceros",
+  evaluacion_clasificacion: "Evaluación/clasificación",
+  cruce_datos: "Cruce de datos",
+};
+
 const ETIQ_CRITERIO_PLAZO = {
   legal: "Legal (normativa aplicable)",
   contractual: "Contractual (duración del contrato)",
@@ -914,10 +927,15 @@ export default function Paso4() {
                   {form.datos_navegacion && (
                     <FilaRevision label="Detalle navegación" valor={form.datos_navegacion_detalle} />
                   )}
+                </div>
+
+                <div className="p4-revision-seccion">
+                  <h4 className="p4-revision-titulo">Paso 3 — Transferencias y sistemas</h4>
                   <FilaRevision label="Destinatarios" valor={form.destinatarios} />
                   <FilaRevision label="Destinatarios internos" valor={form.destinatarios_internos} />
                   <FilaRevision label="Destinatarios nacionales" valor={form.destinatarios_nacionales} />
                   <FilaRevision label="Destinatarios internacionales" valor={form.destinatarios_internacionales} />
+                  <FilaRevision label="Base legal transferencia internacional" valor={form.base_legal_transferencia_internacional} />
                   <FilaRevision label="Sale al extranjero" valor={form.sale_extranjero ? `Sí — ${form.pais_destino || "país no especificado"}` : "No"} />
                   <FilaRevision label="¿Terceros son encargados?" valor={form.terceros_son_encargados ? "Sí" : "No"} />
                   <FilaRevision label="¿Contratos de protección?" valor={form.contratos_proteccion_datos ? "Sí" : "No"} />
@@ -928,9 +946,16 @@ export default function Paso4() {
                     label="Método de transferencia"
                     valor={(form.metodo_transferencia || []).map((v) => ETIQ_METODO_TRANSFERENCIA[v] || v).join(", ")}
                   />
+                  <FilaRevision label="Detalle método de transferencia" valor={form.metodo_transferencia_detalle} />
                   <FilaRevision label="Sistema origen" valor={form.sistemas_origen} />
                   <FilaRevision label="Sistema destino" valor={form.sistemas_destino} />
                   <FilaRevision label="Sistema tratamiento" valor={form.sistemas_tratamiento} />
+                  <FilaRevision
+                    label="Tipos de tratamiento en sistema"
+                    valor={(form.tipos_tratamiento_sistema || []).map((v) => ETIQ_TIPOS_TRATAMIENTO[v] || v).join(", ")}
+                  />
+                  <FilaRevision label="Base de datos" valor={form.base_datos_nombre} />
+                  <FilaRevision label="Proveedor tecnológico" valor={form.proveedor_tecnologico} />
                 </div>
 
                 <div className="p4-revision-seccion">

@@ -33,28 +33,34 @@ function crearFormVacio() { return {
   // ── Paso 2 ───────────────────────────────────────────────
   categorias_titulares: [], universo_titulares: "", origen_datos: "",
   categorias_datos: [], datos_sensibles: false, categorias_sensibles: [],
-  destinatarios: "", sale_extranjero: false, pais_destino: "", otros_datos: "",
+  destinatarios: "", otros_datos: "",
   // R9.3: descripción de datos sensibles + 3 secciones nuevas de Paso 2
   datos_sensibles_descripcion: "",
   datos_academicos_laborales: "", datos_financieros_patrimoniales: "", origen_sistemico_datos: "",
   // B2-05: campos extendidos Paso 2
   incluye_nna: false, nna_detalle: "",
   datos_navegacion: false, datos_navegacion_detalle: "",
+  // ── Paso 3 ───────────────────────────────────────────────
+  // (R9.4: movidos desde Paso2 — "Terceros y transferencias" + "Sistemas y tecnología")
   destinatarios_internos: "", destinatarios_nacionales: "", destinatarios_internacionales: "",
+  sale_extranjero: false, pais_destino: "",
+  base_legal_transferencia_internacional: "",
   terceros_son_encargados: false,
   contratos_proteccion_datos: false, contratos_proteccion_datos_detalle: "",
-  datos_transferidos_detalle: "", metodo_transferencia: [],
+  datos_transferidos_detalle: "", metodo_transferencia: [], metodo_transferencia_detalle: "",
   sistemas_origen: "", sistemas_destino: "", sistemas_tratamiento: "",
   tipos_tratamiento_sistema: [], base_datos_nombre: "", proveedor_tecnologico: "",
-  // ── Paso 3 ───────────────────────────────────────────────
+  // ── Paso 4 ───────────────────────────────────────────────
+  // (etiquetado como "Paso 3" hasta R9.0 — el rename de 3 a 4 pasos movió
+  // estos campos a Paso4.jsx, el comentario quedó desactualizado hasta ahora)
   plazo_conservacion: "", plazo_otro: "", otras_medidas: "",
   medidas_seguridad: [], decisiones_automatizadas: false,
-  // ── Paso 3 — Principios Ley 21.719 ───────────────────────
+  // ── Paso 4 — Principios Ley 21.719 ───────────────────────
   criterio_plazo: "", metodo_eliminacion: "", documenta_destruccion: false,
   excepciones_plazo: "", minimizacion_justificacion: "", mecanismos_exactitud: "",
   evaluacion_periodica: "", cumplimiento_demostrable: "",
   incidentes_historicos: "", cambios_futuros: "",
-  // ── Paso 3 — DPIA ────────────────────────────────────────
+  // ── Paso 4 — DPIA ────────────────────────────────────────
   requiere_dpia: false, dpia_realizada: null, dpia_detalle: "",
   // ── Modo edición ──────────────────────────────────────────
   modoEdicion: false, tratamientoEditId: null,
