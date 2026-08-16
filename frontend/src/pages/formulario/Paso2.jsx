@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormulario } from "../../context/FormularioContext";
 import BarraLateral from "../../components/BarraLateral";
+import BarraProgreso from "../../components/BarraProgreso";
 import "../../styles/formularioCss/paso2.css";
 
 const API = "/api";
@@ -91,28 +92,6 @@ function sincronizarOtrosEnCategoria(categoriaActual, textoOtros) {
   const otros = (textoOtros || "").trim();
   if (!otros) return base;
   return base ? `${base}\nOtros — ${otros}.` : `Otros — ${otros}.`;
-}
-
-function BarraProgreso({ pasoActual }) {
-  const pasos = ["Identificación", "Datos y titulares", "Seguridad y conservación"];
-  return (
-    <div className="p2-progreso">
-      {pasos.map((nombre, i) => {
-        const num = i + 1;
-        const activo     = num === pasoActual;
-        const completado = num < pasoActual;
-        return (
-          <div key={i} className="p2-progreso-item">
-            <div className={`p2-paso-burbuja ${activo ? "activo" : ""} ${completado ? "completado" : ""}`}>
-              {completado ? "✓" : num}
-            </div>
-            <span className={`p2-paso-nombre ${activo ? "activo" : ""}`}>{nombre}</span>
-            {i < pasos.length - 1 && <div className={`p2-paso-linea ${completado ? "completada" : ""}`} />}
-          </div>
-        );
-      })}
-    </div>
-  );
 }
 
 function ModalDesmarcar({ categoria, onConfirmar, onCancelar }) {
@@ -447,7 +426,7 @@ export default function Paso2() {
         </div>
 
         <div className="p2-card">
-          <BarraProgreso pasoActual={2} />
+          <BarraProgreso pasoActual={2} prefix="p2" />
 
           {/* ── Grid 3 columnas ───────────────────────────────── */}
           <div className="p2-grid">

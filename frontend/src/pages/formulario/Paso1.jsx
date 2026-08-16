@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useFormulario } from "../../context/FormularioContext";
 import BarraLateral from "../../components/BarraLateral";
+import BarraProgreso from "../../components/BarraProgreso";
 import BloqueDatoTratado from "../../components/BloqueDatoTratado";
 import { subirImagenProceso, eliminarImagenProceso, obtenerImagenProcesoBlob } from "../../services/tratamientosService";
 import "../../styles/formularioCss/paso1.css";
@@ -59,31 +60,6 @@ const BASES_LEGALES = [
     descripcion: "Datos obtenidos por tratamiento técnico que permiten identificación única (huella, iris, rasgos faciales, voz). Requieren consentimiento expreso más información específica al titular sobre el sistema, finalidad y período de uso (Ley 21.719, Art. 16 ter).",
   },
 ];
-
-/* ─── Barra de progreso ──────────────────────────────────────── */
-function BarraProgreso({ pasoActual }) {
-  const pasos = ["Identificación", "Datos y titulares", "Seguridad y conservación"];
-  return (
-    <div className="p1-progreso">
-      {pasos.map((nombre, i) => {
-        const num = i + 1;
-        const activo    = num === pasoActual;
-        const completado = num < pasoActual;
-        return (
-          <div key={i} className="p1-progreso-item">
-            <div className={`p1-paso-burbuja ${activo ? "activo" : ""} ${completado ? "completado" : ""}`}>
-              {completado ? "✓" : num}
-            </div>
-            <span className={`p1-paso-nombre ${activo ? "activo" : ""}`}>{nombre}</span>
-            {i < pasos.length - 1 && (
-              <div className={`p1-paso-linea ${completado ? "completada" : ""}`} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 /* ─── Tooltip base legal ─────────────────────────────────────── */
 function TooltipBaseLegal({ opcion }) {
@@ -461,7 +437,7 @@ export default function Paso1() {
           })()}
 
           {/* ── Barra de progreso ── */}
-          <BarraProgreso pasoActual={1} />
+          <BarraProgreso pasoActual={1} prefix="p1" />
 
           {/* ── Resumen del análisis (si viene de pantalla 8) ── */}
           {!esEdicion && detectados.length > 0 && (

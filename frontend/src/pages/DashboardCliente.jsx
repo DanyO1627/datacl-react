@@ -180,12 +180,14 @@ export default function Dashboard() {
       })
 
       // 6. Navegar al paso correcto según lo que tenía relleno
+      // (R9.0: plazo_conservacion/medidas_seguridad viven ahora en Paso4;
+      // Paso3 nuevo todavía no tiene campos propios que detectar — llegan en R9.4)
       const paso = (() => {
-        if (t.plazo_conservacion || t.medidas_seguridad) return 3
+        if (t.plazo_conservacion || t.medidas_seguridad) return 4
         if (t.detalle?.categorias_titulares || t.detalle?.universo_titulares || t.destinatarios) return 2
         return 1
       })()
-      const rutas = { 1: "/nuevo-tratamiento", 2: "/nuevo-tratamiento/paso2", 3: "/nuevo-tratamiento/paso3" }
+      const rutas = { 1: "/nuevo-tratamiento", 2: "/nuevo-tratamiento/paso2", 3: "/nuevo-tratamiento/paso3", 4: "/nuevo-tratamiento/paso4" }
       navigate(rutas[paso])
     } catch { /* silencioso */ }
   }

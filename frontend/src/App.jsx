@@ -21,6 +21,7 @@ import { FormularioProvider } from "./context/FormularioContext";
 import Paso1 from "./pages/formulario/Paso1";
 import Paso2 from "./pages/formulario/Paso2";
 import Paso3 from "./pages/formulario/Paso3";
+import Paso4 from "./pages/formulario/Paso4";
 import Perfil from "./pages/Perfil";
 import VistaPrevia from "./pages/VistaPrevia";
 import ConfirmacionDescarga from "./pages/ConfirmacionDescarga";
@@ -220,6 +221,14 @@ function App() {
             element={
               <RutaProtegida>
                 <Paso3 />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="/nuevo-tratamiento/paso4"
+            element={
+              <RutaProtegida>
+                <Paso4 />
               </RutaProtegida>
             }
           />
