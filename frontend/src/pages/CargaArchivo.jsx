@@ -71,9 +71,9 @@ function Alert({ tipo, mensaje, detalle }) {
 
 /* ─── Opciones de fuente ─────────────────────────────────────── */
 const OPCIONES = [
+  { id: "manual",   titulo: "Ingresar manualmente",   desc: "Sin archivo",                 icono: <IconoManual />,  deshabilitado: false },
   { id: "bd",       titulo: "Conectar a BD",          desc: "MySQL, PostgreSQL…",          icono: <IconoBD />,      deshabilitado: false },
   { id: "archivo",  titulo: "Subir archivo",         desc: "CSV o Excel (.xlsx, .xls)",  icono: <IconoArchivo />, deshabilitado: false },
-  { id: "manual",   titulo: "Ingresar manualmente",   desc: "Sin archivo",                 icono: <IconoManual />,  deshabilitado: false },
   { id: "sesiones", titulo: "Sesiones anteriores",    desc: "Reutilizar análisis previo",  icono: <IconoHistorial />, deshabilitado: false },
 ];
 
@@ -82,7 +82,7 @@ export default function NuevaSesion() {
   const navigate = useNavigate();
 
   /* Fuente activa */
-  const [fuenteActiva, setFuenteActiva] = useState("bd");
+  const [fuenteActiva, setFuenteActiva] = useState("manual");
 
   /* ── Estado subir archivo ──────────────────────────────────── */
   const [archivos, setArchivos]                    = useState([]);
