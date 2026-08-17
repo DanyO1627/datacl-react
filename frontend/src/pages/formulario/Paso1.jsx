@@ -9,89 +9,6 @@ import "../../styles/formularioCss/paso1.css";
 
 const API = "/api";
 
-/* ─── Opciones base legal con artículos Ley 21.719 ──────────── */
-const BASES_LEGALES = [
-  {
-    valor: "consentimiento",
-    etiqueta: "Consentimiento",
-    articulo: "Art. 12",
-    descripcion: "El titular otorgó su consentimiento libre, informado, específico e inequívoco. Debe ser previo y manifestado de forma inequívoca. El responsable debe poder acreditarlo (Ley 21.719, Art. 12).",
-  },
-  {
-    valor: "datos_economicos",
-    etiqueta: "Obligaciones económicas o financieras",
-    articulo: "Art. 13 letra a)",
-    descripcion: "El tratamiento se refiere a datos relativos a obligaciones de carácter económico, financiero, bancario o comercial, de conformidad con el Título III de la Ley 21.719 (Art. 13 letra a).",
-  },
-  {
-    valor: "obligacion_legal",
-    etiqueta: "Obligación legal",
-    articulo: "Art. 13 letra b)",
-    descripcion: "El tratamiento es necesario para la ejecución o el cumplimiento de una obligación legal o lo dispone la ley. Ej: reportes al SII, registros laborales, AFP (Ley 21.719, Art. 13 letra b).",
-  },
-  {
-    valor: "contrato",
-    etiqueta: "Ejecución de contrato",
-    articulo: "Art. 13 letra c)",
-    descripcion: "El tratamiento es necesario para la celebración o ejecución de un contrato entre el titular y el responsable, o para la ejecución de medidas precontractuales adoptadas a solicitud del titular (Ley 21.719, Art. 13 letra c).",
-  },
-  {
-    valor: "interes_legitimo",
-    etiqueta: "Interés legítimo",
-    articulo: "Art. 13 letra d)",
-    descripcion: "Existe un interés legítimo del responsable o de un tercero que no afecta los derechos y libertades del titular. El titular puede exigir siempre ser informado sobre el tratamiento (Ley 21.719, Art. 13 letra d).",
-  },
-  {
-    valor: "defensa_derechos",
-    etiqueta: "Defensa de derechos ante tribunales",
-    articulo: "Art. 13 letra e)",
-    descripcion: "El tratamiento es necesario para la formulación, ejercicio o defensa de un derecho ante los tribunales de justicia u órganos públicos (Ley 21.719, Art. 13 letra e).",
-  },
-  {
-    valor: "consentimiento_sensibles",
-    etiqueta: "Consentimiento expreso — datos sensibles",
-    articulo: "Art. 16 inc. 1",
-    descripcion: "Datos sensibles (salud, origen étnico, religión, orientación sexual, biométricos, etc.) que requieren consentimiento EXPRESO del titular, otorgado por declaración escrita, verbal o medio tecnológico equivalente (Ley 21.719, Art. 16 inc. 1).",
-  },
-  {
-    valor: "datos_biometricos",
-    etiqueta: "Datos biométricos",
-    articulo: "Art. 16 ter",
-    descripcion: "Datos obtenidos por tratamiento técnico que permiten identificación única (huella, iris, rasgos faciales, voz). Requieren consentimiento expreso más información específica al titular sobre el sistema, finalidad y período de uso (Ley 21.719, Art. 16 ter).",
-  },
-];
-
-/* ─── Tooltip base legal ─────────────────────────────────────── */
-function TooltipBaseLegal({ opcion }) {
-  const [visible, setVisible] = useState(false);
-  return (
-    <div className="p1-tooltip-wrap"
-      onMouseEnter={() => setVisible(true)}
-      onMouseLeave={() => setVisible(false)}
-    >
-      <span className="p1-tooltip-trigger">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="8" x2="12" y2="12" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-      </span>
-      {visible && (
-        <div className="p1-tooltip-burbuja">
-          <strong>{opcion.etiqueta}</strong>
-          <span>{opcion.descripcion}</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// cuenta las palabras (por espacios) para mostrarlas en el contador de la finalidad
-function contarPalabras(texto) {
-  return texto.trim() === "" ? 0 : texto.trim().split(/\s+/).length;
-}
-
 // descarta bloques que quedaron completamente vacíos (se agregó el bloque
 // pero no se llenó ningún campo) antes de mandarlos al backend
 function limpiarBloquesDatos(bloques) {
@@ -134,15 +51,10 @@ export default function Paso1() {
     nombre:         form.nombre         || "",
     responsable:    form.responsable    || "",
     es_responsable: form.es_responsable ?? true,
-    finalidad:      form.finalidad      || "",
-    base_legal:     form.base_legal ? form.base_legal.split(",").filter(Boolean) : [],
     // Campos extendidos B2-03
     subarea_responsable:         form.subarea_responsable         || "",
     procesos_relacionados:       form.procesos_relacionados       || "",
     finalidades_secundarias:     form.finalidades_secundarias     || "",
-    informa_titulares:           form.informa_titulares           || [],
-    documento_respaldo_tiene:    form.documento_respaldo_tiene    ?? null,
-    documento_respaldo_descripcion: form.documento_respaldo_descripcion || "",
     // R8.3 — orden CEDCA
     proceso_asociado:            form.proceso_asociado            || "",
     // R8.4 — bloques repetibles que reemplazan descripcion_detallada
@@ -217,21 +129,8 @@ export default function Paso1() {
     }
   }
 
-  function toggleBaseLegal(valor) {
-    setLocal((prev) => {
-      const lista = prev.base_legal;
-      return {
-        ...prev,
-        base_legal: lista.includes(valor)
-          ? lista.filter((v) => v !== valor)
-          : [...lista, valor],
-      };
-    });
-  }
-
   function handleChange(e) {
     const { name, value } = e.target;
-    if (name === "finalidad" && contarPalabras(value) > 1000) return;
     setLocal((prev) => ({ ...prev, [name]: value }));
   }
 
@@ -258,23 +157,11 @@ export default function Paso1() {
     }));
   }
 
-  function toggleInformaTitulares(valor) {
-    setLocal((prev) => {
-      const actual = prev.informa_titulares || []
-      return {
-        ...prev,
-        informa_titulares: actual.includes(valor)
-          ? actual.filter((v) => v !== valor)
-          : [...actual, valor],
-      }
-    })
-  }
-
   async function handleGuardarBorrador() {
     setGuardandoBorrador(true);
     try {
-      actualizarForm({ ...local, base_legal: local.base_legal.join(",") });
-      const datos = { ...form, ...local, base_legal: local.base_legal.join(",") };
+      actualizarForm({ ...local });
+      const datos = { ...form, ...local };
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
@@ -318,10 +205,6 @@ export default function Paso1() {
           subarea_responsable: datos.subarea_responsable || null,
           procesos_relacionados: datos.procesos_relacionados || null,
           finalidades_secundarias: datos.finalidades_secundarias || null,
-          informa_titulares: (datos.informa_titulares || []).join(",") || null,
-          documento_respaldo_permiso: datos.documento_respaldo_tiene === true
-            ? (datos.documento_respaldo_descripcion || "Sí")
-            : datos.documento_respaldo_tiene === false ? "No" : null,
           proceso_asociado: datos.proceso_asociado || null,
         },
       };
@@ -372,13 +255,11 @@ export default function Paso1() {
   const puedeAvanzar =
     local.nombre.trim().length > 0 &&
     local.responsable.trim().length > 0 &&
-    local.proceso_asociado.trim().length > 0 &&
-    local.finalidad.trim().length > 0 &&
-    local.base_legal.length > 0;
+    local.proceso_asociado.trim().length > 0;
 
   function handleSiguiente() {
     if (!puedeAvanzar) return;
-    actualizarForm({ ...local, base_legal: local.base_legal.join(",") });
+    actualizarForm({ ...local });
     navigate("/nuevo-tratamiento/paso2");
     window.scrollTo(0, 0);
   }
@@ -636,72 +517,11 @@ export default function Paso1() {
                 value={local.procesos_relacionados}
                 onChange={handleChange}
                 rows={3}
+                maxLength={2000}
               />
+              <span className="p1-campo-contador">{local.procesos_relacionados.length}/2000</span>
             </div>
 
-            {/* Finalidad */}
-            <div className="p1-campo">
-              <label className="p1-label" htmlFor="finalidad">
-                Finalidad
-              </label>
-              <textarea
-                id="finalidad"
-                name="finalidad"
-                className="p1-textarea"
-                placeholder="Describe el objetivo de este tratamiento de datos. Ej: Gestionar el pago de remuneraciones y cumplir con obligaciones laborales y previsionales."
-                value={local.finalidad}
-                onChange={handleChange}
-                rows={3}
-              />
-              <span className={`p1-campo-contador ${contarPalabras(local.finalidad) >= 1000 ? "p1-campo-contador--limite" : ""}`}>
-                {contarPalabras(local.finalidad)}/1000 palabras
-              </span>
-            </div>
-
-            {/* Base legal */}
-            <div className="p1-campo">
-              <div className="p1-label-row">
-                <label className="p1-label" htmlFor="base_legal">
-                  Base legal
-                </label>
-                {/* Tooltips por opción — se muestran en el select como ayuda */}
-                <div className="p1-bases-info">
-                  {BASES_LEGALES.map((op) => (
-                    <TooltipBaseLegal key={op.valor} opcion={op} />
-                  ))}
-                </div>
-              </div>
-              <div className="p1-checkboxes">
-                {BASES_LEGALES.map((op) => {
-                  const marcado = local.base_legal.includes(op.valor);
-                  return (
-                    <label key={op.valor} className={`p1-check-item ${marcado ? "p1-check-item--marcado" : ""}`}>
-                      <input
-                        type="checkbox"
-                        className="p1-check-input"
-                        checked={marcado}
-                        onChange={() => toggleBaseLegal(op.valor)}
-                      />
-                      <span className="p1-check-texto">{op.etiqueta}</span>
-                      <span className="p1-check-articulo">{op.articulo}</span>
-                    </label>
-                  );
-                })}
-              </div>
-
-              {local.base_legal.length > 0 && (
-                <div className="p1-bases-seleccionadas">
-                  {local.base_legal.map((valor) => {
-                    const base = BASES_LEGALES.find((b) => b.valor === valor);
-                    return base ? (
-                      <p key={valor} className="p1-base-desc">
-                        <span className="p1-base-articulo">{base.articulo} —</span> {base.descripcion}
-                      </p>
-                    ) : null;
-                  })}
-                </div>
-              )}
-            </div>
             {/* ── Sección colapsable: Información adicional ── */}
             <div className="p1-adicional">
               <button
@@ -729,67 +549,9 @@ export default function Paso1() {
                       value={local.finalidades_secundarias}
                       onChange={handleChange}
                       rows={3}
+                      maxLength={2000}
                     />
-                  </div>
-
-                  {/* Documento respaldo permiso */}
-                  <div className="p1-campo">
-                    <label className="p1-label">¿Existe documento de respaldo o permiso?</label>
-                    <div className="p1-radios">
-                      <label className="p1-rol-opcion">
-                        <input
-                          type="radio"
-                          name="documento_respaldo_tiene"
-                          checked={local.documento_respaldo_tiene === true}
-                          onChange={() => setLocal((p) => ({ ...p, documento_respaldo_tiene: true }))}
-                        />
-                        <span>Sí</span>
-                      </label>
-                      <label className="p1-rol-opcion">
-                        <input
-                          type="radio"
-                          name="documento_respaldo_tiene"
-                          checked={local.documento_respaldo_tiene === false}
-                          onChange={() => setLocal((p) => ({ ...p, documento_respaldo_tiene: false, documento_respaldo_descripcion: "" }))}
-                        />
-                        <span>No</span>
-                      </label>
-                    </div>
-                    {local.documento_respaldo_tiene === true && (
-                      <textarea
-                        id="documento_respaldo_descripcion"
-                        name="documento_respaldo_descripcion"
-                        className="p1-textarea"
-                        placeholder="Describe el documento de respaldo o permiso"
-                        value={local.documento_respaldo_descripcion}
-                        onChange={handleChange}
-                        rows={2}
-                        style={{ marginTop: 8 }}
-                      />
-                    )}
-                  </div>
-
-                  {/* Cómo se informa a los titulares */}
-                  <div className="p1-campo">
-                    <label className="p1-label">¿Cómo se informa a los titulares?</label>
-                    <div className="p1-checkboxes">
-                      {[
-                        { valor: "web",       etiqueta: "Aviso en web" },
-                        { valor: "correo",    etiqueta: "Correo electrónico" },
-                        { valor: "contrato",  etiqueta: "Contrato" },
-                        { valor: "mandato",   etiqueta: "Mandato" },
-                        { valor: "no_informa", etiqueta: "No se informa" },
-                      ].map(({ valor, etiqueta }) => (
-                        <label key={valor} className="p1-checkbox-opcion">
-                          <input
-                            type="checkbox"
-                            checked={(local.informa_titulares || []).includes(valor)}
-                            onChange={() => toggleInformaTitulares(valor)}
-                          />
-                          <span>{etiqueta}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <span className="p1-campo-contador">{local.finalidades_secundarias.length}/2000</span>
                   </div>
 
                 </div>

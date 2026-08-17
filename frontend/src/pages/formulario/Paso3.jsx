@@ -246,7 +246,7 @@ export default function Paso3() {
                   placeholder="Ej: RRHH, Contabilidad, TI..."
                   value={local.destinatarios_internos}
                   onChange={(e) => setLocal((p) => ({ ...p, destinatarios_internos: e.target.value }))}
-                  rows={2} maxLength={300}
+                  rows={2} maxLength={3000}
                 />
               </div>
 
@@ -257,7 +257,7 @@ export default function Paso3() {
                   placeholder="Ej: AFP Provida, SII, proveedor de nómina..."
                   value={local.destinatarios_nacionales}
                   onChange={(e) => setLocal((p) => ({ ...p, destinatarios_nacionales: e.target.value }))}
-                  rows={2} maxLength={300}
+                  rows={2} maxLength={3000}
                 />
               </div>
 
@@ -268,13 +268,13 @@ export default function Paso3() {
                   placeholder="Ej: Salesforce EE.UU., Google Ireland..."
                   value={local.destinatarios_internacionales}
                   onChange={(e) => handleInternacionales(e.target.value)}
-                  rows={2} maxLength={300}
+                  rows={2} maxLength={3000}
                 />
               </div>
 
               <div className="p3-campo-grupo">
                 <label className="p3-campo-label">Base legal de la transferencia internacional</label>
-                <textarea className="p3-textarea" rows={2} maxLength={500}
+                <textarea className="p3-textarea" rows={2} maxLength={1500}
                   placeholder="Ej: Cláusulas contractuales tipo, decisión de adecuación..."
                   value={local.base_legal_transferencia_internacional}
                   onChange={(e) => setLocal((p) => ({ ...p, base_legal_transferencia_internacional: e.target.value }))}
@@ -326,7 +326,7 @@ export default function Paso3() {
                       <span className="p3-check-texto">¿Existen contratos de protección de datos firmados con terceros?</span>
                     </label>
                     {local.contratos_proteccion_datos && (
-                      <textarea className="p3-textarea" rows={2} maxLength={400}
+                      <textarea className="p3-textarea" rows={2} maxLength={1500}
                         placeholder="Describe los contratos existentes..."
                         value={local.contratos_proteccion_datos_detalle}
                         onChange={(e) => setLocal((p) => ({ ...p, contratos_proteccion_datos_detalle: e.target.value }))}
@@ -339,7 +339,7 @@ export default function Paso3() {
                 <div>
                   <div className="p3-campo-grupo">
                     <label className="p3-campo-label">¿Qué datos se transfieren a terceros?</label>
-                    <textarea className="p3-textarea" rows={3} maxLength={500}
+                    <textarea className="p3-textarea" rows={3} maxLength={3000}
                       placeholder="Ej: Nombre, RUT, correo y sueldo base..."
                       value={local.datos_transferidos_detalle}
                       onChange={(e) => setLocal((p) => ({ ...p, datos_transferidos_detalle: e.target.value }))}
@@ -358,7 +358,7 @@ export default function Paso3() {
                         </label>
                       ))}
                     </div>
-                    <textarea className="p3-textarea" rows={2} maxLength={400}
+                    <textarea className="p3-textarea" rows={2} maxLength={1500}
                       placeholder="Detalle del método de transferencia..."
                       value={local.metodo_transferencia_detalle}
                       onChange={(e) => setLocal((p) => ({ ...p, metodo_transferencia_detalle: e.target.value }))}
@@ -377,7 +377,7 @@ export default function Paso3() {
                 <div className="p3-campo-grupo">
                   <label className="p3-campo-label">Sistemas origen</label>
                   <p className="p3-campo-ayuda">Sistemas donde se originan o capturan los datos</p>
-                  <textarea className="p3-textarea" rows={2} maxLength={400}
+                  <textarea className="p3-textarea" rows={2} maxLength={1500}
                     placeholder="Ej: CRM Salesforce, formulario web..."
                     value={local.sistemas_origen}
                     onChange={(e) => setLocal((p) => ({ ...p, sistemas_origen: e.target.value }))}
@@ -387,7 +387,7 @@ export default function Paso3() {
                 <div className="p3-campo-grupo">
                   <label className="p3-campo-label">Sistemas destino</label>
                   <p className="p3-campo-ayuda">Sistemas donde se almacenan o envían los datos</p>
-                  <textarea className="p3-textarea" rows={2} maxLength={400}
+                  <textarea className="p3-textarea" rows={2} maxLength={1500}
                     placeholder="Ej: ERP SAP, servidor propio, nube AWS..."
                     value={local.sistemas_destino}
                     onChange={(e) => setLocal((p) => ({ ...p, sistemas_destino: e.target.value }))}
@@ -397,7 +397,7 @@ export default function Paso3() {
                 <div className="p3-campo-grupo">
                   <label className="p3-campo-label">Sistemas de tratamiento</label>
                   <p className="p3-campo-ayuda">Sistemas que procesan activamente los datos</p>
-                  <textarea className="p3-textarea" rows={2} maxLength={400}
+                  <textarea className="p3-textarea" rows={2} maxLength={1500}
                     placeholder="Ej: Software de RRHH, plataforma e-commerce..."
                     value={local.sistemas_tratamiento}
                     onChange={(e) => setLocal((p) => ({ ...p, sistemas_tratamiento: e.target.value }))}

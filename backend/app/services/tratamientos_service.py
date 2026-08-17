@@ -212,7 +212,7 @@ _CAMPOS_SNAPSHOT_EXTENDIDO = [
     # que el historial de versiones lo detecte, a diferencia del resto del
     # flujo de detalle_extendido, esta lista NO se llena sola.
     "datos_academicos_laborales", "datos_financieros_patrimoniales",
-    "origen_sistemico_datos", "datos_sensibles_descripcion",
+    "origen_sistemico_datos", "datos_sensibles_descripcion", "otros_datos",
     "base_legal_transferencia_internacional", "metodo_transferencia_detalle",
     "finalidad_todos_necesarios", "finalidad_misma", "informa_titulares_si_no",
     "usa_solo_fines_declarados", "asegura_transparencia_detalle", "minimizacion_si_no",
@@ -327,6 +327,7 @@ _ETIQUETAS_CAMPOS = {
     "datos_financieros_patrimoniales": "Datos financieros y patrimoniales",
     "origen_sistemico_datos": "Origen sistémico de los datos",
     "datos_sensibles_descripcion": "Descripción de los datos sensibles",
+    "otros_datos": "Otros datos personales",
     "base_legal_transferencia_internacional": "Base legal de la transferencia internacional",
     "metodo_transferencia_detalle": "Detalle del método de transferencia",
     "finalidad_todos_necesarios": "¿Todos los datos tienen finalidad y son necesarios?",

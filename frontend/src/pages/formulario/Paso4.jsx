@@ -6,9 +6,94 @@ import { crearTratamiento, actualizarTratamiento } from "../../services/tratamie
 
 import BarraLateral from "../../components/BarraLateral";
 import BarraProgreso from "../../components/BarraProgreso";
+import ListaDinamicaTexto from "../../components/ListaDinamicaTexto";
+import "../../styles/formularioCss/paso1.css";
 import "../../styles/formularioCss/paso4.css";
 
 const API = "/api";
+
+/* ─── Opciones base legal con artículos Ley 21.719 (R9.5: movido desde Paso1) ── */
+const BASES_LEGALES = [
+  {
+    valor: "consentimiento",
+    etiqueta: "Consentimiento",
+    articulo: "Art. 12",
+    descripcion: "El titular otorgó su consentimiento libre, informado, específico e inequívoco. Debe ser previo y manifestado de forma inequívoca. El responsable debe poder acreditarlo (Ley 21.719, Art. 12).",
+  },
+  {
+    valor: "datos_economicos",
+    etiqueta: "Obligaciones económicas o financieras",
+    articulo: "Art. 13 letra a)",
+    descripcion: "El tratamiento se refiere a datos relativos a obligaciones de carácter económico, financiero, bancario o comercial, de conformidad con el Título III de la Ley 21.719 (Art. 13 letra a).",
+  },
+  {
+    valor: "obligacion_legal",
+    etiqueta: "Obligación legal",
+    articulo: "Art. 13 letra b)",
+    descripcion: "El tratamiento es necesario para la ejecución o el cumplimiento de una obligación legal o lo dispone la ley. Ej: reportes al SII, registros laborales, AFP (Ley 21.719, Art. 13 letra b).",
+  },
+  {
+    valor: "contrato",
+    etiqueta: "Ejecución de contrato",
+    articulo: "Art. 13 letra c)",
+    descripcion: "El tratamiento es necesario para la celebración o ejecución de un contrato entre el titular y el responsable, o para la ejecución de medidas precontractuales adoptadas a solicitud del titular (Ley 21.719, Art. 13 letra c).",
+  },
+  {
+    valor: "interes_legitimo",
+    etiqueta: "Interés legítimo",
+    articulo: "Art. 13 letra d)",
+    descripcion: "Existe un interés legítimo del responsable o de un tercero que no afecta los derechos y libertades del titular. El titular puede exigir siempre ser informado sobre el tratamiento (Ley 21.719, Art. 13 letra d).",
+  },
+  {
+    valor: "defensa_derechos",
+    etiqueta: "Defensa de derechos ante tribunales",
+    articulo: "Art. 13 letra e)",
+    descripcion: "El tratamiento es necesario para la formulación, ejercicio o defensa de un derecho ante los tribunales de justicia u órganos públicos (Ley 21.719, Art. 13 letra e).",
+  },
+  {
+    valor: "consentimiento_sensibles",
+    etiqueta: "Consentimiento expreso — datos sensibles",
+    articulo: "Art. 16 inc. 1",
+    descripcion: "Datos sensibles (salud, origen étnico, religión, orientación sexual, biométricos, etc.) que requieren consentimiento EXPRESO del titular, otorgado por declaración escrita, verbal o medio tecnológico equivalente (Ley 21.719, Art. 16 inc. 1).",
+  },
+  {
+    valor: "datos_biometricos",
+    etiqueta: "Datos biométricos",
+    articulo: "Art. 16 ter",
+    descripcion: "Datos obtenidos por tratamiento técnico que permiten identificación única (huella, iris, rasgos faciales, voz). Requieren consentimiento expreso más información específica al titular sobre el sistema, finalidad y período de uso (Ley 21.719, Art. 16 ter).",
+  },
+];
+
+/* ─── Tooltip base legal (R9.5: movido desde Paso1) ──────────── */
+function TooltipBaseLegal({ opcion }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="p1-tooltip-wrap"
+      onMouseEnter={() => setVisible(true)}
+      onMouseLeave={() => setVisible(false)}
+    >
+      <span className="p1-tooltip-trigger">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </span>
+      {visible && (
+        <div className="p1-tooltip-burbuja">
+          <strong>{opcion.etiqueta}</strong>
+          <span>{opcion.descripcion}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// cuenta las palabras (por espacios) para mostrarlas en el contador de la finalidad
+function contarPalabras(texto) {
+  return texto.trim() === "" ? 0 : texto.trim().split(/\s+/).length;
+}
 
 function serializarMedidasSeguridad(medidas, otrasMedidas) {
   const lista = [...(medidas || [])];
@@ -34,6 +119,15 @@ function limpiarBloquesDatos(bloques) {
       para_que:       b.para_que       || null,
       como:           b.como           || null,
     }));
+}
+
+// descarta declaraciones de base legal adicional (R9.6) vacías y las envuelve
+// en {descripcion} — así lo espera BaseLegalEntrada del backend
+function limpiarBaseLegalDetalle(items) {
+  return (items || [])
+    .map((v) => (v || "").trim())
+    .filter(Boolean)
+    .map((descripcion) => ({ descripcion }));
 }
 
 function formatearErrorApi(detail) {
@@ -156,7 +250,6 @@ const ETIQ_INFORMA_TITULARES = {
   correo: "Correo electrónico",
   contrato: "Contrato",
   mandato: "Mandato",
-  no_informa: "No se informa",
 };
 
 const ETIQ_METODO_TRANSFERENCIA = {
@@ -228,6 +321,19 @@ export default function Paso4() {
 
   /* Estado local — mismo patrón de Paso1 y Paso2 */
   const [local, setLocal] = useState({
+    // Principio 1 — Licitud y transparencia / Principio 2 — Finalidad (R9.5: movidos desde Paso1)
+    finalidad: form.finalidad || "",
+    base_legal: form.base_legal ? form.base_legal.split(",").filter(Boolean) : [],
+    base_legal_detalle: form.base_legal_detalle || [],
+    asegura_transparencia_detalle: form.asegura_transparencia_detalle || "",
+    informa_titulares_si_no: form.informa_titulares_si_no ?? null,
+    informa_titulares: form.informa_titulares || [],
+    documento_respaldo_tiene: form.documento_respaldo_tiene ?? null,
+    documento_respaldo_descripcion: form.documento_respaldo_descripcion || "",
+    finalidad_todos_necesarios: form.finalidad_todos_necesarios ?? null,
+    finalidad_misma: form.finalidad_misma ?? null,
+    usa_solo_fines_declarados: form.usa_solo_fines_declarados ?? null,
+    minimizacion_si_no: form.minimizacion_si_no ?? null,
     plazo_conservacion: form.plazo_conservacion || "",
     plazo_otro: form.plazo_otro || "",
     medidas_seguridad: form.medidas_seguridad || [],
@@ -260,6 +366,31 @@ export default function Paso4() {
   const [borradorOk, setBorradorOk] = useState(false);
   const [error, setError] = useState("");
 
+  /* ── Base legal / informa a titulares (checkboxes, R9.5) ──────── */
+  function toggleBaseLegal(valor) {
+    setLocal((prev) => {
+      const lista = prev.base_legal;
+      return {
+        ...prev,
+        base_legal: lista.includes(valor)
+          ? lista.filter((v) => v !== valor)
+          : [...lista, valor],
+      };
+    });
+  }
+
+  function toggleInformaTitulares(valor) {
+    setLocal((prev) => {
+      const actual = prev.informa_titulares || [];
+      return {
+        ...prev,
+        informa_titulares: actual.includes(valor)
+          ? actual.filter((v) => v !== valor)
+          : [...actual, valor],
+      };
+    });
+  }
+
   /* ── Medidas de seguridad (checkboxes) ──────────────────────── */
   function toggleMedida(id) {
     setLocal((prev) => {
@@ -276,8 +407,9 @@ export default function Paso4() {
     setGuardando(true);
     setError("");
 
-    actualizarForm(local);
-    const formularioCompleto = { ...form, ...local };
+    const localParaGuardar = { ...local, base_legal: local.base_legal.join(",") };
+    actualizarForm(localParaGuardar);
+    const formularioCompleto = { ...form, ...localParaGuardar };
 
     const payload = {
       // Campos del tratamiento principal
@@ -305,6 +437,7 @@ export default function Paso4() {
         ? (formularioCompleto.campos_detectados || []).map((c) => c.nombre_columna)
         : null,
       datos_tratados:           limpiarBloquesDatos(formularioCompleto.datos_tratados),
+      base_legal_detalle:       limpiarBaseLegalDetalle(formularioCompleto.base_legal_detalle),
 
       // Objeto detalle — va a la tabla detalle_rat con los nombres del schema
       detalle: {
@@ -328,6 +461,23 @@ export default function Paso4() {
       documento_respaldo_permiso:  formularioCompleto.documento_respaldo_tiene === true
         ? (formularioCompleto.documento_respaldo_descripcion || "Sí")
         : formularioCompleto.documento_respaldo_tiene === false ? "No" : null,
+      // Principios 1 y 2 (R9.5)
+      asegura_transparencia_detalle: formularioCompleto.asegura_transparencia_detalle || null,
+      informa_titulares_si_no:       formularioCompleto.informa_titulares_si_no       ?? null,
+      finalidad_todos_necesarios:    formularioCompleto.finalidad_todos_necesarios    ?? null,
+      finalidad_misma:               formularioCompleto.finalidad_misma               ?? null,
+      usa_solo_fines_declarados:     formularioCompleto.usa_solo_fines_declarados     ?? null,
+      minimizacion_si_no:            formularioCompleto.minimizacion_si_no            ?? null,
+      // R9.3/R9.4 (Paso 2 y 3) — faltaban acá: se guardaban solo si el
+      // usuario paraba a hacer "Guardar borrador" en Paso2/Paso3, pero se
+      // perdían si completaba todo el wizard de corrido hasta "Guardar" (R9.7b).
+      datos_sensibles_descripcion:        formularioCompleto.datos_sensibles_descripcion        || null,
+      datos_academicos_laborales:         formularioCompleto.datos_academicos_laborales         || null,
+      datos_financieros_patrimoniales:    formularioCompleto.datos_financieros_patrimoniales    || null,
+      origen_sistemico_datos:             formularioCompleto.origen_sistemico_datos             || null,
+      base_legal_transferencia_internacional: formularioCompleto.base_legal_transferencia_internacional || null,
+      metodo_transferencia_detalle:       formularioCompleto.metodo_transferencia_detalle       || null,
+      otros_datos:                        formularioCompleto.otros_datos                        || null,
       // B2-05
       incluye_nna:                        formularioCompleto.incluye_nna ? true : null,
       nna_detalle:                        formularioCompleto.nna_detalle || null,
@@ -462,8 +612,9 @@ export default function Paso4() {
   async function handleGuardarBorrador() {
     setGuardandoBorrador(true);
     try {
-      actualizarForm(local);
-      const datos = { ...form, ...local };
+      const localParaGuardar = { ...local, base_legal: local.base_legal.join(",") };
+      actualizarForm(localParaGuardar);
+      const datos = { ...form, ...localParaGuardar };
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
@@ -509,6 +660,7 @@ export default function Paso4() {
         campos_detectados: datos.campos_detectados || [],
         campos_usados: datos.campos_detectados || [],
         datos_tratados: limpiarBloquesDatos(datos.datos_tratados),
+        base_legal_detalle: limpiarBaseLegalDetalle(datos.base_legal_detalle),
         detalle: {
           responsable_tratamiento: datos.responsable || null,
           es_responsable: datos.es_responsable ?? true,
@@ -525,6 +677,21 @@ export default function Paso4() {
           documento_respaldo_permiso: datos.documento_respaldo_tiene === true
             ? (datos.documento_respaldo_descripcion || "Sí")
             : datos.documento_respaldo_tiene === false ? "No" : null,
+          // Principios 1 y 2 (R9.5)
+          asegura_transparencia_detalle: datos.asegura_transparencia_detalle || null,
+          informa_titulares_si_no:       datos.informa_titulares_si_no       ?? null,
+          finalidad_todos_necesarios:    datos.finalidad_todos_necesarios    ?? null,
+          finalidad_misma:               datos.finalidad_misma               ?? null,
+          usa_solo_fines_declarados:     datos.usa_solo_fines_declarados     ?? null,
+          minimizacion_si_no:            datos.minimizacion_si_no            ?? null,
+          // R9.3/R9.4 (Paso 2 y 3) — mismo fix que en handleGuardar (R9.7b)
+          datos_sensibles_descripcion:        datos.datos_sensibles_descripcion        || null,
+          datos_academicos_laborales:         datos.datos_academicos_laborales         || null,
+          datos_financieros_patrimoniales:    datos.datos_financieros_patrimoniales    || null,
+          origen_sistemico_datos:             datos.origen_sistemico_datos             || null,
+          base_legal_transferencia_internacional: datos.base_legal_transferencia_internacional || null,
+          metodo_transferencia_detalle:       datos.metodo_transferencia_detalle       || null,
+          otros_datos:                        datos.otros_datos                        || null,
           incluye_nna:                        datos.incluye_nna ? true : null,
           nna_detalle:                        datos.nna_detalle || null,
           datos_navegacion:                   datos.datos_navegacion ? true : null,
@@ -607,10 +774,14 @@ export default function Paso4() {
   }
 
   function handleAnterior() {
-    actualizarForm(local);
+    actualizarForm({ ...local, base_legal: local.base_legal.join(",") });
     navigate("/nuevo-tratamiento/paso3");
     window.scrollTo(0, 0);
   }
+
+  // R9.5: finalidad y base legal ahora se completan en este paso — se exigen
+  // recién al guardar de verdad, no al guardar un borrador (que es parcial por definición).
+  const puedeGuardar = local.finalidad.trim().length > 0 && local.base_legal.length > 0;
 
   return (
     <div className="p4-layout">
@@ -624,6 +795,236 @@ export default function Paso4() {
 
         <div className="p4-card">
           <BarraProgreso pasoActual={4} prefix="p4" />
+
+          {/* ── Principio 1 — Licitud y transparencia (R9.5: movido desde Paso1 + campos nuevos) ── */}
+          <div className="p4-seccion" style={{ marginBottom: "1.6rem" }}>
+            <h3 className="p4-seccion-titulo">Principio 1 — Licitud y transparencia</h3>
+
+            {/* Base legal */}
+            <div className="p1-campo">
+              <div className="p1-label-row">
+                <label className="p1-label" htmlFor="base_legal">
+                  Base legal
+                </label>
+                <div className="p1-bases-info">
+                  {BASES_LEGALES.map((op) => (
+                    <TooltipBaseLegal key={op.valor} opcion={op} />
+                  ))}
+                </div>
+              </div>
+              <div className="p1-checkboxes">
+                {BASES_LEGALES.map((op) => {
+                  const marcado = local.base_legal.includes(op.valor);
+                  return (
+                    <label key={op.valor} className={`p1-check-item ${marcado ? "p1-check-item--marcado" : ""}`}>
+                      <input
+                        type="checkbox"
+                        className="p1-check-input"
+                        checked={marcado}
+                        onChange={() => toggleBaseLegal(op.valor)}
+                      />
+                      <span className="p1-check-texto">{op.etiqueta}</span>
+                      <span className="p1-check-articulo">{op.articulo}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              {local.base_legal.length > 0 && (
+                <div className="p1-bases-seleccionadas">
+                  {local.base_legal.map((valor) => {
+                    const base = BASES_LEGALES.find((b) => b.valor === valor);
+                    return base ? (
+                      <p key={valor} className="p1-base-desc">
+                        <span className="p1-base-articulo">{base.articulo} —</span> {base.descripcion}
+                      </p>
+                    ) : null;
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Base legal adicional — lista dinámica de texto libre (R9.6) */}
+            <div className="p1-campo">
+              <label className="p1-label">Base legal adicional (opcional)</label>
+              <p className="p1-campo-hint p1-campo-hint--info" style={{ marginBottom: 8 }}>
+                Agrega, una por una, otras normas, consentimientos o documentos que respaldan este tratamiento.
+              </p>
+              <ListaDinamicaTexto
+                items={local.base_legal_detalle}
+                onChange={(items) => setLocal((p) => ({ ...p, base_legal_detalle: items }))}
+                placeholder="Ej: Ley de inclusión laboral 21.015"
+                textoBoton="+ Agregar otra base legal"
+                rows={2}
+              />
+            </div>
+
+            {/* Transparencia — pregunta compartida con Principio 4, un solo campo */}
+            <div className="p4-campo-grupo">
+              <label className="p4-campo-label">¿De qué manera asegura que el tratamiento se realiza conforme a la ley y de forma transparente?</label>
+              <textarea
+                className="p4-textarea-campo"
+                rows={3}
+                placeholder="Ej: políticas de privacidad públicas, avisos de tratamiento, registro de actividades..."
+                value={local.asegura_transparencia_detalle}
+                onChange={(e) => setLocal((p) => ({ ...p, asegura_transparencia_detalle: e.target.value }))}
+                maxLength={1500}
+              />
+            </div>
+
+            {/* ¿Se informa a titulares? — Sí/No antes de los canales */}
+            <div className="p4-campo-grupo">
+              <label className="p4-campo-label">¿Se informa a los titulares sobre el tratamiento de sus datos?</label>
+              <div className="p4-radio-grupo">
+                <label className="p4-radio-item">
+                  <input
+                    type="radio"
+                    name="informa_titulares_si_no"
+                    checked={local.informa_titulares_si_no === true}
+                    onChange={() => setLocal((p) => ({ ...p, informa_titulares_si_no: true }))}
+                  />
+                  <span>Sí</span>
+                </label>
+                <label className="p4-radio-item">
+                  <input
+                    type="radio"
+                    name="informa_titulares_si_no"
+                    checked={local.informa_titulares_si_no === false}
+                    onChange={() => setLocal((p) => ({ ...p, informa_titulares_si_no: false, informa_titulares: [] }))}
+                  />
+                  <span>No</span>
+                </label>
+              </div>
+            </div>
+            {local.informa_titulares_si_no === true && (
+              <div className="p1-campo">
+                <label className="p1-label">¿Cómo se informa a los titulares?</label>
+                <div className="p1-checkboxes">
+                  {[
+                    { valor: "web",       etiqueta: "Aviso en web" },
+                    { valor: "correo",    etiqueta: "Correo electrónico" },
+                    { valor: "contrato",  etiqueta: "Contrato" },
+                    { valor: "mandato",   etiqueta: "Mandato" },
+                  ].map(({ valor, etiqueta }) => (
+                    <label key={valor} className="p1-checkbox-opcion">
+                      <input
+                        type="checkbox"
+                        checked={(local.informa_titulares || []).includes(valor)}
+                        onChange={() => toggleInformaTitulares(valor)}
+                      />
+                      <span>{etiqueta}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Documento de respaldo */}
+            <div className="p1-campo">
+              <label className="p1-label">¿Existe documento de respaldo o permiso?</label>
+              <div className="p1-radios">
+                <label className="p1-rol-opcion">
+                  <input
+                    type="radio"
+                    name="documento_respaldo_tiene"
+                    checked={local.documento_respaldo_tiene === true}
+                    onChange={() => setLocal((p) => ({ ...p, documento_respaldo_tiene: true }))}
+                  />
+                  <span>Sí</span>
+                </label>
+                <label className="p1-rol-opcion">
+                  <input
+                    type="radio"
+                    name="documento_respaldo_tiene"
+                    checked={local.documento_respaldo_tiene === false}
+                    onChange={() => setLocal((p) => ({ ...p, documento_respaldo_tiene: false, documento_respaldo_descripcion: "" }))}
+                  />
+                  <span>No</span>
+                </label>
+              </div>
+              {local.documento_respaldo_tiene === true && (
+                <>
+                  <textarea
+                    className="p1-textarea"
+                    placeholder="Describe el documento de respaldo o permiso"
+                    value={local.documento_respaldo_descripcion}
+                    onChange={(e) => setLocal((p) => ({ ...p, documento_respaldo_descripcion: e.target.value }))}
+                    rows={2}
+                    maxLength={1000}
+                    style={{ marginTop: 8 }}
+                  />
+                  <span className="p1-campo-contador">{local.documento_respaldo_descripcion.length}/1000</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* ── Principio 2 — Finalidad (R9.5: movido desde Paso1 + campos nuevos) ── */}
+          <div className="p4-seccion" style={{ marginBottom: "1.6rem" }}>
+            <h3 className="p4-seccion-titulo">Principio 2 — Finalidad</h3>
+
+            <div className="p1-campo">
+              <label className="p1-label" htmlFor="finalidad">
+                Finalidad
+              </label>
+              <textarea
+                id="finalidad"
+                name="finalidad"
+                className="p1-textarea"
+                placeholder="Describe el objetivo de este tratamiento de datos. Ej: Gestionar el pago de remuneraciones y cumplir con obligaciones laborales y previsionales."
+                value={local.finalidad}
+                onChange={(e) => {
+                  if (contarPalabras(e.target.value) > 2000) return;
+                  setLocal((p) => ({ ...p, finalidad: e.target.value }));
+                }}
+                rows={3}
+              />
+              <span className={`p1-campo-contador ${contarPalabras(local.finalidad) >= 2000 ? "p1-campo-contador--limite" : ""}`}>
+                {contarPalabras(local.finalidad)}/2000 palabras
+              </span>
+            </div>
+
+            <div className="p4-campo-grupo">
+              <label className="p4-campo-label">¿Todos los datos tienen finalidad y son necesarios?</label>
+              <div className="p4-radio-grupo">
+                <label className="p4-radio-item">
+                  <input type="radio" name="finalidad_todos_necesarios" checked={local.finalidad_todos_necesarios === true} onChange={() => setLocal((p) => ({ ...p, finalidad_todos_necesarios: true }))} />
+                  <span>Sí</span>
+                </label>
+                <label className="p4-radio-item">
+                  <input type="radio" name="finalidad_todos_necesarios" checked={local.finalidad_todos_necesarios === false} onChange={() => setLocal((p) => ({ ...p, finalidad_todos_necesarios: false }))} />
+                  <span>No</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="p4-campo-grupo">
+              <label className="p4-campo-label">Todos los datos tienen la misma finalidad</label>
+              <div className="p4-radio-grupo">
+                <label className="p4-radio-item">
+                  <input type="radio" name="finalidad_misma" checked={local.finalidad_misma === true} onChange={() => setLocal((p) => ({ ...p, finalidad_misma: true }))} />
+                  <span>Sí</span>
+                </label>
+                <label className="p4-radio-item">
+                  <input type="radio" name="finalidad_misma" checked={local.finalidad_misma === false} onChange={() => setLocal((p) => ({ ...p, finalidad_misma: false }))} />
+                  <span>No</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="p4-campo-grupo">
+              <label className="p4-campo-label">¿Los datos se usan solo para fines declarados?</label>
+              <div className="p4-radio-grupo">
+                <label className="p4-radio-item">
+                  <input type="radio" name="usa_solo_fines_declarados" checked={local.usa_solo_fines_declarados === true} onChange={() => setLocal((p) => ({ ...p, usa_solo_fines_declarados: true }))} />
+                  <span>Sí</span>
+                </label>
+                <label className="p4-radio-item">
+                  <input type="radio" name="usa_solo_fines_declarados" checked={local.usa_solo_fines_declarados === false} onChange={() => setLocal((p) => ({ ...p, usa_solo_fines_declarados: false }))} />
+                  <span>No</span>
+                </label>
+              </div>
+            </div>
+          </div>
 
           {/* ── Grid 3 secciones ─────────────────────────────── */}
           <div className="p4-grid">
@@ -708,10 +1109,10 @@ export default function Paso4() {
                       value={local.otras_medidas}
                       onChange={(e) => setLocal((prev) => ({ ...prev, otras_medidas: e.target.value }))}
                       rows={3}
-                      maxLength={500}
+                      maxLength={1500}
                     />
                     <p className="p4-campo-ayuda">Si son varias medidas, sepáralas por comas o en líneas distintas.</p>
-                    <span className="p4-campo-contador">{local.otras_medidas.length}/500</span>
+                    <span className="p4-campo-contador">{local.otras_medidas.length}/1500</span>
                   </>
                 )}
               </div>
@@ -788,31 +1189,43 @@ export default function Paso4() {
                 </div>
                 <div className="p4-campo-grupo">
                   <label className="p4-campo-label">Excepciones al plazo de conservación</label>
-                  <textarea className="p4-textarea-campo" rows={2} placeholder="Ej: datos retenidos por obligación legal más allá del plazo estándar..." value={local.excepciones_plazo} onChange={(e) => setLocal((p) => ({ ...p, excepciones_plazo: e.target.value }))} maxLength={500} />
+                  <textarea className="p4-textarea-campo" rows={2} placeholder="Ej: datos retenidos por obligación legal más allá del plazo estándar..." value={local.excepciones_plazo} onChange={(e) => setLocal((p) => ({ ...p, excepciones_plazo: e.target.value }))} maxLength={1500} />
                 </div>
                 <div className="p4-panel-grid">
                   <div className="p4-campo-grupo">
-                    <label className="p4-campo-label">Justificación de minimización</label>
-                    <textarea className="p4-textarea-campo" rows={3} placeholder="¿Por qué son necesarios exactamente estos datos y no más?" value={local.minimizacion_justificacion} onChange={(e) => setLocal((p) => ({ ...p, minimizacion_justificacion: e.target.value }))} maxLength={500} />
+                    <label className="p4-campo-label">¿Se aplica minimización de datos?</label>
+                    <div className="p4-radio-grupo">
+                      <label className="p4-radio-item">
+                        <input type="radio" name="minimizacion_si_no" checked={local.minimizacion_si_no === true} onChange={() => setLocal((p) => ({ ...p, minimizacion_si_no: true }))} />
+                        <span>Sí</span>
+                      </label>
+                      <label className="p4-radio-item">
+                        <input type="radio" name="minimizacion_si_no" checked={local.minimizacion_si_no === false} onChange={() => setLocal((p) => ({ ...p, minimizacion_si_no: false }))} />
+                        <span>No</span>
+                      </label>
+                    </div>
+                    {local.minimizacion_si_no === true && (
+                      <textarea className="p4-textarea-campo" style={{ marginTop: 6 }} rows={3} placeholder="¿Por qué son necesarios exactamente estos datos y no más?" value={local.minimizacion_justificacion} onChange={(e) => setLocal((p) => ({ ...p, minimizacion_justificacion: e.target.value }))} maxLength={1500} />
+                    )}
                   </div>
                   <div className="p4-campo-grupo">
                     <label className="p4-campo-label">Mecanismos para garantizar exactitud</label>
-                    <textarea className="p4-textarea-campo" rows={3} placeholder="Ej: validación automática, actualización periódica..." value={local.mecanismos_exactitud} onChange={(e) => setLocal((p) => ({ ...p, mecanismos_exactitud: e.target.value }))} maxLength={500} />
+                    <textarea className="p4-textarea-campo" rows={3} placeholder="Ej: validación automática, actualización periódica..." value={local.mecanismos_exactitud} onChange={(e) => setLocal((p) => ({ ...p, mecanismos_exactitud: e.target.value }))} maxLength={1500} />
                   </div>
                 </div>
                 <div className="p4-panel-grid">
                   <div className="p4-campo-grupo">
                     <label className="p4-campo-label">Medidas de cumplimiento demostrable</label>
-                    <textarea className="p4-textarea-campo" rows={3} placeholder="Documentos, registros o procedimientos que evidencian el cumplimiento..." value={local.cumplimiento_demostrable} onChange={(e) => setLocal((p) => ({ ...p, cumplimiento_demostrable: e.target.value }))} maxLength={500} />
+                    <textarea className="p4-textarea-campo" rows={3} placeholder="Documentos, registros o procedimientos que evidencian el cumplimiento..." value={local.cumplimiento_demostrable} onChange={(e) => setLocal((p) => ({ ...p, cumplimiento_demostrable: e.target.value }))} maxLength={1500} />
                   </div>
                   <div className="p4-campo-grupo">
                     <label className="p4-campo-label">Incidentes históricos <span className="p4-opcional">(opcional)</span></label>
-                    <textarea className="p4-textarea-campo" rows={3} placeholder="Registros de brechas de seguridad anteriores relevantes..." value={local.incidentes_historicos} onChange={(e) => setLocal((p) => ({ ...p, incidentes_historicos: e.target.value }))} maxLength={500} />
+                    <textarea className="p4-textarea-campo" rows={3} placeholder="Registros de brechas de seguridad anteriores relevantes..." value={local.incidentes_historicos} onChange={(e) => setLocal((p) => ({ ...p, incidentes_historicos: e.target.value }))} maxLength={1500} />
                   </div>
                 </div>
                 <div className="p4-campo-grupo">
                   <label className="p4-campo-label">Cambios futuros previstos <span className="p4-opcional">(opcional)</span></label>
-                  <textarea className="p4-textarea-campo" rows={2} placeholder="Cambios planificados en el tratamiento que podrían afectar el riesgo..." value={local.cambios_futuros} onChange={(e) => setLocal((p) => ({ ...p, cambios_futuros: e.target.value }))} maxLength={500} />
+                  <textarea className="p4-textarea-campo" rows={2} placeholder="Cambios planificados en el tratamiento que podrían afectar el riesgo..." value={local.cambios_futuros} onChange={(e) => setLocal((p) => ({ ...p, cambios_futuros: e.target.value }))} maxLength={1500} />
                 </div>
               </div>
             )}
@@ -850,7 +1263,7 @@ export default function Paso4() {
                     </div>
                     <div className="p4-campo-grupo">
                       <label className="p4-campo-label">Detalles de la DPIA</label>
-                      <textarea className="p4-textarea-campo" rows={4} placeholder="Fecha, responsable, conclusiones principales, medidas adoptadas..." value={local.dpia_detalle} onChange={(e) => setLocal((p) => ({ ...p, dpia_detalle: e.target.value }))} maxLength={1000} />
+                      <textarea className="p4-textarea-campo" rows={4} placeholder="Fecha, responsable, conclusiones principales, medidas adoptadas..." value={local.dpia_detalle} onChange={(e) => setLocal((p) => ({ ...p, dpia_detalle: e.target.value }))} maxLength={3000} />
                     </div>
                   </>
                 )}
@@ -878,26 +1291,47 @@ export default function Paso4() {
                   <FilaRevision label="Proceso asociado" valor={form.proceso_asociado} />
                   <FilaRevision label="Responsable" valor={form.responsable} />
                   <FilaRevision label="Área responsable" valor={form.subarea_responsable} />
-                  <FilaRevision label="Finalidad" valor={form.finalidad} />
                   <FilaRevision
                     label="Descripción detallada"
                     valor={(form.datos_tratados || []).filter((b) => b.categoria_dato || b.se_tratan || b.para_que || b.como).length > 0
                       ? `${form.datos_tratados.length} bloque(s): ${form.datos_tratados.map((b) => b.categoria_dato || "sin categoría").join(", ")}`
                       : null}
                   />
-                  <FilaRevision label="Base legal" valor={(form.base_legal || "").split(",").filter(Boolean).map((v) => ETIQ_BASE_LEGAL[v] || v).join(", ")} />
                   <FilaRevision label="Procesos relacionados" valor={form.procesos_relacionados} />
                   <FilaRevision label="Finalidades secundarias" valor={form.finalidades_secundarias} />
+                </div>
+
+                <div className="p4-revision-seccion">
+                  <h4 className="p4-revision-titulo">Paso 4 — Principio 1 (Licitud y transparencia)</h4>
+                  <FilaRevision label="Base legal" valor={(form.base_legal || "").split(",").filter(Boolean).map((v) => ETIQ_BASE_LEGAL[v] || v).join(", ")} />
                   <FilaRevision
-                    label="¿Cómo se informa a los titulares?"
-                    valor={(form.informa_titulares || []).map((v) => ETIQ_INFORMA_TITULARES[v] || v).join(", ")}
+                    label="Base legal adicional"
+                    valor={(form.base_legal_detalle || []).filter(Boolean).length > 0
+                      ? form.base_legal_detalle.filter(Boolean).join(" · ")
+                      : null}
                   />
+                  <FilaRevision label="¿Asegura licitud y transparencia?" valor={form.asegura_transparencia_detalle} />
+                  <FilaRevision label="¿Se informa a titulares?" valor={form.informa_titulares_si_no === true ? "Sí" : form.informa_titulares_si_no === false ? "No" : null} />
+                  {form.informa_titulares_si_no === true && (
+                    <FilaRevision
+                      label="¿Cómo se informa a los titulares?"
+                      valor={(form.informa_titulares || []).map((v) => ETIQ_INFORMA_TITULARES[v] || v).join(", ")}
+                    />
+                  )}
                   <FilaRevision
                     label="Documento de respaldo"
                     valor={form.documento_respaldo_tiene === true
                       ? `Sí — ${form.documento_respaldo_descripcion || "sin descripción"}`
                       : form.documento_respaldo_tiene === false ? "No" : null}
                   />
+                </div>
+
+                <div className="p4-revision-seccion">
+                  <h4 className="p4-revision-titulo">Paso 4 — Principio 2 (Finalidad)</h4>
+                  <FilaRevision label="Finalidad" valor={form.finalidad} />
+                  <FilaRevision label="¿Todos los datos tienen finalidad y son necesarios?" valor={form.finalidad_todos_necesarios === true ? "Sí" : form.finalidad_todos_necesarios === false ? "No" : null} />
+                  <FilaRevision label="¿Todos los datos tienen la misma finalidad?" valor={form.finalidad_misma === true ? "Sí" : form.finalidad_misma === false ? "No" : null} />
+                  <FilaRevision label="¿Se usan solo para fines declarados?" valor={form.usa_solo_fines_declarados === true ? "Sí" : form.usa_solo_fines_declarados === false ? "No" : null} />
                 </div>
 
                 <div className="p4-revision-seccion">
@@ -983,6 +1417,7 @@ export default function Paso4() {
                   <FilaRevision label="¿Documenta destrucción?" valor={local.documenta_destruccion ? "Sí" : "No"} />
                   <FilaRevision label="Excepciones al plazo" valor={local.excepciones_plazo} />
                   <FilaRevision label="Evaluación periódica" valor={ETIQ_EVALUACION_PERIODICA[local.evaluacion_periodica]} />
+                  <FilaRevision label="¿Se aplica minimización de datos?" valor={local.minimizacion_si_no === true ? "Sí" : local.minimizacion_si_no === false ? "No" : null} />
                   <FilaRevision label="Justificación minimización" valor={local.minimizacion_justificacion} />
                   <FilaRevision label="Mecanismos de exactitud" valor={local.mecanismos_exactitud} />
                   <FilaRevision label="Cumplimiento demostrable" valor={local.cumplimiento_demostrable} />
@@ -1037,6 +1472,12 @@ export default function Paso4() {
             </div>
           )}
 
+          {!puedeGuardar && (
+            <p className="p4-error" style={{ marginBottom: 0 }}>
+              Completa Finalidad y Base legal (Principio 2, arriba) para poder guardar.
+            </p>
+          )}
+
           {/* ── Navegación ───────────────────────────────────── */}
           <div className="p4-navegacion">
             <div className="p4-nav-izquierda">
@@ -1057,7 +1498,7 @@ export default function Paso4() {
               <button
                 className={`p4-btn p4-btn--guardar ${guardando ? "p4-btn--cargando" : ""}`}
                 onClick={handleGuardar}
-                disabled={guardando || guardandoBorrador}
+                disabled={guardando || guardandoBorrador || !puedeGuardar}
               >
                 {guardando
                   ? "Guardando..."

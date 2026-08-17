@@ -55,6 +55,13 @@ function crearFormVacio() { return {
   // estos campos a Paso4.jsx, el comentario quedó desactualizado hasta ahora)
   plazo_conservacion: "", plazo_otro: "", otras_medidas: "",
   medidas_seguridad: [], decisiones_automatizadas: false,
+  // ── Paso 4 — Principios 1 y 2 (R9.5: movidos desde Paso1 + nuevos) ───────
+  asegura_transparencia_detalle: "",
+  finalidad_todos_necesarios: null, finalidad_misma: null,
+  usa_solo_fines_declarados: null, informa_titulares_si_no: null,
+  minimizacion_si_no: null,
+  // Paso 4 — R9.6: lista dinámica de base legal adicional (texto libre)
+  base_legal_detalle: [],
   // ── Paso 4 — Principios Ley 21.719 ───────────────────────
   criterio_plazo: "", metodo_eliminacion: "", documenta_destruccion: false,
   excepciones_plazo: "", minimizacion_justificacion: "", mecanismos_exactitud: "",

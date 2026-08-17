@@ -50,6 +50,7 @@ MIGRATIONS = [
     "ALTER TABLE detalle_rat_extendido ADD COLUMN datos_financieros_patrimoniales TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN origen_sistemico_datos TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN datos_sensibles_descripcion TEXT NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN otros_datos TEXT NULL",
     # R9.1 — Paso 3 transferencias
     "ALTER TABLE detalle_rat_extendido ADD COLUMN base_legal_transferencia_internacional TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN metodo_transferencia_detalle TEXT NULL",

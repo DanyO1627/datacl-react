@@ -274,12 +274,13 @@ export default function DetalleTratamiento() {
   const d      = tratamiento.detalle     // puede ser null en tratamientos anteriores
   const ext    = tratamiento.detalle_extendido   // null si la tabla aún no tiene fila para este tratamiento
 
-  function detectaSensibleEnCategorias() {
-    const cat = (d?.categoria_datos || '').toLowerCase()
-    const keywords = ['salud', 'diagnóstico', 'diagnostico', 'medicamento', 'biométric', 'biometric', 'huella', 'facial', 'iris', 'étnic', 'etnic', 'raza', 'religión', 'religion', 'creencia', 'orientación sexual', 'orientacion sexual', 'opinión polít', 'opinion polit', 'genétic', 'genetic', 'sindical']
-    return keywords.some(kw => cat.includes(kw))
-  }
-  const tieneSensibles = tratamiento.datos_sensibles || detectaSensibleEnCategorias()
+  // R9.7b: la señal principal es solo el Sí/No real de datos_sensibles
+  // (obligatorio en Paso2). Antes también se re-detectaba escaneando
+  // categoria_datos por palabras clave, pero ese campo ya no se llena desde
+  // R9.3 — se saca esa señal secundaria de la determinación.
+  const tieneSensibles = tratamiento.datos_sensibles
+  // Texto descriptivo opcional, solo aporta detalle si el tratamiento es
+  // viejo y todavía trae categoria_datos de antes de R9.3.
   const categoriasSensiblesDetectadas = (d?.categoria_datos || '').split('\n').filter(linea => {
     const l = linea.toLowerCase()
     return ['salud', 'biométric', 'biometric', 'huella', 'étnic', 'etnic', 'religión', 'religion', 'sexual', 'polít', 'genétic', 'sindical'].some(kw => l.includes(kw))
@@ -453,6 +454,18 @@ export default function DetalleTratamiento() {
           </div>
         </div>
 
+        {/* ── Base legal adicional — lista dinámica (R9.6) ── */}
+        {tratamiento.base_legal_detalle?.length > 0 && (
+          <div className="detalle-seccion">
+            <h2 className="detalle-columna-titulo">Base legal adicional</h2>
+            <ul className="detalle-lista-simple">
+              {tratamiento.base_legal_detalle.map((item) => (
+                <li key={item.id}>{item.descripcion}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* ── Sección 2: Identificación del responsable ── */}
         <div className="detalle-seccion">
           <div className="detalle-seccion-header">
@@ -494,14 +507,43 @@ export default function DetalleTratamiento() {
             <Campo label="Origen de los datos">
               <Badges items={d?.origen_datos?.split(",").filter(Boolean).map(v => ORIGEN[v] || v)} />
             </Campo>
-            <Campo label="Categoría de datos (detalle RAT)">
-              {d?.categoria_datos
-                ? <span className="detalle-campo-valor">{d.categoria_datos}</span>
-                : <span className="detalle-campo-pendiente">No se generó una descripción detallada — puedes agregarla desde "Editar"</span>
-              }
-            </Campo>
+            {/* R9.7b: desde R9.3 este campo ya no se llena desde el formulario
+                (Editar no lo tiene) — solo se muestra si un tratamiento viejo
+                lo trae de antes. Sin eso, no hay card ni mensaje sin salida. */}
+            {d?.categoria_datos && (
+              <Campo label="Categoría de datos (detalle RAT)">
+                <span className="detalle-campo-valor">{d.categoria_datos}</span>
+              </Campo>
+            )}
           </div>
         </div>
+
+        {/* ── Datos personales adicionales (R9.3) ── */}
+        {ext && seccionExtendidaTieneData(
+          ext.datos_sensibles_descripcion, ext.datos_academicos_laborales,
+          ext.datos_financieros_patrimoniales, ext.origen_sistemico_datos, ext.otros_datos
+        ) && (
+          <div className="detalle-seccion">
+            <h2 className="detalle-columna-titulo">Datos personales adicionales</h2>
+            <div className="detalle-seccion-campos">
+              <Campo label="Descripción de los datos sensibles">
+                <ValorMultilinea v={ext.datos_sensibles_descripcion} />
+              </Campo>
+              <Campo label="Otros datos personales">
+                <ValorMultilinea v={ext.otros_datos} />
+              </Campo>
+              <Campo label="Datos académicos / laborales">
+                <ValorMultilinea v={ext.datos_academicos_laborales} />
+              </Campo>
+              <Campo label="Datos financieros y patrimoniales">
+                <ValorMultilinea v={ext.datos_financieros_patrimoniales} />
+              </Campo>
+              <Campo label="Origen sistémico de los datos">
+                <ValorMultilinea v={ext.origen_sistemico_datos} />
+              </Campo>
+            </div>
+          </div>
+        )}
 
         {/* ── Sección 4: Evaluación de riesgo ── */}
         <div className="detalle-evaluacion">
@@ -599,15 +641,48 @@ export default function DetalleTratamiento() {
           </div>
         )}
 
-        {ext && seccionExtendidaTieneData(ext.finalidades_secundarias, ext.informa_titulares, ext.documento_respaldo_permiso) && (
+        {ext && seccionExtendidaTieneData(
+          ext.finalidades_secundarias, ext.informa_titulares, ext.documento_respaldo_permiso,
+          ext.asegura_transparencia_detalle, ext.informa_titulares_si_no,
+          ext.finalidad_todos_necesarios, ext.finalidad_misma, ext.usa_solo_fines_declarados
+        ) && (
           <div className="detalle-seccion">
             <h2 className="detalle-columna-titulo">Finalidad y transparencia</h2>
             <div className="detalle-seccion-campos">
               <Campo label="Finalidades secundarias">
                 <ValorMultilinea v={ext.finalidades_secundarias} />
               </Campo>
+              <Campo label="¿Asegura licitud y transparencia?">
+                <ValorMultilinea v={ext.asegura_transparencia_detalle} />
+              </Campo>
               <Campo label="¿Se informa a los titulares?">
-                <Badges items={parsearInformaTitulares(ext.informa_titulares)} />
+                {ext.informa_titulares_si_no === null || ext.informa_titulares_si_no === undefined
+                  ? <span className="detalle-campo-pendiente">—</span>
+                  : <span className="detalle-campo-valor">{ext.informa_titulares_si_no ? 'Sí' : 'No'}</span>
+                }
+              </Campo>
+              {ext.informa_titulares_si_no && (
+                <Campo label="¿Cómo se informa a los titulares?">
+                  <Badges items={parsearInformaTitulares(ext.informa_titulares)} />
+                </Campo>
+              )}
+              <Campo label="¿Todos los datos tienen finalidad y son necesarios?">
+                {ext.finalidad_todos_necesarios === null || ext.finalidad_todos_necesarios === undefined
+                  ? <span className="detalle-campo-pendiente">—</span>
+                  : <span className="detalle-campo-valor">{ext.finalidad_todos_necesarios ? 'Sí' : 'No'}</span>
+                }
+              </Campo>
+              <Campo label="¿Todos los datos tienen la misma finalidad?">
+                {ext.finalidad_misma === null || ext.finalidad_misma === undefined
+                  ? <span className="detalle-campo-pendiente">—</span>
+                  : <span className="detalle-campo-valor">{ext.finalidad_misma ? 'Sí' : 'No'}</span>
+                }
+              </Campo>
+              <Campo label="¿Se usan solo para fines declarados?">
+                {ext.usa_solo_fines_declarados === null || ext.usa_solo_fines_declarados === undefined
+                  ? <span className="detalle-campo-pendiente">—</span>
+                  : <span className="detalle-campo-valor">{ext.usa_solo_fines_declarados ? 'Sí' : 'No'}</span>
+                }
               </Campo>
               <Campo label="Documento de respaldo / permiso">
                 <ValorMultilinea v={ext.documento_respaldo_permiso} />
@@ -650,8 +725,9 @@ export default function DetalleTratamiento() {
 
         {ext && seccionExtendidaTieneData(
           ext.destinatarios_internos, ext.destinatarios_nacionales, ext.destinatarios_internacionales,
+          ext.base_legal_transferencia_internacional,
           ext.terceros_son_encargados, ext.contratos_proteccion_datos, ext.contratos_proteccion_datos_detalle,
-          ext.datos_transferidos_detalle, ext.metodo_transferencia
+          ext.datos_transferidos_detalle, ext.metodo_transferencia, ext.metodo_transferencia_detalle
         ) && (
           <div className="detalle-seccion">
             <h2 className="detalle-columna-titulo">Transferencias y terceros</h2>
@@ -664,6 +740,9 @@ export default function DetalleTratamiento() {
               </Campo>
               <Campo label="Destinatarios internacionales">
                 <ValorMultilinea v={ext.destinatarios_internacionales} />
+              </Campo>
+              <Campo label="Base legal de la transferencia internacional">
+                <ValorMultilinea v={ext.base_legal_transferencia_internacional} />
               </Campo>
               <Campo label="¿Los terceros son encargados?">
                 {ext.terceros_son_encargados === null || ext.terceros_son_encargados === undefined
@@ -687,6 +766,9 @@ export default function DetalleTratamiento() {
               </Campo>
               <Campo label="Método de transferencia">
                 <Valor v={ext.metodo_transferencia} vacio="—" />
+              </Campo>
+              <Campo label="Detalle del método de transferencia">
+                <ValorMultilinea v={ext.metodo_transferencia_detalle} />
               </Campo>
             </div>
           </div>
@@ -723,7 +805,7 @@ export default function DetalleTratamiento() {
 
         {ext && seccionExtendidaTieneData(
           ext.criterio_plazo, ext.metodo_eliminacion, ext.documenta_destruccion,
-          ext.excepciones_plazo, ext.minimizacion_justificacion, ext.mecanismos_exactitud,
+          ext.excepciones_plazo, ext.minimizacion_si_no, ext.minimizacion_justificacion, ext.mecanismos_exactitud,
           ext.evaluacion_periodica, ext.cumplimiento_demostrable,
           ext.incidentes_historicos, ext.cambios_futuros
         ) && (
@@ -744,6 +826,12 @@ export default function DetalleTratamiento() {
               </Campo>
               <Campo label="Excepciones al plazo">
                 <ValorMultilinea v={ext.excepciones_plazo} />
+              </Campo>
+              <Campo label="¿Se aplica minimización de datos?">
+                {ext.minimizacion_si_no === null || ext.minimizacion_si_no === undefined
+                  ? <span className="detalle-campo-pendiente">—</span>
+                  : <span className="detalle-campo-valor">{ext.minimizacion_si_no ? 'Sí' : 'No'}</span>
+                }
               </Campo>
               <Campo label="Justificación de minimización">
                 <ValorMultilinea v={ext.minimizacion_justificacion} />

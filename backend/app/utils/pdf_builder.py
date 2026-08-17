@@ -196,6 +196,17 @@ def _bloques_datos_texto(bloques):
     return divisor.join(partes)
 
 
+def _base_legal_detalle_texto(items):
+    """
+    Formatea la lista dinámica de base legal adicional (R9.6) como texto único
+    para una celda, una declaración por línea. Devuelve None si no hay items
+    (RATs sin este dato — anteriores a R9.6, o simplemente sin usarlo).
+    """
+    if not items:
+        return None
+    return "<br/>".join(f"• {item.replace(chr(10), '<br/>')}" for item in items if item)
+
+
 # ── Conversión ORM → dict plano ──────────────────────────────────────────
 
 def tratamiento_a_dict(t) -> dict:
@@ -220,10 +231,6 @@ def tratamiento_a_dict(t) -> dict:
         "categorias_titulares": d.categorias_titulares if d else None,
         "universo_titulares": d.universo_titulares if d else None,
         "origen_datos": d.origen_datos if d else None,
-        "categoria_datos": d.categoria_datos if d else None,
-        "campos_detectados_texto": ", ".join(
-            c.nombre_columna for c in (t.campos or [])[:6]
-        ) + (f" (+{len(t.campos) - 6})" if t.campos and len(t.campos) > 6 else "") if t.campos else None,
     }
 
     campos_ext = [
@@ -240,6 +247,15 @@ def tratamiento_a_dict(t) -> dict:
         "minimizacion_justificacion", "mecanismos_exactitud", "evaluacion_periodica",
         "cumplimiento_demostrable", "incidentes_historicos", "cambios_futuros",
         "requiere_dpia", "dpia_realizada", "dpia_detalle",
+        # R9.3 — Paso 2 datos ampliados
+        "datos_sensibles_descripcion", "datos_academicos_laborales",
+        "datos_financieros_patrimoniales", "origen_sistemico_datos", "otros_datos",
+        # R9.4 — Paso 3 transferencias
+        "base_legal_transferencia_internacional", "metodo_transferencia_detalle",
+        # R9.5 — Paso 4 Principios 1 y 2
+        "asegura_transparencia_detalle", "informa_titulares_si_no",
+        "finalidad_todos_necesarios", "finalidad_misma", "usa_solo_fines_declarados",
+        "minimizacion_si_no",
     ]
     for campo in campos_ext:
         resultado[campo] = getattr(ext, campo, None) if ext else None
@@ -254,6 +270,14 @@ def tratamiento_a_dict(t) -> dict:
             "como": b.como,
         }
         for b in (getattr(t, "datos_tratados", None) or [])
+    ]
+
+    # Lista dinámica de base legal adicional (R9.6) — mismo patrón que
+    # datos_tratados: relación aparte, ordenada por `orden`.
+    resultado["base_legal_detalle"] = [
+        b.descripcion
+        for b in (getattr(t, "base_legal_detalle", None) or [])
+        if b.descripcion
     ]
 
     return resultado
@@ -342,7 +366,6 @@ def _ficha_tratamiento(d, idx, total, estilos_dict, ancho, color_header):
 
     # Preparar campos derivados
     cats_tit = _titulares_legibles(d.get("categorias_titulares"))
-    cat_datos = d.get("categoria_datos") or d.get("campos_detectados_texto")
     medidas = _medidas_legibles(d.get("medidas_seguridad"))
 
     plazo = d.get("plazo_conservacion")
@@ -422,14 +445,24 @@ def _ficha_tratamiento(d, idx, total, estilos_dict, ancho, color_header):
     ))
 
     # ── Sección 2: Finalidad y base legal ─────────────────────────
+    # Orden calcado del de Paso4 (R9.5/R9.6): Base legal + adicional →
+    # transparencia → informa a titulares → documento de respaldo → Finalidad
+    # → los 3 Sí/No de Principio 2 → finalidades secundarias.
+    base_legal_detalle_texto = _base_legal_detalle_texto(d.get("base_legal_detalle"))
     elementos.extend(_tabla_seccion(
         "Licitud, finalidad y transparencia",
         [
-            ("Finalidad del tratamiento", "(descripción específica, no genérica)", _val(d, "finalidad")),
-            ("Finalidades secundarias", None, _val(d, "finalidades_secundarias")),
             ("Base legal", "(Consentimiento / Obligación legal / Interés legítimo / Contrato)", _val(d, "base_legal", _BASE_LEGAL)),
-            ("¿Se informa a los titulares?", "(sobre la finalidad y uso de sus datos)", _val(d, "informa_titulares", _INFORMA_TITULARES)),
+            ("Base legal adicional", "(otras normas, consentimientos o documentos)", base_legal_detalle_texto),
+            ("¿Asegura licitud y transparencia?", "(cómo se garantiza que el tratamiento es lícito y transparente)", _val(d, "asegura_transparencia_detalle")),
+            ("¿Se informa a los titulares?", None, _val(d, "informa_titulares_si_no")),
+            ("¿Cómo se informa a los titulares?", "(sobre la finalidad y uso de sus datos)", _val(d, "informa_titulares", _INFORMA_TITULARES)),
             ("Documento de respaldo", "(contrato, consentimiento, mandato)", _val(d, "documento_respaldo_permiso")),
+            ("Finalidad del tratamiento", "(descripción específica, no genérica)", _val(d, "finalidad")),
+            ("¿Todos los datos tienen finalidad y son necesarios?", None, _val(d, "finalidad_todos_necesarios")),
+            ("¿Todos los datos tienen la misma finalidad?", None, _val(d, "finalidad_misma")),
+            ("¿Se usan solo para fines declarados?", None, _val(d, "usa_solo_fines_declarados")),
+            ("Finalidades secundarias", None, _val(d, "finalidades_secundarias")),
         ],
         estilos_dict, ancho, color_header,
     ))
@@ -438,11 +471,15 @@ def _ficha_tratamiento(d, idx, total, estilos_dict, ancho, color_header):
     elementos.extend(_tabla_seccion(
         "Tipo de categoría de datos personales tratados",
         [
-            ("Categoría de datos personales", "(Pacientes / Clientes / Empleados / Otros)", cat_datos),
             ("Categorías de titulares", None, cats_tit),
             ("Universo de titulares", "(alcance: todos los clientes, solo empleados, etc.)", _val(d, "universo_titulares")),
             ("Origen de los datos", "(Titular / Terceros / Fuente pública / Generación interna)", _val(d, "origen_datos", _ORIGEN)),
             ("¿Incluye datos sensibles?", "(Salud / Biometría / Religión / Identidad de género)", _val(d, "datos_sensibles")),
+            ("Descripción de los datos sensibles", None, _val(d, "datos_sensibles_descripcion")),
+            ("Datos académicos / laborales", None, _val(d, "datos_academicos_laborales")),
+            ("Datos financieros y patrimoniales", None, _val(d, "datos_financieros_patrimoniales")),
+            ("Origen sistémico de los datos", "(sistemas o bases de datos de origen)", _val(d, "origen_sistemico_datos")),
+            ("Otros datos personales", None, _val(d, "otros_datos")),
             ("Datos de navegación", "(IP, cookies, ID dispositivo, geolocalización)", _val(d, "datos_navegacion")),
             ("Detalle datos de navegación", None, _val(d, "datos_navegacion_detalle")),
             ("Datos de NNA", "(Niños, niñas y adolescentes — menores de 18 años)", _val(d, "incluye_nna")),
@@ -459,12 +496,14 @@ def _ficha_tratamiento(d, idx, total, estilos_dict, ancho, color_header):
             ("Destinatarios internos", "(áreas que acceden o utilizan los datos)", _val(d, "destinatarios_internos")),
             ("Destinatarios nacionales", "(terceros nacionales que reciben datos)", _val(d, "destinatarios_nacionales")),
             ("Destinatarios internacionales", "(tercero, país y base legal)", _val(d, "destinatarios_internacionales")),
+            ("Base legal de la transferencia internacional", None, _val(d, "base_legal_transferencia_internacional")),
             ("¿Los datos salen al extranjero?", None, _val(d, "sale_extranjero")),
             ("¿Los terceros actúan como encargados?", None, _val(d, "terceros_son_encargados")),
             ("¿Existen contratos de protección de datos?", "(con terceros que reciben datos)", _val(d, "contratos_proteccion_datos")),
             ("Detalle contratos de protección", None, _val(d, "contratos_proteccion_datos_detalle")),
             ("Datos transferidos (detalle)", None, _val(d, "datos_transferidos_detalle")),
             ("Método de transferencia", "(digital / verbal / físico)", _val(d, "metodo_transferencia")),
+            ("Detalle del método de transferencia", None, _val(d, "metodo_transferencia_detalle")),
         ],
         estilos_dict, ancho, color_header,
     ))
@@ -480,6 +519,7 @@ def _ficha_tratamiento(d, idx, total, estilos_dict, ancho, color_header):
             ("Excepciones al plazo", "(archivo histórico / obligación legal)", _val(d, "excepciones_plazo")),
             ("Medidas de seguridad", "(cifrado, control acceso, backups, auditoría, etc.)", medidas),
             ("¿Decisiones automatizadas?", "(algoritmos o IA que deciden sobre personas)", _val(d, "decisiones_automatizadas")),
+            ("¿Se aplica minimización de datos?", None, _val(d, "minimizacion_si_no")),
             ("Justificación de minimización", "(¿por qué estos datos y no más?)", _val(d, "minimizacion_justificacion")),
             ("Mecanismos de exactitud", "(¿cómo se mantienen actualizados?)", _val(d, "mecanismos_exactitud")),
             ("Evaluación periódica", None, _val(d, "evaluacion_periodica", _PERIODO_EVALUACION)),

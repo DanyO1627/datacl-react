@@ -204,6 +204,7 @@ class DetalleRatExtendidoEntrada(BaseModel):
     datos_financieros_patrimoniales:        Optional[str] = None
     origen_sistemico_datos:                 Optional[str] = None
     datos_sensibles_descripcion:            Optional[str] = None
+    otros_datos:                            Optional[str] = None
     base_legal_transferencia_internacional: Optional[str] = None
     metodo_transferencia_detalle:           Optional[str] = None
     finalidad_todos_necesarios:             Optional[bool] = None
@@ -272,6 +273,7 @@ class DetalleRatExtendidoRespuesta(BaseModel):
     datos_financieros_patrimoniales:        Optional[str] = None
     origen_sistemico_datos:                 Optional[str] = None
     datos_sensibles_descripcion:            Optional[str] = None
+    otros_datos:                            Optional[str] = None
     base_legal_transferencia_internacional: Optional[str] = None
     metodo_transferencia_detalle:           Optional[str] = None
     finalidad_todos_necesarios:             Optional[bool] = None

@@ -267,6 +267,7 @@ export default function Paso2() {
         },
         detalle_extendido: {
           datos_sensibles_descripcion:        datos.datos_sensibles_descripcion        || null,
+          otros_datos:                        datos.otros_datos                        || null,
           datos_academicos_laborales:         datos.datos_academicos_laborales         || null,
           datos_financieros_patrimoniales:    datos.datos_financieros_patrimoniales    || null,
           origen_sistemico_datos:             datos.origen_sistemico_datos             || null,
@@ -371,9 +372,9 @@ export default function Paso2() {
                   placeholder="Ej: Alumnos y apoderados del establecimiento educacional"
                   value={local.universo_titulares}
                   onChange={(e) => setLocal((prev) => ({ ...prev, universo_titulares: e.target.value }))}
-                  rows={3} maxLength={500}
+                  rows={3} maxLength={2000}
                 />
-                <span className="p2-campo-contador">{local.universo_titulares.length}/500</span>
+                <span className="p2-campo-contador">{local.universo_titulares.length}/2000</span>
               </div>
 
               <div className="p2-campo-grupo">
@@ -426,9 +427,9 @@ export default function Paso2() {
                     placeholder="Especifica otros tipos de datos personales..."
                     value={local.otros_datos}
                     onChange={(e) => setLocal((prev) => ({ ...prev, otros_datos: e.target.value }))}
-                    rows={2} maxLength={300}
+                    rows={2} maxLength={2000}
                   />
-                  <span className="p2-campo-contador">{local.otros_datos.length}/300</span>
+                  <span className="p2-campo-contador">{local.otros_datos.length}/2000</span>
                 </div>
               </div>
 
@@ -466,9 +467,9 @@ export default function Paso2() {
                   placeholder="Ej: Título profesional, cargo actual, certificaciones vigentes..."
                   value={local.datos_academicos_laborales}
                   onChange={(e) => setLocal((prev) => ({ ...prev, datos_academicos_laborales: e.target.value }))}
-                  rows={3} maxLength={500}
+                  rows={3} maxLength={1500}
                 />
-                <span className="p2-campo-contador">{local.datos_academicos_laborales.length}/500</span>
+                <span className="p2-campo-contador">{local.datos_academicos_laborales.length}/1500</span>
               </div>
             </div>
 
@@ -520,9 +521,9 @@ export default function Paso2() {
                       placeholder="Describe con tus palabras los datos sensibles que se tratan..."
                       value={local.datos_sensibles_descripcion}
                       onChange={(e) => setLocal((prev) => ({ ...prev, datos_sensibles_descripcion: e.target.value }))}
-                      rows={3} maxLength={500}
+                      rows={3} maxLength={1500}
                     />
-                    <span className="p2-campo-contador">{local.datos_sensibles_descripcion.length}/500</span>
+                    <span className="p2-campo-contador">{local.datos_sensibles_descripcion.length}/1500</span>
                   </div>
                 </div>
               )}
@@ -551,7 +552,7 @@ export default function Paso2() {
                     <span className="p2-check-texto">¿El tratamiento incluye datos de menores de edad (NNA)?</span>
                   </label>
                   {local.incluye_nna && (
-                    <textarea className="p2-textarea" rows={2} maxLength={400}
+                    <textarea className="p2-textarea" rows={2} maxLength={1500}
                       placeholder="Ej: Fichas de alumnos, datos médicos de menores de 18 años..."
                       value={local.nna_detalle}
                       onChange={(e) => setLocal((p) => ({ ...p, nna_detalle: e.target.value }))}
@@ -573,7 +574,7 @@ export default function Paso2() {
                     <span className="p2-check-texto">¿Se tratan datos de navegación o identificadores digitales?</span>
                   </label>
                   {local.datos_navegacion && (
-                    <textarea className="p2-textarea" rows={2} maxLength={400}
+                    <textarea className="p2-textarea" rows={2} maxLength={1500}
                       placeholder="Ej: IP, cookies de sesión, ID de dispositivo, geolocalización..."
                       value={local.datos_navegacion_detalle}
                       onChange={(e) => setLocal((p) => ({ ...p, datos_navegacion_detalle: e.target.value }))}
@@ -586,12 +587,12 @@ export default function Paso2() {
                   <div className="p2-campo-grupo">
                     <label className="p2-campo-label">Datos financieros y patrimoniales</label>
                     <p className="p2-campo-ayuda">Ingresos, cuenta corriente, historial bancario, bienes muebles e inmuebles...</p>
-                    <textarea className="p2-textarea" rows={3} maxLength={500}
+                    <textarea className="p2-textarea" rows={3} maxLength={1500}
                       placeholder="Ej: Ingresos mensuales, cuenta corriente, historial crediticio..."
                       value={local.datos_financieros_patrimoniales}
                       onChange={(e) => setLocal((p) => ({ ...p, datos_financieros_patrimoniales: e.target.value }))}
                     />
-                    <span className="p2-campo-contador">{local.datos_financieros_patrimoniales.length}/500</span>
+                    <span className="p2-campo-contador">{local.datos_financieros_patrimoniales.length}/1500</span>
                   </div>
                 </div>
 
@@ -602,12 +603,12 @@ export default function Paso2() {
             <div className="p2-seccion-extra">
               <h3 className="p2-seccion-extra-titulo">¿Cuál es el origen sistémico de los datos?</h3>
               <p className="p2-campo-ayuda">Sistemas o bases de datos desde donde se originan estos datos, en términos generales.</p>
-              <textarea className="p2-textarea" rows={3} maxLength={500}
+              <textarea className="p2-textarea" rows={3} maxLength={1500}
                 placeholder="Ej: Los datos se generan y almacenan directamente en el sistema interno de gestión..."
                 value={local.origen_sistemico_datos}
                 onChange={(e) => setLocal((p) => ({ ...p, origen_sistemico_datos: e.target.value }))}
               />
-              <span className="p2-campo-contador">{local.origen_sistemico_datos.length}/500</span>
+              <span className="p2-campo-contador">{local.origen_sistemico_datos.length}/1500</span>
             </div>
 
           </div>{/* fin secciones-extra */}

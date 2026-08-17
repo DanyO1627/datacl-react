@@ -208,6 +208,9 @@ class DetalleRatExtendido(Base):
     datos_financieros_patrimoniales = Column(Text, nullable=True)
     origen_sistemico_datos          = Column(Text, nullable=True)
     datos_sensibles_descripcion     = Column(Text, nullable=True)
+    # R9.7b: campo "Otros" de categoría de datos personales — existía en la UI
+    # de Paso2 desde antes pero nunca se guardaba, se perdía siempre al enviar.
+    otros_datos                     = Column(Text, nullable=True)
 
     # ── Paso 3 — transferencias (R9.1) ──
     base_legal_transferencia_internacional = Column(Text, nullable=True)
