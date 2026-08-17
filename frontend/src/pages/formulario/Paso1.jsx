@@ -710,7 +710,7 @@ export default function Paso1() {
                 onClick={() => setAbiertaAdicional((v) => !v)}
               >
                 <span className={`p1-adicional-icono ${abiertaAdicional ? "p1-adicional-icono--abierto" : ""}`}>▶</span>
-                Información adicional — completa si aplica a tu organización
+                Información adicional - completa si aplica a tu organización
               </button>
 
               {abiertaAdicional && (
