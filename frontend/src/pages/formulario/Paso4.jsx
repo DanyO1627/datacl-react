@@ -1303,35 +1303,41 @@ export default function Paso4() {
 
                 <div className="p4-revision-seccion">
                   <h4 className="p4-revision-titulo">Paso 4 — Principio 1 (Licitud y transparencia)</h4>
-                  <FilaRevision label="Base legal" valor={(form.base_legal || "").split(",").filter(Boolean).map((v) => ETIQ_BASE_LEGAL[v] || v).join(", ")} />
+                  {/* Estos campos se editan en esta misma pantalla (Paso4) — hay
+                      que leerlos de `local` (lo que hay escrito ahora), no de
+                      `form` (lo que quedó guardado la última vez). `form` recién
+                      se pone al día cuando se guarda, así que leerlo acá hacía
+                      que el resumen mostrara "No especificado" mientras se
+                      estaba llenando el formulario, aunque ya tuviera datos. */}
+                  <FilaRevision label="Base legal" valor={(local.base_legal || []).map((v) => ETIQ_BASE_LEGAL[v] || v).join(", ")} />
                   <FilaRevision
                     label="Base legal adicional"
-                    valor={(form.base_legal_detalle || []).filter(Boolean).length > 0
-                      ? form.base_legal_detalle.filter(Boolean).join(" · ")
+                    valor={(local.base_legal_detalle || []).filter(Boolean).length > 0
+                      ? local.base_legal_detalle.filter(Boolean).join(" · ")
                       : null}
                   />
-                  <FilaRevision label="¿Asegura licitud y transparencia?" valor={form.asegura_transparencia_detalle} />
-                  <FilaRevision label="¿Se informa a titulares?" valor={form.informa_titulares_si_no === true ? "Sí" : form.informa_titulares_si_no === false ? "No" : null} />
-                  {form.informa_titulares_si_no === true && (
+                  <FilaRevision label="¿Asegura licitud y transparencia?" valor={local.asegura_transparencia_detalle} />
+                  <FilaRevision label="¿Se informa a titulares?" valor={local.informa_titulares_si_no === true ? "Sí" : local.informa_titulares_si_no === false ? "No" : null} />
+                  {local.informa_titulares_si_no === true && (
                     <FilaRevision
                       label="¿Cómo se informa a los titulares?"
-                      valor={(form.informa_titulares || []).map((v) => ETIQ_INFORMA_TITULARES[v] || v).join(", ")}
+                      valor={(local.informa_titulares || []).map((v) => ETIQ_INFORMA_TITULARES[v] || v).join(", ")}
                     />
                   )}
                   <FilaRevision
                     label="Documento de respaldo"
-                    valor={form.documento_respaldo_tiene === true
-                      ? `Sí — ${form.documento_respaldo_descripcion || "sin descripción"}`
-                      : form.documento_respaldo_tiene === false ? "No" : null}
+                    valor={local.documento_respaldo_tiene === true
+                      ? `Sí — ${local.documento_respaldo_descripcion || "sin descripción"}`
+                      : local.documento_respaldo_tiene === false ? "No" : null}
                   />
                 </div>
 
                 <div className="p4-revision-seccion">
                   <h4 className="p4-revision-titulo">Paso 4 — Principio 2 (Finalidad)</h4>
-                  <FilaRevision label="Finalidad" valor={form.finalidad} />
-                  <FilaRevision label="¿Todos los datos tienen finalidad y son necesarios?" valor={form.finalidad_todos_necesarios === true ? "Sí" : form.finalidad_todos_necesarios === false ? "No" : null} />
-                  <FilaRevision label="¿Todos los datos tienen la misma finalidad?" valor={form.finalidad_misma === true ? "Sí" : form.finalidad_misma === false ? "No" : null} />
-                  <FilaRevision label="¿Se usan solo para fines declarados?" valor={form.usa_solo_fines_declarados === true ? "Sí" : form.usa_solo_fines_declarados === false ? "No" : null} />
+                  <FilaRevision label="Finalidad" valor={local.finalidad} />
+                  <FilaRevision label="¿Todos los datos tienen finalidad y son necesarios?" valor={local.finalidad_todos_necesarios === true ? "Sí" : local.finalidad_todos_necesarios === false ? "No" : null} />
+                  <FilaRevision label="¿Todos los datos tienen la misma finalidad?" valor={local.finalidad_misma === true ? "Sí" : local.finalidad_misma === false ? "No" : null} />
+                  <FilaRevision label="¿Se usan solo para fines declarados?" valor={local.usa_solo_fines_declarados === true ? "Sí" : local.usa_solo_fines_declarados === false ? "No" : null} />
                 </div>
 
                 <div className="p4-revision-seccion">
