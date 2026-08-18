@@ -1,7 +1,10 @@
+import logging
 import os
 import re
 from functools import lru_cache
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 RUTA_LEY = Path(__file__).parent.parent / "assets" / "ley_21719.pdf"
 
@@ -14,6 +17,14 @@ ARTICULOS_RELEVANTES = {
     "16", "16 bis", "16 ter", "16 quáter", "16 quinquies", "16 sexies",
     "27", "28",
 }
+
+# Groq (plan on_demand) limita a 8000 tokens totales por minuto por request.
+# El texto completo de los 13 artículos de arriba suma ~27.000 caracteres —
+# él solo ya se pasaba del límite antes de sumar los tratamientos ni la
+# respuesta pedida (max_tokens). Se manda solo el inicio de cada artículo:
+# alcanza para que la IA cite el número/letra correcto sin inventar, que es
+# lo que pide el prompt, sin acercarse al límite.
+MAX_CHARS_POR_ARTICULO = 300
 
 
 @lru_cache(maxsize=1)
@@ -47,7 +58,10 @@ def _texto_ley() -> str | None:
             continue
         inicio = encabezado.start()
         fin = encabezados[i + 1].start() if i + 1 < len(encabezados) else len(texto_completo)
-        fragmentos.append(texto_completo[inicio:fin].strip())
+        fragmento = texto_completo[inicio:fin].strip()
+        if len(fragmento) > MAX_CHARS_POR_ARTICULO:
+            fragmento = fragmento[:MAX_CHARS_POR_ARTICULO].rsplit(" ", 1)[0] + "…"
+        fragmentos.append(fragmento)
 
     return "\n\n".join(fragmentos) if fragmentos else None
 
@@ -108,11 +122,19 @@ Sé específico. Evita recomendaciones genéricas que apliquen a cualquier organ
 Formato: encabezado por tratamiento, texto corrido, sin listas."""
 
         respuesta = cliente.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            # llama-3.3-70b-versatile fue retirado del catálogo de Groq (ver
+            # cliente.models.list() — ya no aparece ningún modelo llama-3.x
+            # de propósito general, solo los prompt-guard). openai/gpt-oss-120b
+            # es el reemplazo más parecido en tamaño/capacidad hoy disponible.
+            model="openai/gpt-oss-120b",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=2500,
         )
         return respuesta.choices[0].message.content
 
     except Exception:
+        # Se traga el error a propósito (el PDF se genera igual sin IA), pero
+        # antes lo hacía en silencio total — sin esto, un 502 en el frontend
+        # no daba ninguna pista de la causa real sin reproducirlo a mano.
+        logger.exception("pedir_analisis_ia falló, el informe se genera sin análisis IA")
         return None
