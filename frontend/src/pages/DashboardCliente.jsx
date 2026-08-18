@@ -8,6 +8,7 @@ import GraficoRiesgo from "../components/GraficoRiesgo"
 import GraficoBasesLicitud from "../components/GraficoBasesLicitud"
 import GraficoEstados from "../components/GraficoEstados"
 import { useFormulario } from "../context/FormularioContext"
+import { mapearTratamientoAForm } from "../utils/mapearTratamiento"
 import "../styles/dashboardCliente.css"
 
 const COLORES_RIESGO = { BAJO: "#38a169", MEDIO: "#d97706", ALTO: "#e53e3e" }
@@ -26,7 +27,7 @@ function obtenerFactoresRiesgo(t) {
 export default function Dashboard() {
   const navigate = useNavigate()
   const { usuario, token } = useAuth()
-  const { actualizarForm, resetForm } = useFormulario()
+  const { actualizarForm, cargarFormCompleto, resetForm } = useFormulario()
 
   const [nombreOrg, setNombreOrg] = useState(usuario?.nombre || "")
   const [cargando, setCargando] = useState(true)
@@ -69,7 +70,7 @@ export default function Dashboard() {
         setCargando(false)
       }
 
-      // Carga borradores separado — si falla no rompe el dashboard
+      // Carga borradores separado - si falla no rompe el dashboard
       try {
         const res = await fetch("/api/sesiones", {
           headers: { Authorization: `Bearer ${token}` },
@@ -131,23 +132,24 @@ export default function Dashboard() {
       // 5. Reconstruir estado del formulario desde la primera actividad incompleta (BORRADOR)
       const primerBorradorIdx = tratsValidos.findIndex(t => t.estado === "BORRADOR")
       // Si todos están COMPLETO/PENDIENTE pero la sesión sigue como borrador (ej. PATCH falló),
-      // no tiene sentido reabrir el formulario — ir directo a mis tratamientos.
+      // no tiene sentido reabrir el formulario - ir directo a mis tratamientos.
       if (primerBorradorIdx === -1) {
         navigate("/mis-tratamientos")
         return
       }
       const idxResumen = primerBorradorIdx
       const t = tratsValidos[idxResumen]
-      // "otras:" marca el inicio del texto libre y puede contener comas o
-      // saltos de línea propios — todo lo que sigue hasta el final le pertenece.
-      const medidasStr = t.medidas_seguridad || ""
-      const idxOtras = medidasStr.indexOf("otras:")
-      const medidasArr = idxOtras !== -1
-        ? [...medidasStr.slice(0, idxOtras).replace(/,$/, "").split(",").filter(Boolean), "otras"]
-        : medidasStr.split(",").filter(Boolean)
-      const otrasMedidas = idxOtras !== -1 ? medidasStr.slice(idxOtras + "otras:".length) : ""
 
-      actualizarForm({
+      // R9.4b: restaurar TODO el tratamiento (incluido detalle_extendido),
+      // mismo mapeo que usa "Editar tratamiento" - no solo un subconjunto
+      // chico de campos. Evita que guardar de nuevo desde cualquier paso
+      // mande null en campos que en realidad ya tenían datos en la BD.
+      // cargarFormCompleto (no actualizarForm) además resetea el form antes
+      // de aplicar los datos, para que no queden campos de un borrador
+      // anterior filtrados si el usuario entra a este sin haber salido limpio
+      // del último.
+      cargarFormCompleto({
+        ...mapearTratamientoAForm(t),
         sesionActual:          sesion.id,
         tratamientosGuardados,
         actividadesPendientes,
@@ -155,28 +157,6 @@ export default function Dashboard() {
         campos_detectados:     actividades[idxResumen]?.campos_usados || sesionDetalle.columnas_json || [],
         campos_pendientes:     [],
         campos_sesion:         sesionDetalle.columnas_json || [],
-        // Paso 1
-        nombre:        t.nombre || "",
-        responsable:   t.detalle?.responsable_tratamiento || "",
-        es_responsable: t.detalle?.es_responsable ?? true,
-        finalidad:     t.finalidad || "",
-        base_legal:    t.base_legal || "",
-        // Paso 2
-        categorias_titulares: t.detalle?.categorias_titulares
-          ? t.detalle.categorias_titulares.split(",").filter(Boolean)
-          : [],
-        universo_titulares:   t.detalle?.universo_titulares || "",
-        origen_datos:         t.detalle?.origen_datos || "",
-        datos_sensibles:      t.datos_sensibles ?? false,
-        categorias_sensibles: [],
-        destinatarios:        t.destinatarios || "",
-        sale_extranjero:      t.sale_extranjero ?? false,
-        // Paso 3
-        plazo_conservacion:       t.plazo_conservacion || "",
-        plazo_otro:               t.plazo_otro || "",
-        medidas_seguridad:        medidasArr,
-        otras_medidas:            otrasMedidas,
-        decisiones_automatizadas: t.decisiones_automatizadas ?? false,
       })
 
       // 6. Navegar al paso correcto según lo que tenía relleno
