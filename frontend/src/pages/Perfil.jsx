@@ -19,6 +19,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// GET /organizaciones/logo exige JWT — un <img src="/api/..."> directo no
+// manda el header Authorization y siempre da 401. Se pide como blob (así sí
+// pasa por el interceptor de arriba) y se arma un object URL local para el
+// <img>. Mismo patrón que ya usa obtenerImagenProcesoBlob en tratamientosService.js.
+async function obtenerLogoBlobUrl() {
+  try {
+    const res = await api.get("/organizaciones/logo", { responseType: "blob" });
+    return URL.createObjectURL(res.data);
+  } catch (err) {
+    if (err.response?.status === 404) return null;
+    throw err;
+  }
+}
+
 // ── Iconos SVG inline (sin dependencia extra) ──────────────────
 function IconoEditar() {
   return (
@@ -104,6 +118,7 @@ export default function Perfil() {
 
   // ── Pre-rellenar desde GET /auth/me ──────────────────────────
   useEffect(() => {
+    let urlCreada = null;
     async function cargarPerfil() {
       try {
         const res = await api.get("/auth/me");
@@ -113,7 +128,10 @@ export default function Perfil() {
           rut:    res.data.rut    || "",
         });
         if (res.data.color_institucional) setColorInst(res.data.color_institucional);
-        if (res.data.logo_ruta) setLogoUrl(`${API}/organizaciones/logo?t=${Date.now()}`);
+        if (res.data.logo_ruta) {
+          urlCreada = await obtenerLogoBlobUrl();
+          setLogoUrl(urlCreada);
+        }
       } catch {
         // fallback al contexto si el endpoint falla
         if (usuario) {
@@ -126,6 +144,9 @@ export default function Perfil() {
       }
     }
     cargarPerfil();
+    // mismo patrón de limpieza que Paso1.jsx/DetalleTratamiento.jsx para sus
+    // object URLs de imagen — libera el blob al desmontar o recargar.
+    return () => { if (urlCreada) URL.revokeObjectURL(urlCreada); };
   }, [token]);
 
   // ── Guardar perfil ────────────────────────────────────────────
@@ -210,7 +231,7 @@ export default function Perfil() {
       await api.post("/organizaciones/logo", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      setLogoUrl(`${API}/organizaciones/logo?t=${Date.now()}`);
+      setLogoUrl(await obtenerLogoBlobUrl());
       setAlertaPdf({ tipo: "exito", mensaje: "Logo subido correctamente." });
     } catch (err) {
       const detalle = err.response?.data?.detail;
@@ -292,7 +313,7 @@ export default function Perfil() {
                 </div>
               </div>
 
-              {/* RUT — no editable */}
+              {/* RUT - no editable */}
               <div className="pf-campo">
                 <label className="pf-label">RUT</label>
                 <div className="pf-input-wrap">
@@ -342,7 +363,7 @@ export default function Perfil() {
                 </div>
               )}
 
-              {/* Botón guardar perfil — solo si hay algo editando */}
+              {/* Botón guardar perfil - solo si hay algo editando */}
               {(editandoNombre || editandoCorreo) && (
                 <div className="pf-form-footer">
                   <button
