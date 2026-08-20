@@ -31,7 +31,7 @@ function crearFormVacio() { return {
   // Paso 1 — R8.4: bloques repetibles que reemplazan descripcion_detallada
   datos_tratados: [],
   // ── Paso 2 ───────────────────────────────────────────────
-  categorias_titulares: [], universo_titulares: "", origen_datos: "",
+  categorias_titulares: [], universo_titulares: "", origen_datos: "", origen_datos_detalle: "",
   categorias_datos: [], datos_sensibles: false, categorias_sensibles: [],
   destinatarios: "", otros_datos: "",
   // R9.3: descripción de datos sensibles + 3 secciones nuevas de Paso 2
@@ -63,9 +63,9 @@ function crearFormVacio() { return {
   // Paso 4 — R9.6: lista dinámica de base legal adicional (texto libre)
   base_legal_detalle: [],
   // ── Paso 4 — Principios Ley 21.719 ───────────────────────
-  criterio_plazo: "", metodo_eliminacion: "", documenta_destruccion: false,
+  criterio_plazo: "", metodo_eliminacion: "", metodo_eliminacion_otro: "", documenta_destruccion: false,
   excepciones_plazo: "", minimizacion_justificacion: "", mecanismos_exactitud: "",
-  evaluacion_periodica: "", cumplimiento_demostrable: "",
+  evaluacion_periodica: "", evaluacion_periodica_detalle: "", cumplimiento_demostrable: "",
   incidentes_historicos: "", cambios_futuros: "",
   // ── Paso 4 — DPIA ────────────────────────────────────────
   requiere_dpia: false, dpia_realizada: null, dpia_detalle: "",

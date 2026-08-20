@@ -507,6 +507,9 @@ export default function DetalleTratamiento() {
             <Campo label="Origen de los datos">
               <Badges items={d?.origen_datos?.split(",").filter(Boolean).map(v => ORIGEN[v] || v)} />
             </Campo>
+            <Campo label="Detalle del origen de los datos">
+              <Valor v={ext?.origen_datos_detalle} vacio="—" />
+            </Campo>
             {/* R9.7b: desde R9.3 este campo ya no se llena desde el formulario
                 (Editar no lo tiene) — solo se muestra si un tratamiento viejo
                 lo trae de antes. Sin eso, no hay card ni mensaje sin salida. */}
@@ -804,9 +807,9 @@ export default function DetalleTratamiento() {
         )}
 
         {ext && seccionExtendidaTieneData(
-          ext.criterio_plazo, ext.metodo_eliminacion, ext.documenta_destruccion,
+          ext.criterio_plazo, ext.metodo_eliminacion, ext.metodo_eliminacion_otro, ext.documenta_destruccion,
           ext.excepciones_plazo, ext.minimizacion_si_no, ext.minimizacion_justificacion, ext.mecanismos_exactitud,
-          ext.evaluacion_periodica, ext.cumplimiento_demostrable,
+          ext.evaluacion_periodica, ext.evaluacion_periodica_detalle, ext.cumplimiento_demostrable,
           ext.incidentes_historicos, ext.cambios_futuros
         ) && (
           <div className="detalle-seccion">
@@ -816,7 +819,11 @@ export default function DetalleTratamiento() {
                 <Valor v={ext.criterio_plazo} mapa={CRITERIO_PLAZO} vacio="—" />
               </Campo>
               <Campo label="Método de eliminación">
-                <Valor v={ext.metodo_eliminacion} mapa={METODO_ELIMINACION} vacio="—" />
+                <Valor
+                  v={ext.metodo_eliminacion === "otro" ? (ext.metodo_eliminacion_otro || "Otro") : ext.metodo_eliminacion}
+                  mapa={ext.metodo_eliminacion === "otro" ? null : METODO_ELIMINACION}
+                  vacio="—"
+                />
               </Campo>
               <Campo label="¿Se documenta la destrucción?">
                 {ext.documenta_destruccion === null || ext.documenta_destruccion === undefined
@@ -841,6 +848,9 @@ export default function DetalleTratamiento() {
               </Campo>
               <Campo label="Evaluación periódica">
                 <Valor v={ext.evaluacion_periodica} mapa={EVALUACION_PERIODICA} vacio="—" />
+              </Campo>
+              <Campo label="Detalle de la evaluación periódica">
+                <ValorMultilinea v={ext.evaluacion_periodica_detalle} />
               </Campo>
               <Campo label="¿Cumplimiento demostrable?">
                 {ext.cumplimiento_demostrable === null || ext.cumplimiento_demostrable === undefined

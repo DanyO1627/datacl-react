@@ -188,11 +188,13 @@ class DetalleRatExtendidoEntrada(BaseModel):
     categorias_datos_seleccion: Optional[str] = None
     criterio_plazo:            Optional[str] = None
     metodo_eliminacion:        Optional[str] = None
+    metodo_eliminacion_otro:   Optional[str] = None
     documenta_destruccion:     Optional[bool] = None
     excepciones_plazo:         Optional[str] = None
     minimizacion_justificacion: Optional[str] = None
     mecanismos_exactitud:      Optional[str] = None
     evaluacion_periodica:      Optional[str] = None
+    evaluacion_periodica_detalle: Optional[str] = None
     cumplimiento_demostrable:  Optional[str] = None
     incidentes_historicos:     Optional[str] = None
     cambios_futuros:           Optional[str] = None
@@ -203,6 +205,7 @@ class DetalleRatExtendidoEntrada(BaseModel):
     datos_academicos_laborales:             Optional[str] = None
     datos_financieros_patrimoniales:        Optional[str] = None
     origen_sistemico_datos:                 Optional[str] = None
+    origen_datos_detalle:                   Optional[str] = None
     datos_sensibles_descripcion:            Optional[str] = None
     otros_datos:                            Optional[str] = None
     base_legal_transferencia_internacional: Optional[str] = None
@@ -256,11 +259,13 @@ class DetalleRatExtendidoRespuesta(BaseModel):
     # Principios legales
     criterio_plazo:            Optional[str] = None
     metodo_eliminacion:        Optional[str] = None
+    metodo_eliminacion_otro:   Optional[str] = None
     documenta_destruccion:     Optional[bool] = None
     excepciones_plazo:         Optional[str] = None
     minimizacion_justificacion: Optional[str] = None
     mecanismos_exactitud:      Optional[str] = None
     evaluacion_periodica:      Optional[str] = None
+    evaluacion_periodica_detalle: Optional[str] = None
     cumplimiento_demostrable:  Optional[str] = None
     incidentes_historicos:     Optional[str] = None
     cambios_futuros:           Optional[str] = None
@@ -272,6 +277,7 @@ class DetalleRatExtendidoRespuesta(BaseModel):
     datos_academicos_laborales:             Optional[str] = None
     datos_financieros_patrimoniales:        Optional[str] = None
     origen_sistemico_datos:                 Optional[str] = None
+    origen_datos_detalle:                   Optional[str] = None
     datos_sensibles_descripcion:            Optional[str] = None
     otros_datos:                            Optional[str] = None
     base_legal_transferencia_internacional: Optional[str] = None

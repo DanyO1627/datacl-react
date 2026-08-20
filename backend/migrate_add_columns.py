@@ -49,6 +49,7 @@ MIGRATIONS = [
     "ALTER TABLE detalle_rat_extendido ADD COLUMN datos_academicos_laborales TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN datos_financieros_patrimoniales TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN origen_sistemico_datos TEXT NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN origen_datos_detalle TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN datos_sensibles_descripcion TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN otros_datos TEXT NULL",
     # R9.1 — Paso 3 transferencias
@@ -61,6 +62,10 @@ MIGRATIONS = [
     "ALTER TABLE detalle_rat_extendido ADD COLUMN usa_solo_fines_declarados TINYINT(1) NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN asegura_transparencia_detalle TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN minimizacion_si_no TINYINT(1) NULL",
+    # 2026-08-20 — texto libre "Método de eliminación: otro" + detalle de
+    # "¿Se evalúa periódicamente la pertinencia de los datos?"
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN metodo_eliminacion_otro TEXT NULL",
+    "ALTER TABLE detalle_rat_extendido ADD COLUMN evaluacion_periodica_detalle TEXT NULL",
 ]
 
 

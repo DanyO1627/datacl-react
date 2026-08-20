@@ -189,11 +189,15 @@ class DetalleRatExtendido(Base):
     # ── Principios (Ley 21.719) ──
     criterio_plazo              = Column(String(50), nullable=True)
     metodo_eliminacion          = Column(String(100), nullable=True)
+    # texto libre cuando metodo_eliminacion == "otro" (mismo patrón que plazo_otro)
+    metodo_eliminacion_otro     = Column(Text, nullable=True)
     documenta_destruccion       = Column(Boolean, nullable=True)
     excepciones_plazo           = Column(Text, nullable=True)
     minimizacion_justificacion  = Column(Text, nullable=True)
     mecanismos_exactitud        = Column(Text, nullable=True)
     evaluacion_periodica        = Column(String(50), nullable=True)
+    # detalle libre de la evaluación periódica de pertinencia de los datos
+    evaluacion_periodica_detalle = Column(Text, nullable=True)
     cumplimiento_demostrable    = Column(Text, nullable=True)
     incidentes_historicos       = Column(Text, nullable=True)
     cambios_futuros             = Column(Text, nullable=True)
@@ -207,6 +211,11 @@ class DetalleRatExtendido(Base):
     datos_academicos_laborales      = Column(Text, nullable=True)
     datos_financieros_patrimoniales = Column(Text, nullable=True)
     origen_sistemico_datos          = Column(Text, nullable=True)
+    # Detalle libre del "Origen de la obtención del dato personal" (checklist
+    # Titular/Terceros/Fuente pública/Generación interna, en detalle_rat) —
+    # el modelo RAT_CEDCA explica cada origen marcado (ej. "Origen Paciente:
+    # Ficha clínica...", "Origen Comunicaciones: se reciben desde centro...").
+    origen_datos_detalle            = Column(Text, nullable=True)
     datos_sensibles_descripcion     = Column(Text, nullable=True)
     # R9.7b: campo "Otros" de categoría de datos personales — existía en la UI
     # de Paso2 desde antes pero nunca se guardaba, se perdía siempre al enviar.

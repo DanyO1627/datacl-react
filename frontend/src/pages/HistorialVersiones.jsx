@@ -72,11 +72,13 @@ const ETIQUETAS_CAMPOS = {
   // Detalle extendido — Principios Ley 21.719
   criterio_plazo: 'Criterio del plazo',
   metodo_eliminacion: 'Método de eliminación',
+  metodo_eliminacion_otro: 'Método de eliminación (otro)',
   documenta_destruccion: 'Documenta destrucción',
   excepciones_plazo: 'Excepciones al plazo',
   minimizacion_justificacion: 'Justificación de minimización',
   mecanismos_exactitud: 'Mecanismos de exactitud',
   evaluacion_periodica: 'Evaluación periódica',
+  evaluacion_periodica_detalle: 'Detalle de la evaluación periódica',
   cumplimiento_demostrable: 'Cumplimiento demostrable',
   incidentes_historicos: 'Incidentes históricos',
   cambios_futuros: 'Cambios futuros',

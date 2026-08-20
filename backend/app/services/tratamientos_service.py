@@ -201,8 +201,8 @@ _CAMPOS_SNAPSHOT_EXTENDIDO = [
     "sistemas_origen", "sistemas_destino", "sistemas_tratamiento",
     "tipos_tratamiento_sistema", "base_datos_nombre", "proveedor_tecnologico",
     "pais_destino", "categorias_sensibles", "categorias_datos_seleccion",
-    "criterio_plazo", "metodo_eliminacion", "documenta_destruccion", "excepciones_plazo",
-    "minimizacion_justificacion", "mecanismos_exactitud", "evaluacion_periodica",
+    "criterio_plazo", "metodo_eliminacion", "metodo_eliminacion_otro", "documenta_destruccion", "excepciones_plazo",
+    "minimizacion_justificacion", "mecanismos_exactitud", "evaluacion_periodica", "evaluacion_periodica_detalle",
     "cumplimiento_demostrable", "incidentes_historicos", "cambios_futuros",
     "requiere_dpia", "dpia_realizada", "dpia_detalle",
     
@@ -212,7 +212,7 @@ _CAMPOS_SNAPSHOT_EXTENDIDO = [
     # que el historial de versiones lo detecte, a diferencia del resto del
     # flujo de detalle_extendido, esta lista NO se llena sola.
     "datos_academicos_laborales", "datos_financieros_patrimoniales",
-    "origen_sistemico_datos", "datos_sensibles_descripcion", "otros_datos",
+    "origen_sistemico_datos", "origen_datos_detalle", "datos_sensibles_descripcion", "otros_datos",
     "base_legal_transferencia_internacional", "metodo_transferencia_detalle",
     "finalidad_todos_necesarios", "finalidad_misma", "informa_titulares_si_no",
     "usa_solo_fines_declarados", "asegura_transparencia_detalle", "minimizacion_si_no",
@@ -278,6 +278,7 @@ _ETIQUETAS_CAMPOS = {
     "categorias_titulares": "Categorías de titulares",
     "universo_titulares": "Universo de titulares",
     "origen_datos": "Origen de los datos",
+    "origen_datos_detalle": "Detalle del origen de los datos",
     "responsable_tratamiento": "Responsable",
     "es_responsable": "Rol del responsable",
     # Detalle extendido
@@ -311,11 +312,13 @@ _ETIQUETAS_CAMPOS = {
     "categorias_datos_seleccion": "Categorías de datos seleccionadas",
     "criterio_plazo": "Criterio del plazo",
     "metodo_eliminacion": "Método de eliminación",
+    "metodo_eliminacion_otro": "Método de eliminación (otro)",
     "documenta_destruccion": "Documenta destrucción",
     "excepciones_plazo": "Excepciones al plazo",
     "minimizacion_justificacion": "Justificación de minimización",
     "mecanismos_exactitud": "Mecanismos de exactitud",
     "evaluacion_periodica": "Evaluación periódica",
+    "evaluacion_periodica_detalle": "Detalle de la evaluación periódica",
     "cumplimiento_demostrable": "Cumplimiento demostrable",
     "incidentes_historicos": "Incidentes históricos",
     "cambios_futuros": "Cambios futuros",

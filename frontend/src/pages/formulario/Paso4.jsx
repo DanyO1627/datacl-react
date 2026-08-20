@@ -323,6 +323,7 @@ export default function Paso4() {
   const [local, setLocal] = useState({
     // Principio 1 — Licitud y transparencia / Principio 2 — Finalidad (R9.5: movidos desde Paso1)
     finalidad: form.finalidad || "",
+    finalidades_secundarias: form.finalidades_secundarias || "",
     base_legal: form.base_legal ? form.base_legal.split(",").filter(Boolean) : [],
     base_legal_detalle: form.base_legal_detalle || [],
     asegura_transparencia_detalle: form.asegura_transparencia_detalle || "",
@@ -342,11 +343,13 @@ export default function Paso4() {
     // Principios Ley 21.719
     criterio_plazo: form.criterio_plazo || "",
     metodo_eliminacion: form.metodo_eliminacion || "",
+    metodo_eliminacion_otro: form.metodo_eliminacion_otro || "",
     documenta_destruccion: form.documenta_destruccion ?? false,
     excepciones_plazo: form.excepciones_plazo || "",
     minimizacion_justificacion: form.minimizacion_justificacion || "",
     mecanismos_exactitud: form.mecanismos_exactitud || "",
     evaluacion_periodica: form.evaluacion_periodica || "",
+    evaluacion_periodica_detalle: form.evaluacion_periodica_detalle || "",
     cumplimiento_demostrable: form.cumplimiento_demostrable || "",
     incidentes_historicos: form.incidentes_historicos || "",
     cambios_futuros: form.cambios_futuros || "",
@@ -475,6 +478,7 @@ export default function Paso4() {
       datos_academicos_laborales:         formularioCompleto.datos_academicos_laborales         || null,
       datos_financieros_patrimoniales:    formularioCompleto.datos_financieros_patrimoniales    || null,
       origen_sistemico_datos:             formularioCompleto.origen_sistemico_datos             || null,
+      origen_datos_detalle:               formularioCompleto.origen_datos_detalle               || null,
       base_legal_transferencia_internacional: formularioCompleto.base_legal_transferencia_internacional || null,
       metodo_transferencia_detalle:       formularioCompleto.metodo_transferencia_detalle       || null,
       otros_datos:                        formularioCompleto.otros_datos                        || null,
@@ -504,11 +508,13 @@ export default function Paso4() {
       // Principios Ley 21.719
       criterio_plazo:              formularioCompleto.criterio_plazo              || null,
       metodo_eliminacion:          formularioCompleto.metodo_eliminacion          || null,
+      metodo_eliminacion_otro:     formularioCompleto.metodo_eliminacion_otro     || null,
       documenta_destruccion:       formularioCompleto.documenta_destruccion       ?? false,
       excepciones_plazo:           formularioCompleto.excepciones_plazo           || null,
       minimizacion_justificacion:  formularioCompleto.minimizacion_justificacion  || null,
       mecanismos_exactitud:        formularioCompleto.mecanismos_exactitud        || null,
       evaluacion_periodica:        formularioCompleto.evaluacion_periodica        || null,
+      evaluacion_periodica_detalle: formularioCompleto.evaluacion_periodica_detalle || null,
       cumplimiento_demostrable:    formularioCompleto.cumplimiento_demostrable    || null,
       incidentes_historicos:       formularioCompleto.incidentes_historicos       || null,
       cambios_futuros:             formularioCompleto.cambios_futuros             || null,
@@ -689,6 +695,7 @@ export default function Paso4() {
           datos_academicos_laborales:         datos.datos_academicos_laborales         || null,
           datos_financieros_patrimoniales:    datos.datos_financieros_patrimoniales    || null,
           origen_sistemico_datos:             datos.origen_sistemico_datos             || null,
+          origen_datos_detalle:               datos.origen_datos_detalle               || null,
           base_legal_transferencia_internacional: datos.base_legal_transferencia_internacional || null,
           metodo_transferencia_detalle:       datos.metodo_transferencia_detalle       || null,
           otros_datos:                        datos.otros_datos                        || null,
@@ -717,11 +724,13 @@ export default function Paso4() {
           // Principios Ley 21.719
           criterio_plazo:              local.criterio_plazo              || null,
           metodo_eliminacion:          local.metodo_eliminacion          || null,
+          metodo_eliminacion_otro:     local.metodo_eliminacion_otro     || null,
           documenta_destruccion:       local.documenta_destruccion       ?? false,
           excepciones_plazo:           local.excepciones_plazo           || null,
           minimizacion_justificacion:  local.minimizacion_justificacion  || null,
           mecanismos_exactitud:        local.mecanismos_exactitud        || null,
           evaluacion_periodica:        local.evaluacion_periodica        || null,
+          evaluacion_periodica_detalle: local.evaluacion_periodica_detalle || null,
           cumplimiento_demostrable:    local.cumplimiento_demostrable    || null,
           incidentes_historicos:       local.incidentes_historicos       || null,
           cambios_futuros:             local.cambios_futuros             || null,
@@ -983,6 +992,25 @@ export default function Paso4() {
               </span>
             </div>
 
+            {/* Finalidades secundarias — R9.5b: movido desde Paso1 (hallazgo #7), el
+                modelo la pide justo después de "Finalidad", no en Identificación. */}
+            <div className="p1-campo">
+              <label className="p1-label" htmlFor="finalidades_secundarias">
+                Finalidades secundarias
+              </label>
+              <textarea
+                id="finalidades_secundarias"
+                name="finalidades_secundarias"
+                className="p1-textarea"
+                placeholder="¿Existen finalidades secundarias como fidelización, reportes internos?"
+                value={local.finalidades_secundarias}
+                onChange={(e) => setLocal((p) => ({ ...p, finalidades_secundarias: e.target.value }))}
+                rows={3}
+                maxLength={2000}
+              />
+              <span className="p1-campo-contador">{local.finalidades_secundarias.length}/2000</span>
+            </div>
+
             <div className="p4-campo-grupo">
               <label className="p4-campo-label">¿Todos los datos tienen finalidad y son necesarios?</label>
               <div className="p4-radio-grupo">
@@ -1023,6 +1051,28 @@ export default function Paso4() {
                   <span>No</span>
                 </label>
               </div>
+            </div>
+
+            {/* R9.5b: movido desde el panel "Principios Ley 21.719" — el modelo
+                pregunta esto junto a Finalidad, no junto a Conservación. */}
+            <div className="p4-campo-grupo">
+              <label className="p4-campo-label">¿Se evalúa periódicamente la pertinencia de los datos?</label>
+              <div className="p4-select-wrap">
+                <select className="p4-select-campo" value={local.evaluacion_periodica} onChange={(e) => setLocal((p) => ({ ...p, evaluacion_periodica: e.target.value }))}>
+                  <option value="">Seleccionar...</option>
+                  {PERIODOS_EVALUACION.map((o) => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
+                </select>
+              </div>
+              <textarea
+                className="p4-textarea-campo"
+                style={{ marginTop: 8 }}
+                rows={3}
+                maxLength={1000}
+                placeholder="Detalla cómo y cuándo se revisa la pertinencia de los datos tratados..."
+                value={local.evaluacion_periodica_detalle}
+                onChange={(e) => setLocal((p) => ({ ...p, evaluacion_periodica_detalle: e.target.value }))}
+              />
+              <span className="p4-campo-contador">{local.evaluacion_periodica_detalle.length}/1000</span>
             </div>
           </div>
 
@@ -1156,6 +1206,7 @@ export default function Paso4() {
             </button>
             {principiosAbierto && (
               <div className="p4-panel-body">
+                <p className="p4-campo-label" style={{ fontSize: "0.76rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", opacity: 0.7, margin: "0 0 4px" }}>Principio 6 — Conservación limitada</p>
                 <div className="p4-panel-grid">
                   <div className="p4-campo-grupo">
                     <label className="p4-campo-label">Criterio para definir el plazo</label>
@@ -1165,54 +1216,69 @@ export default function Paso4() {
                     </select>
                   </div>
                   <div className="p4-campo-grupo">
-                    <label className="p4-campo-label">Evaluación periódica del tratamiento</label>
-                    <select className="p4-select-campo" value={local.evaluacion_periodica} onChange={(e) => setLocal((p) => ({ ...p, evaluacion_periodica: e.target.value }))}>
-                      <option value="">Seleccionar...</option>
-                      {PERIODOS_EVALUACION.map((o) => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <div className="p4-panel-grid">
-                  <div className="p4-campo-grupo">
                     <label className="p4-campo-label">Método de eliminación de datos</label>
-                    <select className="p4-select-campo" value={local.metodo_eliminacion} onChange={(e) => setLocal((p) => ({ ...p, metodo_eliminacion: e.target.value }))}>
+                    <select
+                      className="p4-select-campo"
+                      value={local.metodo_eliminacion}
+                      onChange={(e) => setLocal((p) => ({
+                        ...p,
+                        metodo_eliminacion: e.target.value,
+                        metodo_eliminacion_otro: e.target.value !== "otro" ? "" : p.metodo_eliminacion_otro,
+                      }))}
+                    >
                       <option value="">Seleccionar...</option>
                       {METODOS_ELIMINACION.map((o) => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
                     </select>
+                    {local.metodo_eliminacion === "otro" && (
+                      <textarea
+                        className="p4-textarea-campo"
+                        style={{ marginTop: 6 }}
+                        rows={2}
+                        maxLength={300}
+                        placeholder="Especifica el método de eliminación..."
+                        value={local.metodo_eliminacion_otro}
+                        onChange={(e) => setLocal((p) => ({ ...p, metodo_eliminacion_otro: e.target.value }))}
+                        autoFocus
+                      />
+                    )}
                   </div>
-                  <div className="p4-campo-grupo p4-campo-grupo--centrado">
-                    <label className={`p4-check-item ${local.documenta_destruccion ? "p4-check-item--marcado" : ""}`}>
-                      <input type="checkbox" className="p4-check-input" checked={local.documenta_destruccion} onChange={(e) => setLocal((p) => ({ ...p, documenta_destruccion: e.target.checked }))} />
-                      <span className="p4-check-texto">¿Se documenta la destrucción/eliminación de datos?</span>
-                    </label>
-                  </div>
+                </div>
+                <div className="p4-campo-grupo p4-campo-grupo--centrado">
+                  <label className={`p4-check-item ${local.documenta_destruccion ? "p4-check-item--marcado" : ""}`}>
+                    <input type="checkbox" className="p4-check-input" checked={local.documenta_destruccion} onChange={(e) => setLocal((p) => ({ ...p, documenta_destruccion: e.target.checked }))} />
+                    <span className="p4-check-texto">¿Se documenta la destrucción/eliminación de datos?</span>
+                  </label>
                 </div>
                 <div className="p4-campo-grupo">
                   <label className="p4-campo-label">Excepciones al plazo de conservación</label>
                   <textarea className="p4-textarea-campo" rows={2} placeholder="Ej: datos retenidos por obligación legal más allá del plazo estándar..." value={local.excepciones_plazo} onChange={(e) => setLocal((p) => ({ ...p, excepciones_plazo: e.target.value }))} maxLength={1500} />
                 </div>
-                <div className="p4-panel-grid">
-                  <div className="p4-campo-grupo">
-                    <label className="p4-campo-label">¿Se aplica minimización de datos?</label>
-                    <div className="p4-radio-grupo">
-                      <label className="p4-radio-item">
-                        <input type="radio" name="minimizacion_si_no" checked={local.minimizacion_si_no === true} onChange={() => setLocal((p) => ({ ...p, minimizacion_si_no: true }))} />
-                        <span>Sí</span>
-                      </label>
-                      <label className="p4-radio-item">
-                        <input type="radio" name="minimizacion_si_no" checked={local.minimizacion_si_no === false} onChange={() => setLocal((p) => ({ ...p, minimizacion_si_no: false }))} />
-                        <span>No</span>
-                      </label>
-                    </div>
-                    {local.minimizacion_si_no === true && (
-                      <textarea className="p4-textarea-campo" style={{ marginTop: 6 }} rows={3} placeholder="¿Por qué son necesarios exactamente estos datos y no más?" value={local.minimizacion_justificacion} onChange={(e) => setLocal((p) => ({ ...p, minimizacion_justificacion: e.target.value }))} maxLength={1500} />
-                    )}
+
+                <p className="p4-campo-label" style={{ fontSize: "0.76rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", opacity: 0.7, margin: "14px 0 4px" }}>Principio 3 — Minimización de datos</p>
+                <div className="p4-campo-grupo">
+                  <label className="p4-campo-label">¿Se aplica minimización de datos?</label>
+                  <div className="p4-radio-grupo">
+                    <label className="p4-radio-item">
+                      <input type="radio" name="minimizacion_si_no" checked={local.minimizacion_si_no === true} onChange={() => setLocal((p) => ({ ...p, minimizacion_si_no: true }))} />
+                      <span>Sí</span>
+                    </label>
+                    <label className="p4-radio-item">
+                      <input type="radio" name="minimizacion_si_no" checked={local.minimizacion_si_no === false} onChange={() => setLocal((p) => ({ ...p, minimizacion_si_no: false }))} />
+                      <span>No</span>
+                    </label>
                   </div>
-                  <div className="p4-campo-grupo">
-                    <label className="p4-campo-label">Mecanismos para garantizar exactitud</label>
-                    <textarea className="p4-textarea-campo" rows={3} placeholder="Ej: validación automática, actualización periódica..." value={local.mecanismos_exactitud} onChange={(e) => setLocal((p) => ({ ...p, mecanismos_exactitud: e.target.value }))} maxLength={1500} />
-                  </div>
+                  {local.minimizacion_si_no === true && (
+                    <textarea className="p4-textarea-campo" style={{ marginTop: 6 }} rows={3} placeholder="¿Por qué son necesarios exactamente estos datos y no más?" value={local.minimizacion_justificacion} onChange={(e) => setLocal((p) => ({ ...p, minimizacion_justificacion: e.target.value }))} maxLength={1500} />
+                  )}
                 </div>
+
+                <p className="p4-campo-label" style={{ fontSize: "0.76rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", opacity: 0.7, margin: "14px 0 4px" }}>Principio 4 — Exactitud</p>
+                <div className="p4-campo-grupo">
+                  <label className="p4-campo-label">Mecanismos para garantizar exactitud</label>
+                  <textarea className="p4-textarea-campo" rows={3} placeholder="Ej: validación automática, actualización periódica..." value={local.mecanismos_exactitud} onChange={(e) => setLocal((p) => ({ ...p, mecanismos_exactitud: e.target.value }))} maxLength={1500} />
+                </div>
+
+                <p className="p4-campo-label" style={{ fontSize: "0.76rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", opacity: 0.7, margin: "14px 0 4px" }}>Otros</p>
                 <div className="p4-panel-grid">
                   <div className="p4-campo-grupo">
                     <label className="p4-campo-label">Medidas de cumplimiento demostrable</label>
@@ -1298,7 +1364,6 @@ export default function Paso4() {
                       : null}
                   />
                   <FilaRevision label="Procesos relacionados" valor={form.procesos_relacionados} />
-                  <FilaRevision label="Finalidades secundarias" valor={form.finalidades_secundarias} />
                 </div>
 
                 <div className="p4-revision-seccion">
@@ -1335,9 +1400,12 @@ export default function Paso4() {
                 <div className="p4-revision-seccion">
                   <h4 className="p4-revision-titulo">Paso 4 — Principio 2 (Finalidad)</h4>
                   <FilaRevision label="Finalidad" valor={local.finalidad} />
+                  <FilaRevision label="Finalidades secundarias" valor={local.finalidades_secundarias} />
                   <FilaRevision label="¿Todos los datos tienen finalidad y son necesarios?" valor={local.finalidad_todos_necesarios === true ? "Sí" : local.finalidad_todos_necesarios === false ? "No" : null} />
                   <FilaRevision label="¿Todos los datos tienen la misma finalidad?" valor={local.finalidad_misma === true ? "Sí" : local.finalidad_misma === false ? "No" : null} />
                   <FilaRevision label="¿Se usan solo para fines declarados?" valor={local.usa_solo_fines_declarados === true ? "Sí" : local.usa_solo_fines_declarados === false ? "No" : null} />
+                  <FilaRevision label="¿Se evalúa periódicamente la pertinencia de los datos?" valor={ETIQ_EVALUACION_PERIODICA[local.evaluacion_periodica]} />
+                  <FilaRevision label="Detalle de la evaluación periódica" valor={local.evaluacion_periodica_detalle} />
                 </div>
 
                 <div className="p4-revision-seccion">
@@ -1348,6 +1416,7 @@ export default function Paso4() {
                   />
                   <FilaRevision label="Universo de titulares" valor={form.universo_titulares} />
                   <FilaRevision label="Origen de los datos" valor={(form.origen_datos || "").split(",").filter(Boolean).map((v) => ETIQ_ORIGEN[v] || v).join(", ")} />
+                  <FilaRevision label="Detalle del origen de los datos" valor={form.origen_datos_detalle} />
                   <FilaRevision
                     label="Categorías de datos"
                     valor={categoriasDatos.map((id) => ETIQ_CATEGORIAS[id] || id).join(", ")}
@@ -1419,10 +1488,14 @@ export default function Paso4() {
                 <div className="p4-revision-seccion">
                   <h4 className="p4-revision-titulo">Paso 4 — Principios Ley 21.719</h4>
                   <FilaRevision label="Criterio de plazo" valor={ETIQ_CRITERIO_PLAZO[local.criterio_plazo]} />
-                  <FilaRevision label="Método de eliminación" valor={ETIQ_METODO_ELIMINACION[local.metodo_eliminacion]} />
+                  <FilaRevision
+                    label="Método de eliminación"
+                    valor={local.metodo_eliminacion === "otro"
+                      ? `Otro: ${local.metodo_eliminacion_otro}`
+                      : ETIQ_METODO_ELIMINACION[local.metodo_eliminacion]}
+                  />
                   <FilaRevision label="¿Documenta destrucción?" valor={local.documenta_destruccion ? "Sí" : "No"} />
                   <FilaRevision label="Excepciones al plazo" valor={local.excepciones_plazo} />
-                  <FilaRevision label="Evaluación periódica" valor={ETIQ_EVALUACION_PERIODICA[local.evaluacion_periodica]} />
                   <FilaRevision label="¿Se aplica minimización de datos?" valor={local.minimizacion_si_no === true ? "Sí" : local.minimizacion_si_no === false ? "No" : null} />
                   <FilaRevision label="Justificación minimización" valor={local.minimizacion_justificacion} />
                   <FilaRevision label="Mecanismos de exactitud" valor={local.mecanismos_exactitud} />
