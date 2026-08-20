@@ -135,6 +135,7 @@ export default function Paso2() {
     categorias_titulares: form.categorias_titulares || [],
     universo_titulares:   form.universo_titulares || "",
     origen_datos:         form.origen_datos ? form.origen_datos.split(",").filter(Boolean) : [],
+    origen_datos_detalle: form.origen_datos_detalle || "",
     categorias_datos:     categoriasDatosIniciales,
     datos_sensibles:      primeraVezEnPaso2 ? haySensiblesDetectados : form.datos_sensibles,
     categorias_sensibles: categoriasSensiblesIniciales,
@@ -271,6 +272,7 @@ export default function Paso2() {
           datos_academicos_laborales:         datos.datos_academicos_laborales         || null,
           datos_financieros_patrimoniales:    datos.datos_financieros_patrimoniales    || null,
           origen_sistemico_datos:             datos.origen_sistemico_datos             || null,
+          origen_datos_detalle:               datos.origen_datos_detalle               || null,
           incluye_nna:                        datos.incluye_nna ? true : null,
           nna_detalle:                        datos.nna_detalle || null,
           datos_navegacion:                   datos.datos_navegacion ? true : null,
@@ -393,6 +395,14 @@ export default function Paso2() {
                     );
                   })}
                 </div>
+                <p className="p2-campo-ayuda" style={{ marginTop: 8 }}>Detalla cada origen marcado — ej. de dónde viene exactamente el dato, en qué ficha o sistema se recibe</p>
+                <textarea className="p2-textarea"
+                  placeholder="Ej: Origen Paciente/Padre/Madre/Tutores: información recibida en la Ficha clínica en entrevistas o de la ficha de postulación. Origen directo de Centro Médico: a través de la Ficha de Pacientes..."
+                  value={local.origen_datos_detalle}
+                  onChange={(e) => setLocal((prev) => ({ ...prev, origen_datos_detalle: e.target.value }))}
+                  rows={4} maxLength={4000}
+                />
+                <span className="p2-campo-contador">{local.origen_datos_detalle.length}/4000</span>
               </div>
             </div>
 

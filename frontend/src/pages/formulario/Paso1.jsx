@@ -54,7 +54,8 @@ export default function Paso1() {
     // Campos extendidos B2-03
     subarea_responsable:         form.subarea_responsable         || "",
     procesos_relacionados:       form.procesos_relacionados       || "",
-    finalidades_secundarias:     form.finalidades_secundarias     || "",
+    // finalidades_secundarias se edita en Paso4 ahora (R9.5b, hallazgo #7 —
+    // el modelo la pide junto a "Finalidad", no en Identificación).
     // R8.3 — orden CEDCA
     proceso_asociado:            form.proceso_asociado            || "",
     // R8.4 — bloques repetibles que reemplazan descripcion_detallada
@@ -63,7 +64,6 @@ export default function Paso1() {
 
   const [guardandoBorrador, setGuardandoBorrador] = useState(false);
   const [borradorOk, setBorradorOk] = useState(false);
-  const [abiertaAdicional, setAbiertaAdicional] = useState(false);
 
   // ── Imagen del proceso asociado (R8.2/R8.3) ──────────────────
   // Solo se puede subir/ver una vez que el tratamiento tiene id: en edición
@@ -522,41 +522,6 @@ export default function Paso1() {
               <span className="p1-campo-contador">{local.procesos_relacionados.length}/2000</span>
             </div>
 
-            {/* ── Sección colapsable: Información adicional ── */}
-            <div className="p1-adicional">
-              <button
-                type="button"
-                className="p1-adicional-toggle"
-                onClick={() => setAbiertaAdicional((v) => !v)}
-              >
-                <span className={`p1-adicional-icono ${abiertaAdicional ? "p1-adicional-icono--abierto" : ""}`}>▶</span>
-                Información adicional - completa si aplica a tu organización
-              </button>
-
-              {abiertaAdicional && (
-                <div className="p1-adicional-contenido">
-
-                  {/* Finalidades secundarias */}
-                  <div className="p1-campo">
-                    <label className="p1-label" htmlFor="finalidades_secundarias">
-                      Finalidades secundarias
-                    </label>
-                    <textarea
-                      id="finalidades_secundarias"
-                      name="finalidades_secundarias"
-                      className="p1-textarea"
-                      placeholder="¿Existen finalidades secundarias como fidelización, reportes internos?"
-                      value={local.finalidades_secundarias}
-                      onChange={handleChange}
-                      rows={3}
-                      maxLength={2000}
-                    />
-                    <span className="p1-campo-contador">{local.finalidades_secundarias.length}/2000</span>
-                  </div>
-
-                </div>
-              )}
-            </div>
           </div>
 
           {/* ── Toast borrador guardado ── */}
