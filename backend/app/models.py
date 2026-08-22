@@ -23,6 +23,45 @@ class Organizacion(Base):
     sesiones     = relationship("SesionAnalisis", back_populates="organizacion", cascade="all, delete-orphan")
 
 
+# R10.0, una cuenta individual dentro de una organización (multi-usuario).
+# Se separa el concepto de "cuenta que se loguea" del de "organización":
+# Organizacion sigue existiendo tal cual (la usa el admin de plataforma
+# rol='ADMIN'), pero desde acá cada organización puede tener varios usuarios,
+# cada uno con su propia fila de permisos (PermisoUsuario).
+class Usuario(Base):
+    __tablename__ = "usuarios"
+
+    id                    = Column(Integer, primary_key=True, index=True)
+    organizacion_id       = Column(Integer, ForeignKey("organizaciones.id", ondelete="CASCADE"), nullable=False)
+    nombre                = Column(String(200), nullable=False)
+    correo                = Column(String(200), unique=True, nullable=False)
+    password              = Column(String(200), nullable=False)
+    rol                   = Column(Enum("ADMIN_ORG", "MIEMBRO"), nullable=False)
+    creado_por            = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
+    debe_cambiar_password = Column(Boolean, default=True, nullable=False)
+    activo                = Column(Boolean, default=True, nullable=False)
+    creado_en             = Column(DateTime, server_default=func.now(), nullable=False)
+
+    organizacion = relationship("Organizacion")
+
+
+# R10.0 — permisos individuales de un Usuario (1 a 1). Todos parten en False:
+# un usuario recién creado no puede nada hasta que el admin de la
+# organización le active permisos explícitamente.
+class PermisoUsuario(Base):
+    __tablename__ = "permisos_usuario"
+
+    id                  = Column(Integer, primary_key=True, index=True)
+    usuario_id          = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), unique=True, nullable=False)
+    tratamientos_ver    = Column(Boolean, default=False, nullable=False)
+    tratamientos_crear  = Column(Boolean, default=False, nullable=False)
+    tratamientos_editar = Column(Boolean, default=False, nullable=False)
+    informes_ver        = Column(Boolean, default=False, nullable=False)
+    informes_generar    = Column(Boolean, default=False, nullable=False)
+    informes_eliminar   = Column(Boolean, default=False, nullable=False)
+    riesgos_ver         = Column(Boolean, default=False, nullable=False)
+
+
 class Tratamiento(Base):
     __tablename__ = "tratamientos"
 
@@ -92,6 +131,9 @@ class VersionTratamiento(Base):
     datos_snapshot     = Column(JSON, nullable=False)
     campos_modificados = Column(JSON, nullable=False, default=list)
     modificado_por     = Column(String(200), nullable=True)
+    # R10.0, va al usuario real que hizo el cambio (nullable: filas viejas
+    # y los cambios anteriores a R10 quedan en NULL, siguen usando modificado_por)
+    usuario_id         = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
     descripcion_cambio = Column(Text, nullable=True)
     nivel_riesgo       = Column(String(10), nullable=True)
     creado_en          = Column(DateTime, server_default=func.now(), nullable=False)

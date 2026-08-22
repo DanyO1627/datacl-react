@@ -66,6 +66,8 @@ MIGRATIONS = [
     # "¿Se evalúa periódicamente la pertinencia de los datos?"
     "ALTER TABLE detalle_rat_extendido ADD COLUMN metodo_eliminacion_otro TEXT NULL",
     "ALTER TABLE detalle_rat_extendido ADD COLUMN evaluacion_periodica_detalle TEXT NULL",
+    # 2026-08-21 — R10.0: usuario_id en historial de versiones (multi-usuario)
+    "ALTER TABLE versiones_tratamiento ADD COLUMN usuario_id INT NULL",
 ]
 
 
