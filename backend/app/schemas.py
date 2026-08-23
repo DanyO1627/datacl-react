@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, field_validator
-from typing import Optional
+from typing import Optional, Union
 from datetime import datetime
 import re
 
@@ -67,6 +67,43 @@ class TokenRespuesta(BaseModel):
     token_type: str = "bearer"
     organizacion: OrganizacionRespuesta
 
+
+# ── R10.1 — cuenta individual (persona) dentro de una organización ─────────
+# Separada de OrganizacionRespuesta a propósito, con su propia clave
+# ("usuario", no "organizacion") para que el frontend nunca confunda los
+# datos de la PERSONA logueada con los de la ORGANIZACIÓN a la que
+# pertenece. OrganizacionRespuesta exige rut/nombre/rol de la organización;
+# un Usuario no tiene esos atributos, por eso no se reusa ese schema acá.
+class PermisosRespuesta(BaseModel):
+    tratamientos_ver: bool
+    tratamientos_crear: bool
+    tratamientos_editar: bool
+    informes_ver: bool
+    informes_generar: bool
+    informes_eliminar: bool
+    riesgos_ver: bool
+    model_config = {"from_attributes": True}
+
+
+class UsuarioMeRespuesta(BaseModel):
+    id: int
+    nombre: str
+    correo: str
+    rol: str
+    debe_cambiar_password: bool
+    organizacion: OrganizacionRespuesta
+    # None para ADMIN_ORG (no tiene fila en permisos_usuario, no la necesita)
+    permisos: Optional[PermisosRespuesta] = None
+    model_config = {"from_attributes": True}
+
+
+# Respuesta de POST /auth/login para el camino nuevo (Usuario, R10.1). El
+# camino viejo (admin de plataforma / organizaciones sin migrar a R10.4)
+# sigue devolviendo TokenRespuesta tal cual, sin cambios.
+class TokenRespuestaUsuario(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    usuario: UsuarioMeRespuesta
 
 
 # Para editar nombre y correo desde la pantalla de perfil
