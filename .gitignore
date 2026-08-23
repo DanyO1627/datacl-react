@@ -9,6 +9,7 @@ informes_generados/
 test.db
 test.db-journal
 uploads/logos/
+uploads/procesos/
 Sprint7_Tarjetas_Trello_v2.md
 .env.prod
 .env.production
@@ -17,6 +18,7 @@ backend/.env.production
 frontend/.env.prod
 frontend/.env.production
 backend/uploads/logos
+backend/uploads/procesos
 backend/.env
 backend/.env.prod
 backend/.env.production

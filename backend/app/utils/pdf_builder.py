@@ -1019,7 +1019,7 @@ def construir_pdf(org, tratamientos: list) -> bytes:
 
     fecha_gen = datetime.now().strftime("%d/%m/%Y %H:%M")
     org_nombre = org.nombre
-    org_rut = org.rut
+    org_rut = getattr(org, "rut", None)  # blindaje: siempre debería venir un Organizacion real (R10.3)
 
     # Aviso de pendientes (va al inicio, antes del primer tratamiento)
     pendientes = [d for d in dicts if d.get("estado") == "PENDIENTE"]

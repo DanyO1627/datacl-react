@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.basededatos import get_db
-from app.utils.jwt import obtener_usuario_actual
+from app.utils.jwt import requiere_permiso, organizacion_id_de
 from app import models
 from app.schemas import (
     SesionAnalisisCrear,
@@ -36,11 +36,11 @@ def _to_response(s: models.SesionAnalisis) -> SesionAnalisisRespuesta:
 def crear_sesion(
     datos: SesionAnalisisCrear,
     db: Session = Depends(get_db),
-    usuario: models.Organizacion = Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "crear")),
 ):
     nombre = datos.nombre or f"Sesión {datetime.now().strftime('%d/%m/%Y %H:%M')}"
     sesion = models.SesionAnalisis(
-        organizacion_id=usuario.id,
+        organizacion_id=organizacion_id_de(usuario),
         nombre=nombre,
         fuente=datos.fuente,
         motor_bd=datos.motor_bd,
@@ -56,12 +56,12 @@ def crear_sesion(
 @router.get("", response_model=list[SesionAnalisisRespuesta])
 def listar_sesiones(
     db: Session = Depends(get_db),
-    usuario: models.Organizacion = Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "ver")),
 ):
     sesiones = (
         db.query(models.SesionAnalisis)
         .options(joinedload(models.SesionAnalisis.sesiones_actividad))
-        .filter(models.SesionAnalisis.organizacion_id == usuario.id)
+        .filter(models.SesionAnalisis.organizacion_id == organizacion_id_de(usuario))
         .order_by(models.SesionAnalisis.creado_en.desc())
         .all()
     )
@@ -72,11 +72,11 @@ def listar_sesiones(
 def obtener_sesion(
     sesion_id: int,
     db: Session = Depends(get_db),
-    usuario: models.Organizacion = Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "ver")),
 ):
     sesion = db.query(models.SesionAnalisis).filter(
         models.SesionAnalisis.id == sesion_id,
-        models.SesionAnalisis.organizacion_id == usuario.id,
+        models.SesionAnalisis.organizacion_id == organizacion_id_de(usuario),
     ).first()
     if not sesion:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
@@ -88,11 +88,11 @@ def actualizar_estado(
     sesion_id: int,
     datos: ActualizarEstadoSesion,
     db: Session = Depends(get_db),
-    usuario: models.Organizacion = Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "crear")),
 ):
     sesion = db.query(models.SesionAnalisis).filter(
         models.SesionAnalisis.id == sesion_id,
-        models.SesionAnalisis.organizacion_id == usuario.id,
+        models.SesionAnalisis.organizacion_id == organizacion_id_de(usuario),
     ).first()
     if not sesion:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
@@ -106,14 +106,14 @@ def actualizar_estado(
 def eliminar_sesion(
     sesion_id: int,
     db: Session = Depends(get_db),
-    usuario: models.Organizacion = Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "crear")),
 ):
     sesion = (
         db.query(models.SesionAnalisis)
         .options(joinedload(models.SesionAnalisis.sesiones_actividad))
         .filter(
             models.SesionAnalisis.id == sesion_id,
-            models.SesionAnalisis.organizacion_id == usuario.id,
+            models.SesionAnalisis.organizacion_id == organizacion_id_de(usuario),
         )
         .first()
     )

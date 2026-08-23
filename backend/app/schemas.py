@@ -525,7 +525,9 @@ class TratamientoEditar(BaseModel):
     detalle_extendido: Optional[DetalleRatExtendidoEntrada] = None
     datos_tratados: list[DatoTratadoEntrada] = []
     base_legal_detalle: list[BaseLegalEntrada] = []
-    modificado_por: Optional[str] = None
+    # ahora el frontend ya no consumirá un campo rellenable
+    # ahora eso viene desde usuario.nombre directo desde el backend para saber quién 
+    # modificó qué. 
 
     @field_validator("nombre")
     @classmethod

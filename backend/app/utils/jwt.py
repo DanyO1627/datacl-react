@@ -91,6 +91,38 @@ def obtener_usuario_actual(
     return organizacion
 
 
+# HELPERS DE IDENTIDAD (R10.3)
+# obtener_usuario_actual devuelve un models.Usuario O un models.Organizacion
+# según el camino de login (ver arriba). Los routers necesitan resolver
+# "organizacion_id"/"la Organizacion real"/"quién es la persona" sin
+# importarles cuál de los dos tipos llegó, estos 3 helpers son el único
+# lugar donde se hace ese isinstance, para que no se repita en cada router.
+def organizacion_id_de(usuario) -> int:
+    """
+    El organizacion_id real de la cuenta autenticada:
+    - models.Usuario (persona, R10.1): su .id NO es organizacion_id, hay que
+      usar .organizacion_id.
+    - models.Organizacion (camino viejo — admin de plataforma, u
+      organizaciones cliente todavía no migradas a Usuario por R10.4): para
+      ella .id SIEMPRE fue su propio organizacion_id, como antes de R10.
+    """
+    return usuario.organizacion_id if isinstance(usuario, models.Usuario) else usuario.id
+
+
+def organizacion_de(usuario) -> models.Organizacion:
+    """La Organizacion real a la que pertenece la cuenta autenticada."""
+    return usuario.organizacion if isinstance(usuario, models.Usuario) else usuario
+
+
+def usuario_id_autor_de(usuario):
+    """
+    El id de la PERSONA que hizo la acción, para columnas como
+    VersionTratamiento.usuario_id (R10.0). None en el camino viejo: todavía
+    no hay una persona real detrás de esa cuenta (eso es R10.4).
+    """
+    return usuario.id if isinstance(usuario, models.Usuario) else None
+
+
 def requiere_admin(
     usuario = Depends(obtener_usuario_actual),
 ):
@@ -120,25 +152,47 @@ def requiere_admin_org(
     return usuario
 
 
+def requiere_gestionar_organizacion(
+    usuario = Depends(obtener_usuario_actual),
+) -> models.Organizacion:
+    """
+    Dependencia para endpoints que editan datos de LA ORGANIZACIÓN (nombre,
+    logo, color — R10.3), no de una cuenta individual.
+
+    A diferencia de requiere_admin_org (exclusiva de un models.Usuario real
+    con rol ADMIN_ORG, porque gestionar subcuentas solo tiene sentido una vez
+    migrado a R10.4), acá SÍ se deja pasar al camino viejo (Organizacion):
+    esas cuentas siempre pudieron editar su propio logo/nombre/color sin
+    restricción, R10 no les puede sacar algo que siempre tuvieron.
+
+    Devuelve directo la Organizacion a editar (nunca el Usuario) — el
+    endpoint no necesita ramificar nada.
+    """
+    if isinstance(usuario, models.Usuario) and usuario.rol != "ADMIN_ORG":
+        raise HTTPException(status_code=403, detail="Acceso restringido al administrador de la organización")
+    return organizacion_de(usuario)
+
+
 def requiere_permiso(modulo: str, accion: str):
     """
-    Dependencia para exigir un permiso granular puntual (R10.1).
+    Dependencia para exigir un permiso granular puntual (R10.1/R10.3).
     Uso: def mi_endpoint(usuario = Depends(requiere_permiso("tratamientos", "editar")))
 
-    - Camino viejo (Organizacion, sin usuario_id en el token): no tiene
-      permisos granulares -> 403 siempre.
+    - Camino viejo (Organizacion — admin de plataforma, u organizaciones
+      cliente todavía no migradas a Usuario por R10.4): pasa siempre, sin
+      restricción. Estas cuentas siempre tuvieron acceso total a lo suyo;
+      R10 solo AGREGA subcuentas restringidas, no le saca nada a la cuenta
+      original.
     - ADMIN_ORG: pasa siempre, sin consultar permisos_usuario.
     - MIEMBRO: exige que el booleano "{modulo}_{accion}" en su PermisoUsuario
       esté en True.
-
-    Todavía no se usa en ningún router (eso es R10.3) — se define acá.
     """
     def _dependencia(
         usuario = Depends(obtener_usuario_actual),
         db: Session = Depends(get_db),
     ):
         if not isinstance(usuario, models.Usuario):
-            raise HTTPException(status_code=403, detail="Acceso restringido")
+            return usuario
 
         if usuario.rol == "ADMIN_ORG":
             return usuario

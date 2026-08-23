@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 from app.basededatos import get_db
 from app import models
-from app.utils.jwt import obtener_usuario_actual
+from app.utils.jwt import requiere_permiso, organizacion_id_de, organizacion_de
 from app.utils.pdf_builder import construir_pdf
 from app.schemas import InformeRespuesta, GenerarInformeRequest
 from app.services.informes_service import pedir_analisis_ia
@@ -23,15 +23,15 @@ CARPETA_INFORMES = Path("informes_generados")
 CARPETA_INFORMES.mkdir(exist_ok=True)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# ENDPOINTS
-# ─────────────────────────────────────────────────────────────────────────────
+# ===================================
+#             ENDPOINTS
+# ===================================
 
 @router.post("/generar")
 def generar_informe(
     datos: GenerarInformeRequest,
     db: Session = Depends(get_db),
-    usuario: models.Organizacion = Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("informes", "generar")),
 ):
     """
     Genera el informe PDF con los tratamientos seleccionados por el usuario.
@@ -42,6 +42,8 @@ def generar_informe(
             status_code=400,
             detail="Selecciona al menos un tratamiento para generar el informe.",
         )
+
+    organizacion_id = organizacion_id_de(usuario)
 
     tratamientos = (
         db.query(models.Tratamiento)
@@ -54,7 +56,7 @@ def generar_informe(
         )
         .filter(
             models.Tratamiento.id.in_(datos.ids_tratamientos),
-            models.Tratamiento.organizacion_id == usuario.id,
+            models.Tratamiento.organizacion_id == organizacion_id,
             models.Tratamiento.estado != "BORRADOR",
         )
         .order_by(models.Tratamiento.creado_en.desc())
@@ -67,13 +69,15 @@ def generar_informe(
             detail="No se encontraron tratamientos válidos para generar el informe.",
         )
 
+    organizacion = organizacion_de(usuario)
+
     ahora = datetime.now()
-    nombre_seguro = usuario.nombre.replace(" ", "_").replace("/", "-")
+    nombre_seguro = organizacion.nombre.replace(" ", "_").replace("/", "-")
     fecha_str     = ahora.strftime("%Y%m%d_%H%M%S")
     nombre_pdf    = f"RAT_{nombre_seguro}_{fecha_str}.pdf"
     ruta_pdf      = CARPETA_INFORMES / nombre_pdf
 
-    ruta_pdf.write_bytes(construir_pdf(usuario, tratamientos))
+    ruta_pdf.write_bytes(construir_pdf(organizacion, tratamientos))
 
     # La IA se corre aquí, con la lista ya filtrada, no en un endpoint aparte.
     # Si Groq falla, contenido_ia queda None y el PDF se guarda igual.
@@ -101,7 +105,7 @@ def generar_informe(
     }
 
     nuevo_informe = models.Informe(
-        organizacion_id=usuario.id,
+        organizacion_id=organizacion_id,
         generado_en=ahora,
         contenido_ia=contenido_ia,
         ruta_pdf=str(ruta_pdf),
@@ -124,16 +128,18 @@ def generar_informe(
 def analizar_informe_ia(
     informe_id: int,
     db: Session = Depends(get_db),
-    usuario: models.Organizacion = Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("informes", "ver")),
 ):
     """
     Agrega análisis IA a un informe ya generado.
     Llama a Groq y guarda el análisis en BD. El PDF queda sin cambios.
     Devuelve 502 si Groq no responde, para que el frontend informe al usuario.
     """
+    organizacion_id = organizacion_id_de(usuario)
+
     informe = db.query(models.Informe).filter(
         models.Informe.id == informe_id,
-        models.Informe.organizacion_id == usuario.id,
+        models.Informe.organizacion_id == organizacion_id,
     ).first()
 
     if not informe:
@@ -149,7 +155,7 @@ def analizar_informe_ia(
             )
             .filter(
                 models.Tratamiento.id.in_(ids_originales),
-                models.Tratamiento.organizacion_id == usuario.id,
+                models.Tratamiento.organizacion_id == organizacion_id,
             )
             .all()
         )
@@ -160,7 +166,7 @@ def analizar_informe_ia(
                 joinedload(models.Tratamiento.detalle),
                 joinedload(models.Tratamiento.detalle_extendido),
             )
-            .filter(models.Tratamiento.organizacion_id == usuario.id)
+            .filter(models.Tratamiento.organizacion_id == organizacion_id)
             .order_by(models.Tratamiento.creado_en.desc())
             .limit(informe.num_tratamientos or 10)
             .all()
@@ -189,7 +195,7 @@ def analizar_informe_ia(
 @router.get("", response_model=list[InformeRespuesta])
 def listar_informes(
     db: Session = Depends(get_db),
-    usuario: models.Organizacion = Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("informes", "ver")),
 ):
     """
     Lista los informes de la organización autenticada.
@@ -197,7 +203,7 @@ def listar_informes(
     Calcula num_tratamientos contando los tratamientos actuales de la org.
     """
     informes = db.query(models.Informe).filter(
-        models.Informe.organizacion_id == usuario.id
+        models.Informe.organizacion_id == organizacion_id_de(usuario)
     ).order_by(models.Informe.generado_en.desc()).all()
 
     return [
@@ -217,12 +223,12 @@ def listar_informes(
 def obtener_analisis_ia(
     informe_id: int,
     db: Session = Depends(get_db),
-    usuario: models.Organizacion = Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("informes", "ver")),
 ):
     """Devuelve el contenido_ia de un informe. 404 si no existe o no tiene análisis."""
     informe = db.query(models.Informe).filter(
         models.Informe.id == informe_id,
-        models.Informe.organizacion_id == usuario.id,
+        models.Informe.organizacion_id == organizacion_id_de(usuario),
     ).first()
 
     if not informe:
@@ -238,7 +244,7 @@ def obtener_analisis_ia(
 def descargar_informe(
     informe_id: int,
     db: Session = Depends(get_db),
-    usuario: models.Organizacion = Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("informes", "ver")),
 ):
     """
     Descarga el PDF de un informe ya generado.
@@ -248,7 +254,7 @@ def descargar_informe(
     """
     informe = db.query(models.Informe).filter(
         models.Informe.id == informe_id,
-        models.Informe.organizacion_id == usuario.id,
+        models.Informe.organizacion_id == organizacion_id_de(usuario),
     ).first()
 
     if not informe:
@@ -273,7 +279,7 @@ def descargar_informe(
 def eliminar_informe(
     informe_id: int,
     db: Session = Depends(get_db),
-    usuario: models.Organizacion = Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("informes", "eliminar")),
 ):
     """
     Elimina un informe y su PDF del disco.
@@ -281,7 +287,7 @@ def eliminar_informe(
     """
     informe = db.query(models.Informe).filter(
         models.Informe.id == informe_id,
-        models.Informe.organizacion_id == usuario.id,
+        models.Informe.organizacion_id == organizacion_id_de(usuario),
     ).first()
 
     if not informe:

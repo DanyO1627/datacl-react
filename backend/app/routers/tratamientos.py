@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.basededatos import get_db
-from app.utils.jwt import obtener_usuario_actual
+from app.utils.jwt import requiere_permiso, organizacion_id_de, usuario_id_autor_de
 from app import models
 from app.schemas import (
     TratamientoCrear,
@@ -37,28 +37,28 @@ TAMANO_MAX = 2 * 1024 * 1024  # 2 MB
 def crear_tratamiento(
     datos: TratamientoCrear,
     db: Session = Depends(get_db),
-    usuario: models.Organizacion = Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "crear")),
 ):
-    return svc.crear_tratamiento(db, datos, usuario.id)
+    return svc.crear_tratamiento(db, datos, organizacion_id_de(usuario))
 
 
 @router.get("", response_model=list[TratamientoListado])
 def listar_tratamientos(
     nivel_riesgo: Optional[str] = None,
     estado: Optional[str] = None,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "ver")),
     db: Session = Depends(get_db),
 ):
-    return svc.listar_tratamientos(db, usuario.id, nivel_riesgo, estado)
+    return svc.listar_tratamientos(db, organizacion_id_de(usuario), nivel_riesgo, estado)
 
 
 @router.get("/{tratamiento_id}", response_model=TratamientoRespuesta)
 def obtener_tratamiento(
     tratamiento_id: int,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "ver")),
     db: Session = Depends(get_db),
 ):
-    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, usuario.id)
+    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, organizacion_id_de(usuario))
     if not tratamiento:
         raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
     return tratamiento
@@ -68,10 +68,17 @@ def obtener_tratamiento(
 def editar_tratamiento(
     tratamiento_id: int,
     datos: TratamientoEditar,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "editar")),
     db: Session = Depends(get_db),
 ):
-    tratamiento = svc.editar_tratamiento(db, tratamiento_id, datos, usuario.id)
+    tratamiento = svc.editar_tratamiento(
+        db,
+        tratamiento_id,
+        datos,
+        organizacion_id_de(usuario),
+        usuario_id_editor=usuario_id_autor_de(usuario),
+        modificado_por=usuario.nombre,
+    )
     if not tratamiento:
         raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
     return tratamiento
@@ -80,10 +87,10 @@ def editar_tratamiento(
 @router.post("/{tratamiento_id}/evaluar", response_model=TratamientoRespuesta)
 def evaluar_tratamiento(
     tratamiento_id: int,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "editar")),
     db: Session = Depends(get_db),
 ):
-    tratamiento = svc.evaluar_riesgo(db, tratamiento_id, usuario.id)
+    tratamiento = svc.evaluar_riesgo(db, tratamiento_id, organizacion_id_de(usuario))
     if not tratamiento:
         raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
     return tratamiento
@@ -92,10 +99,10 @@ def evaluar_tratamiento(
 @router.delete("/{tratamiento_id}")
 def eliminar_tratamiento(
     tratamiento_id: int,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "editar")),
     db: Session = Depends(get_db),
 ):
-    eliminado = svc.eliminar_tratamiento(db, tratamiento_id, usuario.id)
+    eliminado = svc.eliminar_tratamiento(db, tratamiento_id, organizacion_id_de(usuario))
     if not eliminado:
         raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
     return {"mensaje": "Tratamiento eliminado correctamente.", "id": tratamiento_id}
@@ -104,10 +111,10 @@ def eliminar_tratamiento(
 @router.get("/{tratamiento_id}/campos", response_model=list[CampoRatRespuesta])
 def obtener_campos_rat(
     tratamiento_id: int,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "ver")),
     db: Session = Depends(get_db),
 ):
-    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, usuario.id)
+    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, organizacion_id_de(usuario))
     if not tratamiento:
         raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
     return (
@@ -120,12 +127,12 @@ def obtener_campos_rat(
 @router.get("/{tratamiento_id}/versiones", response_model=list[VersionTratamientoResumen])
 def listar_versiones_tratamiento(
     tratamiento_id: int,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "ver")),
     db: Session = Depends(get_db),
 ):
     # Primero se verifica que el tratamiento sea de la organización logueada
     # (devuelve none si no existe o es de otra org) para evitar que cualquiera acceda a cualquiera.
-    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, usuario.id)
+    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, organizacion_id_de(usuario))
     if not tratamiento:
         raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
     return svc.obtener_versiones(db, tratamiento_id)
@@ -135,11 +142,11 @@ def listar_versiones_tratamiento(
 def obtener_version_tratamiento(
     tratamiento_id: int,
     numero: int,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "ver")),
     db: Session = Depends(get_db),
 ):
     # Misma revisión de pertenencia que en el listado, antes de ir a buscar la versión que busca
-    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, usuario.id)
+    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, organizacion_id_de(usuario))
     if not tratamiento:
         raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
     version = svc.obtener_version_por_numero(db, tratamiento_id, numero)
@@ -158,10 +165,10 @@ def obtener_version_tratamiento(
 def subir_imagen_proceso(
     tratamiento_id: int,
     archivo: UploadFile = File(...),
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "editar")),
     db: Session = Depends(get_db),
 ):
-    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, usuario.id)
+    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, organizacion_id_de(usuario))
     if not tratamiento:
         raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
 
@@ -191,10 +198,10 @@ def subir_imagen_proceso(
 @router.delete("/{tratamiento_id}/imagen-proceso", summary="Eliminar imagen del proceso asociado")
 def eliminar_imagen_proceso(
     tratamiento_id: int,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "editar")),
     db: Session = Depends(get_db),
 ):
-    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, usuario.id)
+    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, organizacion_id_de(usuario))
     if not tratamiento:
         raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
 
@@ -211,10 +218,10 @@ def eliminar_imagen_proceso(
 @router.get("/{tratamiento_id}/imagen-proceso", summary="Obtener imagen del proceso asociado")
 def obtener_imagen_proceso(
     tratamiento_id: int,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(requiere_permiso("tratamientos", "ver")),
     db: Session = Depends(get_db),
 ):
-    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, usuario.id)
+    tratamiento = svc.obtener_tratamiento_por_id(db, tratamiento_id, organizacion_id_de(usuario))
     if not tratamiento:
         raise HTTPException(status_code=404, detail="Tratamiento no encontrado.")
 

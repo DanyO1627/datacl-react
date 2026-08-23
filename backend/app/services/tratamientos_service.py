@@ -360,6 +360,8 @@ def editar_tratamiento(
     tratamiento_id: int,
     datos: TratamientoEditar,
     organizacion_id: int,
+    usuario_id_editor: int | None = None,
+    modificado_por: str | None = None,
 ) -> models.Tratamiento | None:
     tratamiento = (
         db.query(models.Tratamiento)
@@ -450,16 +452,11 @@ def editar_tratamiento(
         # Historial de versiones: se registra en cualquier estado del tratamiento.
         snapshot_despues = _serializar_tratamiento(tratamiento)
 
-        # Si el usuario indicó quién está editando, se usa ese nombre;
-        # si no, se usa el nombre de la organización como respaldo.
-        modificado_por = datos.modificado_por.strip() if datos.modificado_por and datos.modificado_por.strip() else None
-        if not modificado_por:
-            organizacion = (
-                db.query(models.Organizacion)
-                .filter(models.Organizacion.id == organizacion_id)
-                .first()
-            )
-            modificado_por = organizacion.nombre if organizacion else None
+        # R10.3 ->  modificado_por/usuario_id_editor ya vienen resueltos por el
+        # router (organizacion_id_de/usuario_id_autor_de en jwt.py), sacados
+        # de la sesión autenticada. Antes se leía datos.modificado_por, un
+        # texto libre que mandaba el frontend sin validar nada (dejó de
+        # usarse a propósito (por eso TratamientoEditar ya no tiene ese campo)).
 
         ultima_version = (
             db.query(models.VersionTratamiento)
@@ -480,6 +477,7 @@ def editar_tratamiento(
                 numero_version=siguiente_num,
                 datos_snapshot=snapshot_despues,
                 campos_modificados=[],
+                usuario_id=usuario_id_editor,
                 modificado_por=modificado_por,
                 descripcion_cambio="Versión actual",
                 nivel_riesgo=tratamiento.nivel_riesgo,

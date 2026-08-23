@@ -5,26 +5,10 @@ from pandas.errors import EmptyDataError, ParserError
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 
 from app.utils.analisis import leer_columnas_csv, leer_columnas_excel, clasificar_columnas
-from app.utils.jwt import obtener_usuario_actual
+from app.utils.jwt import requiere_permiso
 
-# ─────────────────────────────────────────────────────────────────────────────
-# DECISIÓN: ¿Requiere autenticación /analizar?
-#
-# SÍ requiere JWT: razones:
-#
-# 1. ABUSO DE RECURSOS: sin autenticación cualquier persona o bot puede subir
-#    archivos de forma masiva y consumir CPU/RAM del servidor indefinidamente.
-#
-# 2. COHERENCIA DE FLUJO: el análisis es el paso previo a crear un tratamiento,
-#    que sí requiere JWT. No tiene sentido que el paso previo sea público.
-#
-# 3. TRAZABILIDAD: si en el futuro queremos registrar qué organización analizó
-#    qué archivos, ya tenemos el usuario disponible en el contexto.
-#
-# IMPLEMENTACIÓN: se agrega Depends(obtener_usuario_actual) a ambos endpoints.
-# El frontend (analisisService.js) ya envía el JWT automáticamente via interceptor,
-# por lo que no requiere ningún cambio en el frontend.
-# ─────────────────────────────────────────────────────────────────────────────
+# Requiere JWT para evitar abuso de recursos y porque es el paso previo a
+# crear un tratamiento; exige el mismo permiso, tratamientos_crear.
 
 router = APIRouter(prefix="/analizar", tags=["analisis"])
 
@@ -76,7 +60,7 @@ def _leer_dataframe(contenido: bytes, tipo: str) -> pd.DataFrame:
 @router.post("/archivo")
 async def analizar_archivo(
     archivos: Annotated[list[UploadFile], File(...)],
-    _usuario=Depends(obtener_usuario_actual),
+    _usuario=Depends(requiere_permiso("tratamientos", "crear")),
 ):
     """
     Nivel 1: recibe uno o más archivos CSV/Excel y clasifica sus columnas.
@@ -167,7 +151,7 @@ async def analizar_archivo(
 async def analizar_con_diccionario(
     diccionario: Annotated[UploadFile, File(...)],
     archivos: list[UploadFile] = File(default=[]),
-    _usuario=Depends(obtener_usuario_actual),
+    _usuario=Depends(requiere_permiso("tratamientos", "crear")),
 ):
     """
     Nivel 2 — recibe un diccionario técnico (nombre_tecnico + descripcion) y,
@@ -374,7 +358,7 @@ def _engine_temporal(url: str):
 @router.post("/conexion/probar")
 async def probar_conexion(
     datos: ConexionBDRequest,
-    _usuario=Depends(obtener_usuario_actual),
+    _usuario=Depends(requiere_permiso("tratamientos", "crear")),
 ):
     """
     Verifica que la conexión es válida y devuelve la lista de tablas.
@@ -427,7 +411,7 @@ async def probar_conexion(
 @router.post("/conexion/columnas")
 async def obtener_columnas_bd(
     datos: ConexionBDRequest,
-    _usuario=Depends(obtener_usuario_actual),
+    _usuario=Depends(requiere_permiso("tratamientos", "crear")),
 ):
     """
     Devuelve los nombres de columnas de las tablas seleccionadas,
@@ -471,7 +455,7 @@ async def obtener_columnas_bd(
 @router.post("/conexion")
 async def analizar_conexion_bd(
     datos: ConexionBDRequest,
-    _usuario=Depends(obtener_usuario_actual),
+    _usuario=Depends(requiere_permiso("tratamientos", "crear")),
 ):
     
     """
