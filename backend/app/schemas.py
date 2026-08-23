@@ -106,6 +106,107 @@ class TokenRespuestaUsuario(BaseModel):
     usuario: UsuarioMeRespuesta
 
 
+# CRUD DE LOS USUARIOS (R10.2)
+_ROLES_USUARIO_VALIDOS = ("ADMIN_ORG", "MIEMBRO")
+
+
+class PermisosEntrada(BaseModel):
+    tratamientos_ver: bool = False
+    tratamientos_crear: bool = False
+    tratamientos_editar: bool = False
+    informes_ver: bool = False
+    informes_generar: bool = False
+    informes_eliminar: bool = False
+    riesgos_ver: bool = False
+
+
+class UsuarioCrear(BaseModel):
+    nombre: str
+    correo: EmailStr
+    password: str
+    rol: str
+    # Solo aplica si rol == "MIEMBRO", se ignora si el rol == "ADMIN_ORG".
+    permisos: Optional[PermisosEntrada] = None
+
+    @field_validator("nombre")
+    @classmethod
+    def nombre_no_vacio(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("El nombre no puede estar vacío")
+        return v.strip()
+
+    @field_validator("password")
+    @classmethod
+    def password_minimo(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("La contraseña debe tener al menos 8 caracteres")
+        if len(v) > 72:
+            raise ValueError("La contraseña no puede tener más de 72 caracteres")
+        return v
+
+    @field_validator("rol")
+    @classmethod
+    def rol_valido(cls, v: str) -> str:
+        if v not in _ROLES_USUARIO_VALIDOS:
+            raise ValueError(f"rol debe ser uno de {_ROLES_USUARIO_VALIDOS}")
+        return v
+
+
+class UsuarioEditar(BaseModel):
+    nombre: Optional[str] = None
+    rol: Optional[str] = None
+    activo: Optional[bool] = None
+    permisos: Optional[PermisosEntrada] = None
+
+    @field_validator("nombre")
+    @classmethod
+    def nombre_no_vacio(cls, v: str) -> str:
+        if v is not None and not v.strip():
+            raise ValueError("El nombre no puede estar vacío")
+        return v.strip() if v else v
+
+    @field_validator("rol")
+    @classmethod
+    def rol_valido(cls, v: str) -> str:
+        if v is not None and v not in _ROLES_USUARIO_VALIDOS:
+            raise ValueError(f"rol debe ser uno de {_ROLES_USUARIO_VALIDOS}")
+        return v
+
+
+class UsuarioPasswordReset(BaseModel):
+    password_nueva: str
+    confirmar_password: str
+
+    @field_validator("password_nueva")
+    @classmethod
+    def password_minimo(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("La contraseña debe tener al menos 8 caracteres")
+        if len(v) > 72:
+            raise ValueError("La contraseña no puede tener más de 72 caracteres")
+        return v
+
+    @field_validator("confirmar_password")
+    @classmethod
+    def passwords_coinciden(cls, v: str, info) -> str:
+        nueva = info.data.get("password_nueva")
+        if nueva and v != nueva:
+            raise ValueError("Las contraseñas no coinciden")
+        return v
+
+
+class UsuarioRespuesta(BaseModel):
+    id: int
+    nombre: str
+    correo: str
+    rol: str
+    activo: bool
+    debe_cambiar_password: bool
+    creado_en: datetime
+    permisos: Optional[PermisosRespuesta] = None
+    model_config = {"from_attributes": True}
+
+
 # Para editar nombre y correo desde la pantalla de perfil
 class OrganizacionEditarPerfil(BaseModel):
     nombre: Optional[str] = None

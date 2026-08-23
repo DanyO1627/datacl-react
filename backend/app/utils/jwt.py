@@ -105,6 +105,21 @@ def requiere_admin(
     return usuario
 
 
+def requiere_admin_org(
+    usuario = Depends(obtener_usuario_actual),
+):
+    """
+    Dependencia para endpoints exclusivos del admin de UNA organización
+    (rol='ADMIN_ORG' en `usuarios`, R10.1/R10.2) — no confundir con
+    requiere_admin (admin de PLATAFORMA, rol='ADMIN' en `organizaciones`).
+    El camino viejo (Organizacion) nunca pasa acá, ni siquiera el admin de
+    plataforma: es exclusivo de personas reales dentro de una organización.
+    """
+    if not isinstance(usuario, models.Usuario) or usuario.rol != "ADMIN_ORG":
+        raise HTTPException(status_code=403, detail="Acceso restringido al administrador de la organización")
+    return usuario
+
+
 def requiere_permiso(modulo: str, accion: str):
     """
     Dependencia para exigir un permiso granular puntual (R10.1).
