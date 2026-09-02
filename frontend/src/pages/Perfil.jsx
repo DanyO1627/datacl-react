@@ -6,8 +6,24 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import BarraLateral from "../components/BarraLateral";
+import PermisosCheckboxes from "../components/PermisosCheckboxes";
+import {
+  crearUsuario,
+  listarUsuarios,
+  editarUsuario,
+  eliminarUsuario,
+  resetearPassword,
+} from "../services/usuariosService";
 import axios from "axios";
 import "../styles/perfil.css";
+
+// R10.6 — permisos "en blanco" para inicializar el formulario de creación y
+// el modal de editar permisos.
+const PERMISOS_VACIOS = {
+  tratamientos_ver: false, tratamientos_crear: false, tratamientos_editar: false,
+  informes_ver: false, informes_generar: false, informes_eliminar: false,
+  riesgos_ver: false,
+};
 
 const API = "/api";
 
@@ -116,19 +132,44 @@ export default function Perfil() {
   const [guardandoPass, setGuardandoPass] = useState(false);
   const [alertaPass, setAlertaPass] = useState(null);
 
+  // ── Estado de gestión de usuarios (R10.6, solo ADMIN_ORG) ─────
+  const esAdminOrg = usuario?.rol === "ADMIN_ORG";
+
+  const [usuarios, setUsuarios] = useState([]);
+  const [cargandoUsuarios, setCargandoUsuarios] = useState(false);
+  const [alertaUsuarios, setAlertaUsuarios] = useState(null);
+
+  const [mostrarFormCrear, setMostrarFormCrear] = useState(false);
+  const [formCrear, setFormCrear] = useState({ nombre: "", correo: "", password: "", esAdmin: false, permisos: PERMISOS_VACIOS });
+  const [creandoUsuario, setCreandoUsuario] = useState(false);
+
+  const [usuarioEditandoPermisos, setUsuarioEditandoPermisos] = useState(null);
+  const [permisosEnEdicion, setPermisosEnEdicion] = useState(PERMISOS_VACIOS);
+  const [guardandoPermisos, setGuardandoPermisos] = useState(false);
+
+  const [usuarioReseteando, setUsuarioReseteando] = useState(null);
+  const [passwordReset, setPasswordReset] = useState({ password_nueva: "", confirmar_password: "" });
+  const [reseteando, setReseteando] = useState(false);
+
+  const [usuarioEliminando, setUsuarioEliminando] = useState(null);
+  const [eliminandoUsuario, setEliminandoUsuario] = useState(false);
+
   // ── Pre-rellenar desde GET /auth/me ──────────────────────────
   useEffect(() => {
     let urlCreada = null;
     async function cargarPerfil() {
       try {
         const res = await api.get("/auth/me");
+        // R10.1: camino nuevo (usuarios) trae rut/color_institucional/logo_ruta
+        // anidados en res.data.organizacion; camino viejo los trae directo.
+        const datosOrg = res.data.organizacion || res.data;
         setPerfil({
-          nombre: res.data.nombre || "",
-          correo: res.data.correo || "",
-          rut:    res.data.rut    || "",
+          nombre: datosOrg.nombre || "",
+          correo: datosOrg.correo || "",
+          rut:    datosOrg.rut    || "",
         });
-        if (res.data.color_institucional) setColorInst(res.data.color_institucional);
-        if (res.data.logo_ruta) {
+        if (datosOrg.color_institucional) setColorInst(datosOrg.color_institucional);
+        if (datosOrg.logo_ruta) {
           urlCreada = await obtenerLogoBlobUrl();
           setLogoUrl(urlCreada);
         }
@@ -208,6 +249,113 @@ export default function Perfil() {
     }
   }
 
+  // ── Cargar usuarios de la organización (R10.6) ────────────────
+  useEffect(() => {
+    if (!esAdminOrg) return;
+    async function cargarUsuarios() {
+      setCargandoUsuarios(true);
+      try {
+        const datos = await listarUsuarios();
+        setUsuarios(datos);
+      } catch (err) {
+        setAlertaUsuarios({ tipo: "error", mensaje: err.message });
+      } finally {
+        setCargandoUsuarios(false);
+      }
+    }
+    cargarUsuarios();
+  }, [esAdminOrg]);
+
+  // ── Crear usuario ──────────────────────────────────────────────
+  async function handleCrearUsuario(e) {
+    e.preventDefault();
+    setCreandoUsuario(true);
+    setAlertaUsuarios(null);
+    try {
+      const creado = await crearUsuario({
+        nombre: formCrear.nombre,
+        correo: formCrear.correo,
+        password: formCrear.password,
+        rol: formCrear.esAdmin ? "ADMIN_ORG" : "MIEMBRO",
+        permisos: formCrear.esAdmin ? null : formCrear.permisos,
+      });
+      setUsuarios((prev) => [...prev, creado]);
+      setAlertaUsuarios({ tipo: "exito", mensaje: "Usuario creado correctamente." });
+      setMostrarFormCrear(false);
+      setFormCrear({ nombre: "", correo: "", password: "", esAdmin: false, permisos: PERMISOS_VACIOS });
+    } catch (err) {
+      setAlertaUsuarios({ tipo: "error", mensaje: err.message });
+    } finally {
+      setCreandoUsuario(false);
+    }
+  }
+
+  // ── Editar permisos ────────────────────────────────────────────
+  function abrirEditarPermisos(u) {
+    setUsuarioEditandoPermisos(u);
+    setPermisosEnEdicion(u.permisos || PERMISOS_VACIOS);
+  }
+
+  async function handleGuardarPermisos() {
+    setGuardandoPermisos(true);
+    try {
+      const actualizado = await editarUsuario(usuarioEditandoPermisos.id, { permisos: permisosEnEdicion });
+      setUsuarios((prev) => prev.map((u) => (u.id === actualizado.id ? actualizado : u)));
+      setUsuarioEditandoPermisos(null);
+      setAlertaUsuarios({ tipo: "exito", mensaje: "Permisos actualizados correctamente." });
+    } catch (err) {
+      setAlertaUsuarios({ tipo: "error", mensaje: err.message });
+    } finally {
+      setGuardandoPermisos(false);
+    }
+  }
+
+  // ── Activar / desactivar ───────────────────────────────────────
+  async function handleToggleActivo(u) {
+    setAlertaUsuarios(null);
+    try {
+      const actualizado = await editarUsuario(u.id, { activo: !u.activo });
+      setUsuarios((prev) => prev.map((x) => (x.id === actualizado.id ? actualizado : x)));
+    } catch (err) {
+      setAlertaUsuarios({ tipo: "error", mensaje: err.message });
+    }
+  }
+
+  // ── Resetear contraseña ─────────────────────────────────────────
+  function abrirResetearPassword(u) {
+    setUsuarioReseteando(u);
+    setPasswordReset({ password_nueva: "", confirmar_password: "" });
+  }
+
+  async function handleResetearPassword(e) {
+    e.preventDefault();
+    setReseteando(true);
+    try {
+      await resetearPassword(usuarioReseteando.id, passwordReset);
+      setAlertaUsuarios({ tipo: "exito", mensaje: `Contraseña de ${usuarioReseteando.nombre} actualizada correctamente.` });
+      setUsuarioReseteando(null);
+    } catch (err) {
+      setAlertaUsuarios({ tipo: "error", mensaje: err.message });
+    } finally {
+      setReseteando(false);
+    }
+  }
+
+  // ── Eliminar usuario ────────────────────────────────────────────
+  async function handleEliminarUsuario() {
+    setEliminandoUsuario(true);
+    try {
+      await eliminarUsuario(usuarioEliminando.id);
+      setUsuarios((prev) => prev.filter((u) => u.id !== usuarioEliminando.id));
+      setAlertaUsuarios({ tipo: "exito", mensaje: "Usuario eliminado correctamente." });
+      setUsuarioEliminando(null);
+    } catch (err) {
+      setAlertaUsuarios({ tipo: "error", mensaje: err.message });
+    } finally {
+      setEliminandoUsuario(false);
+    }
+  }
+
   // ── Subir logo ────────────────────────────────────────────────
   async function handleSubirLogo(e) {
     const archivo = e.target.files?.[0];
@@ -281,7 +429,8 @@ export default function Perfil() {
         {/* ── Card principal ── */}
         <div className="pf-contenido">
 
-          {/* ════════ Sección: datos de la organización ════════ */}
+          {/* ════════ Sección: datos de la organización (solo ADMIN_ORG, R10.6) ════════ */}
+          {esAdminOrg && (
           <section className="pf-seccion">
             <h2 className="pf-seccion-titulo">Datos de la organización</h2>
 
@@ -393,9 +542,10 @@ export default function Perfil() {
               )}
             </form>
           </section>
+          )}
 
-          {/* Divisor */}
-          <hr className="pf-divisor" />
+          {/* Divisor — solo si la sección de arriba se mostró */}
+          {esAdminOrg && <hr className="pf-divisor" />}
 
           {/* ════════ Sección: cambio de contraseña ════════ */}
           <section className="pf-seccion">
@@ -629,7 +779,262 @@ export default function Perfil() {
             </section>
           </div>
 
+          {/* ════════ Sección: gestión de usuarios (solo ADMIN_ORG, R10.6) ════════ */}
+          {esAdminOrg && (
+          <div className="pf-contenido" style={{ marginTop: "1.5rem" }}>
+            <section className="pf-seccion">
+              <div className="pf-seccion-header-row">
+                <h2 className="pf-seccion-titulo">Gestión de usuarios</h2>
+                <button
+                  type="button"
+                  className="pf-btn pf-btn--guardar pf-btn--sm"
+                  onClick={() => setMostrarFormCrear(true)}
+                >
+                  + Crear usuario
+                </button>
+              </div>
+
+              {alertaUsuarios && (
+                <div className={`pf-alerta pf-alerta--${alertaUsuarios.tipo}`} style={{ marginTop: 12 }}>
+                  <span className="pf-alerta-icono">
+                    {alertaUsuarios.tipo === "exito" ? <IconoCheck /> : <IconoError />}
+                  </span>
+                  <span>{alertaUsuarios.mensaje}</span>
+                </div>
+              )}
+
+              {cargandoUsuarios ? (
+                <p className="pf-pdf-hint" style={{ marginTop: 12 }}>Cargando usuarios...</p>
+              ) : usuarios.length === 0 ? (
+                <p className="pf-pdf-hint" style={{ marginTop: 12 }}>Todavía no hay usuarios creados en esta organización.</p>
+              ) : (
+                <table className="pf-tabla-usuarios">
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Correo</th>
+                      <th>Rol</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {usuarios.map((u) => (
+                      <tr key={u.id}>
+                        <td>{u.nombre}</td>
+                        <td>{u.correo}</td>
+                        <td>{u.rol === "ADMIN_ORG" ? "Administrador" : "Miembro"}</td>
+                        <td>
+                          <span className={`pf-usuario-badge ${u.activo ? "pf-usuario-badge--activo" : "pf-usuario-badge--inactivo"}`}>
+                            {u.activo ? "Activo" : "Inactivo"}
+                          </span>
+                        </td>
+                        <td className="pf-tabla-acciones">
+                          {u.rol === "MIEMBRO" && (
+                            <button type="button" className="pf-accion-link" onClick={() => abrirEditarPermisos(u)}>
+                              Permisos
+                            </button>
+                          )}
+                          <button type="button" className="pf-accion-link" onClick={() => abrirResetearPassword(u)}>
+                            Resetear contraseña
+                          </button>
+                          <button type="button" className="pf-accion-link" onClick={() => handleToggleActivo(u)}>
+                            {u.activo ? "Desactivar" : "Activar"}
+                          </button>
+                          <button type="button" className="pf-accion-link pf-accion-link--peligro" onClick={() => setUsuarioEliminando(u)}>
+                            Eliminar
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </section>
+          </div>
+          )}
+
       </main>
+
+      {/* ── Modal: crear usuario ── */}
+      {mostrarFormCrear && (
+        <div className="pf-modal-overlay">
+          <div className="pf-modal-card">
+            <h3 className="pf-modal-titulo">Crear usuario</h3>
+            <form onSubmit={handleCrearUsuario} className="pf-form">
+              <div className="pf-campo">
+                <label className="pf-label">Nombre</label>
+                <input
+                  type="text"
+                  className="pf-input"
+                  value={formCrear.nombre}
+                  onChange={(e) => setFormCrear((f) => ({ ...f, nombre: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="pf-campo">
+                <label className="pf-label">Correo electrónico</label>
+                <input
+                  type="email"
+                  className="pf-input"
+                  value={formCrear.correo}
+                  onChange={(e) => setFormCrear((f) => ({ ...f, correo: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="pf-campo">
+                <label className="pf-label">Contraseña</label>
+                <input
+                  type="password"
+                  className="pf-input"
+                  value={formCrear.password}
+                  onChange={(e) => setFormCrear((f) => ({ ...f, password: e.target.value }))}
+                  placeholder="Mínimo 8 caracteres"
+                  required
+                />
+              </div>
+
+              <label className="pf-toggle-admin">
+                <input
+                  type="checkbox"
+                  checked={formCrear.esAdmin}
+                  onChange={(e) => setFormCrear((f) => ({ ...f, esAdmin: e.target.checked }))}
+                />
+                <span>Es administrador de la organización</span>
+              </label>
+
+              {!formCrear.esAdmin && (
+                <div className="pf-campo">
+                  <label className="pf-label">Permisos</label>
+                  <PermisosCheckboxes
+                    permisos={formCrear.permisos}
+                    onChange={(p) => setFormCrear((f) => ({ ...f, permisos: p }))}
+                  />
+                </div>
+              )}
+
+              <div className="pf-form-footer">
+                <button
+                  type="button"
+                  className="pf-btn pf-btn--cancelar"
+                  onClick={() => setMostrarFormCrear(false)}
+                  disabled={creandoUsuario}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="pf-btn pf-btn--guardar" disabled={creandoUsuario}>
+                  {creandoUsuario ? "Creando..." : "Crear usuario"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: editar permisos ── */}
+      {usuarioEditandoPermisos && (
+        <div className="pf-modal-overlay">
+          <div className="pf-modal-card">
+            <h3 className="pf-modal-titulo">Permisos de {usuarioEditandoPermisos.nombre}</h3>
+            <PermisosCheckboxes permisos={permisosEnEdicion} onChange={setPermisosEnEdicion} />
+            <div className="pf-form-footer" style={{ marginTop: 16 }}>
+              <button
+                type="button"
+                className="pf-btn pf-btn--cancelar"
+                onClick={() => setUsuarioEditandoPermisos(null)}
+                disabled={guardandoPermisos}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="pf-btn pf-btn--guardar"
+                onClick={handleGuardarPermisos}
+                disabled={guardandoPermisos}
+              >
+                {guardandoPermisos ? "Guardando..." : "Guardar permisos"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: resetear contraseña ── */}
+      {usuarioReseteando && (
+        <div className="pf-modal-overlay">
+          <div className="pf-modal-card">
+            <h3 className="pf-modal-titulo">Resetear contraseña de {usuarioReseteando.nombre}</h3>
+            <form onSubmit={handleResetearPassword} className="pf-form">
+              <div className="pf-campo">
+                <label className="pf-label">Contraseña nueva</label>
+                <input
+                  type="password"
+                  className="pf-input"
+                  value={passwordReset.password_nueva}
+                  onChange={(e) => setPasswordReset((p) => ({ ...p, password_nueva: e.target.value }))}
+                  placeholder="Mínimo 8 caracteres"
+                  required
+                />
+              </div>
+              <div className="pf-campo">
+                <label className="pf-label">Confirmar contraseña nueva</label>
+                <input
+                  type="password"
+                  className="pf-input"
+                  value={passwordReset.confirmar_password}
+                  onChange={(e) => setPasswordReset((p) => ({ ...p, confirmar_password: e.target.value }))}
+                  required
+                />
+              </div>
+              <p className="pf-pdf-hint">La persona deberá cambiarla de nuevo al iniciar sesión.</p>
+              <div className="pf-form-footer">
+                <button
+                  type="button"
+                  className="pf-btn pf-btn--cancelar"
+                  onClick={() => setUsuarioReseteando(null)}
+                  disabled={reseteando}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="pf-btn pf-btn--guardar" disabled={reseteando}>
+                  {reseteando ? "Guardando..." : "Resetear contraseña"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: confirmar eliminar ── */}
+      {usuarioEliminando && (
+        <div className="pf-modal-overlay">
+          <div className="pf-modal-card">
+            <h3 className="pf-modal-titulo">¿Eliminar usuario?</h3>
+            <p>
+              Esta acción no se puede deshacer. Se eliminará a
+              <strong> "{usuarioEliminando.nombre}"</strong> ({usuarioEliminando.correo}).
+            </p>
+            <div className="pf-form-footer">
+              <button
+                type="button"
+                className="pf-btn pf-btn--cancelar"
+                onClick={() => setUsuarioEliminando(null)}
+                disabled={eliminandoUsuario}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="pf-btn pf-btn--eliminar"
+                onClick={handleEliminarUsuario}
+                disabled={eliminandoUsuario}
+              >
+                {eliminandoUsuario ? "Eliminando..." : "Sí, eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

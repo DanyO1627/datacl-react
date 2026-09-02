@@ -5,6 +5,7 @@ import Registro from "./pages/Registro";
 import Login from "./pages/Login";
 import DashboardCliente from "./pages/DashboardCliente";
 import RutaProtegida from "./components/RutaProtegida";
+import RutaConPermiso from "./components/RutaConPermiso";
 import RutaAdmin from "./components/RutaAdmin";
 import RecuperarPassword from "./pages/RecuperarPassword";
 import Informes from "./pages/Informes";
@@ -29,6 +30,7 @@ import DetalleOrganizacion from "./pages/DetalleOrganizacion";
 import IngresoManual from "./pages/IngresoManual";
 import ConexionBD from "./pages/ConexionBD";
 import HistorialVersiones from "./pages/HistorialVersiones";
+import CambiarPasswordObligatorio from "./pages/CambiarPasswordObligatorio";
 
 function App() {
   return (
@@ -40,6 +42,12 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Registro />} />
           <Route path="/recuperar-password" element={<RecuperarPassword />} />
+
+          {/* R10.7 — requiere sesión pero NO va envuelta en RutaProtegida:
+              esa misma redirige acá cuando debe_cambiar_password === true,
+              así que envolverla causaría un loop infinito. El guard de auth
+              lo hace el propio componente. */}
+          <Route path="/cambiar-password" element={<CambiarPasswordObligatorio />} />
 
           {/* Rutas admin */}
           <Route
@@ -95,73 +103,73 @@ function App() {
           <Route
             path="/subir-archivo"
             element={
-              <RutaProtegida>
+              <RutaConPermiso modulo="tratamientos" accion="crear">
                 <CargaArchivo />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
           <Route
             path="/nueva-sesion/conexion-bd"
             element={
-              <RutaProtegida>
+              <RutaConPermiso modulo="tratamientos" accion="crear">
                 <ConexionBD />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
           <Route
             path="/informes"
             element={
-              <RutaProtegida>
+              <RutaConPermiso modulo="informes" accion="ver">
                 <Informes />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
           <Route
             path="/informes/nuevo"
             element={
-              <RutaProtegida>
+              <RutaConPermiso modulo="informes" accion="generar">
                 <VistaPrevia />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
           <Route
             path="/informes/confirmacion"
             element={
-              <RutaProtegida>
+              <RutaConPermiso modulo="informes" accion="generar">
                 <ConfirmacionDescarga />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
           <Route
             path="/mis-tratamientos"
             element={
-              <RutaProtegida>
+              <RutaConPermiso modulo="tratamientos" accion="ver">
                 <MisTratamientos />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
           <Route
             path="/tratamientos/:id"
             element={
-              <RutaProtegida>
+              <RutaConPermiso modulo="tratamientos" accion="ver">
                 <DetalleTratamiento />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
           <Route
             path="/tratamientos/:id/editar"
             element={
-              <RutaProtegida>
+              <RutaConPermiso modulo="tratamientos" accion="editar">
                 <EditarTratamiento />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
           <Route
             path="/mis-tratamientos/:id/historial"
             element={
-              <RutaProtegida>
+              <RutaConPermiso modulo="tratamientos" accion="ver">
                 <HistorialVersiones />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
           <Route
@@ -175,17 +183,17 @@ function App() {
           <Route
             path="/riesgos"
             element={
-              <RutaProtegida>
+              <RutaConPermiso modulo="riesgos" accion="ver">
                 <Riesgos />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
           <Route
             path="/resultados-analisis"
             element={
-              <RutaProtegida>
+              <RutaConPermiso modulo="tratamientos" accion="crear">
                 <ResultadosAnalisis />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
 
@@ -193,43 +201,44 @@ function App() {
           <Route
             path="/nueva-sesion/manual"
             element={
-              <RutaProtegida>
+              <RutaConPermiso modulo="tratamientos" accion="crear">
                 <IngresoManual />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
 
-          {/* Formulario RAT */}
+          {/* Formulario RAT — wizard compartido por crear Y editar (ver
+              RutaConPermiso.jsx: EditarTratamiento.jsx redirige acá mismo) */}
           <Route
             path="/nuevo-tratamiento"
             element={
-              <RutaProtegida>
+              <RutaConPermiso permisos={[{ modulo: "tratamientos", accion: "crear" }, { modulo: "tratamientos", accion: "editar" }]}>
                 <Paso1 />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
           <Route
             path="/nuevo-tratamiento/paso2"
             element={
-              <RutaProtegida>
+              <RutaConPermiso permisos={[{ modulo: "tratamientos", accion: "crear" }, { modulo: "tratamientos", accion: "editar" }]}>
                 <Paso2 />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
           <Route
             path="/nuevo-tratamiento/paso3"
             element={
-              <RutaProtegida>
+              <RutaConPermiso permisos={[{ modulo: "tratamientos", accion: "crear" }, { modulo: "tratamientos", accion: "editar" }]}>
                 <Paso3 />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
           <Route
             path="/nuevo-tratamiento/paso4"
             element={
-              <RutaProtegida>
+              <RutaConPermiso permisos={[{ modulo: "tratamientos", accion: "crear" }, { modulo: "tratamientos", accion: "editar" }]}>
                 <Paso4 />
-              </RutaProtegida>
+              </RutaConPermiso>
             }
           />
 

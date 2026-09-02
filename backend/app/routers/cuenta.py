@@ -39,6 +39,15 @@ def cambiar_password(
         )
 
     usuario.password = pwd_context.hash(datos.password_nueva)
+
+    # R10.7 — si la cuenta tenía pendiente el cambio obligatorio (recién
+    # creada por un ADMIN_ORG en R10.2, o resetada por él en R10.6), este es
+    # el único lugar donde se cumple: la persona acaba de fijar su propia
+    # contraseña, así que ya no hay que forzarla de nuevo. Atributo no existe
+    # en el camino viejo (Organizacion) — no le aplica el flag.
+    if hasattr(usuario, "debe_cambiar_password"):
+        usuario.debe_cambiar_password = False
+
     db.commit()
 
     return {"mensaje": "Contraseña actualizada correctamente"}

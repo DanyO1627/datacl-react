@@ -474,3 +474,181 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ─── Gestión de usuarios (R10.6) ──────────────────────────────── */
+.pf-seccion-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.4rem;
+}
+
+.pf-seccion-header-row .pf-seccion-titulo {
+  margin: 0;
+}
+
+.pf-tabla-usuarios {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.pf-tabla-usuarios th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8aabcc;
+  padding: 8px 10px;
+  border-bottom: 1.5px solid #e8f0f8;
+}
+
+.pf-tabla-usuarios td {
+  padding: 10px;
+  border-bottom: 1px solid #f0f5fa;
+  color: var(--navy);
+  vertical-align: middle;
+}
+
+.pf-tabla-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pf-accion-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mid);
+  cursor: pointer;
+}
+
+.pf-accion-link:hover {
+  color: var(--dark);
+  text-decoration: underline;
+}
+
+.pf-accion-link--peligro {
+  color: #dc2626;
+}
+
+.pf-accion-link--peligro:hover {
+  color: #991b1b;
+}
+
+.pf-usuario-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.pf-usuario-badge--activo {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.pf-usuario-badge--inactivo {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.pf-btn--eliminar {
+  background: #dc2626;
+  color: #fff;
+}
+
+.pf-btn--eliminar:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+/* Toggle "Es administrador" del formulario de creación */
+.pf-toggle-admin {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dark);
+  cursor: pointer;
+}
+
+/* ─── Modales (crear / editar permisos / resetear / eliminar) ──── */
+.pf-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 16, 36, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.pf-modal-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.8rem;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 40px rgba(2, 16, 36, 0.25);
+}
+
+.pf-modal-titulo {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 1.2rem;
+}
+
+/* ─── Grilla de permisos (PermisosCheckboxes.jsx) ──────────────── */
+.permisos-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.permisos-modulo {
+  border: 1px solid #e8f0f8;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.permisos-modulo-titulo {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 8px;
+}
+
+.permisos-modulo-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.permiso-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--navy);
+  cursor: pointer;
+}
+
+.permiso-check input:disabled {
+  cursor: not-allowed;
+}
+
+.permiso-check input:disabled ~ span {
+  color: #8aabcc;
+}

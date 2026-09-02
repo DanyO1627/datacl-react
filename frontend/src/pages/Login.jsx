@@ -88,7 +88,10 @@ export default function Login() {
 
       if (response.status === 200) {
         iniciarSesion(data); // esto guarda todo (token y usuario)
-        navigate(data.organizacion?.rol === 'ADMIN' ? '/dashboardAdmin' : '/dashboard');
+        // R10.1: camino nuevo trae el rol de la organización anidado en
+        // data.usuario.organizacion.rol, no en data.organizacion.rol directo.
+        const rolOrg = data.usuario ? data.usuario.organizacion?.rol : data.organizacion?.rol;
+        navigate(rolOrg === 'ADMIN' ? '/dashboardAdmin' : '/dashboard');
       } else if (response.status === 401) {
         setServerError("Correo o contraseña incorrectos");
       } else {

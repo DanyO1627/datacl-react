@@ -22,6 +22,7 @@ const LINKS = [
   {
     ruta: "/subir-archivo",
     etiqueta: "Iniciar RAT",
+    permisoRequerido: ["tratamientos", "crear"],
     icono: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="16 16 12 12 8 16" />
@@ -33,6 +34,7 @@ const LINKS = [
   {
     ruta: "/mis-tratamientos",
     etiqueta: "Mis tratamientos",
+    permisoRequerido: ["tratamientos", "ver"],
     icono: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -46,6 +48,7 @@ const LINKS = [
   {
     ruta: "/informes",
     etiqueta: "Informes",
+    permisoRequerido: ["informes", "ver"],
     icono: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -58,6 +61,7 @@ const LINKS = [
   {
     ruta: "/riesgos",
     etiqueta: "Riesgos",
+    permisoRequerido: ["riesgos", "ver"],
     icono: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
@@ -82,17 +86,25 @@ export default function BarraLateral() {
   const navigate = useNavigate();
   // useLocation nos dice en qué ruta estamos y así podemos marcar el link activo
   const location = useLocation();
-  const { usuario, cerrarSesion } = useAuth();
+  const { usuario, cerrarSesion, tienePermiso } = useAuth();
 
   function handleCerrarSesion() {
     cerrarSesion(); // elimina token y datos del contexto y localStorage y dsp te redirige
     navigate("/login");
   }
 
+  // R10.8 — un link sin permisoRequerido (Inicio, Mi perfil) siempre se
+  // muestra; el resto solo si tienePermiso() da true para su módulo/acción.
+  const linksVisibles = LINKS.filter((link) => {
+    if (!link.permisoRequerido) return true;
+    const [modulo, accion] = link.permisoRequerido;
+    return tienePermiso(modulo, accion);
+  });
+
   return (
     <aside className="barra-lateral">
 
-      
+
       {/* Logo */}
         <div className="barra-lateral__logo">
           <Logo size="sm" src={Logo_blanco} onClick={() => navigate("/dashboard")} />
@@ -101,7 +113,7 @@ export default function BarraLateral() {
 
       {/* los links */}
       <nav className="barra-lateral__nav">
-        {LINKS.map((link) => {
+        {linksVisibles.map((link) => {
           // si la ruta coincide con el link, se marca activo
           const activo = location.pathname === link.ruta;
           return (
