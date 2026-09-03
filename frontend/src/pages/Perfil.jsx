@@ -135,6 +135,20 @@ export default function Perfil() {
   // ── Estado de gestión de usuarios (R10.6, solo ADMIN_ORG) ─────
   const esAdminOrg = usuario?.rol === "ADMIN_ORG";
 
+  // R10.11 — "Datos de la organización" y "Personalización del informe PDF"
+  // los puede gestionar cualquier cuenta que NO sea un MIEMBRO restringido:
+  // ADMIN_ORG (camino nuevo) o el camino viejo (Organizacion, rol
+  // 'ORGANIZACION' — sigue existiendo, POST /auth/registro todavía crea
+  // filas ahí, no en `usuarios`). Es la misma regla que ya aplica el
+  // backend en requiere_gestionar_organizacion (jwt.py) para esos dos
+  // endpoints. "Gestión de usuarios" es distinto a propósito: ese backend
+  // (requiere_admin_org) SÍ exige ser un Usuario con rol ADMIN_ORG
+  // exacto — el camino viejo no puede crear subcuentas sin migrar primero,
+  // así que esa sección se queda con el check esAdminOrg de siempre.
+  // usuario.rol nunca es 'ADMIN' acá (RutaProtegida ya redirige a
+  // /dashboardAdmin antes de llegar a /perfil).
+  const puedeGestionarOrganizacion = usuario?.rol !== "MIEMBRO";
+
   const [usuarios, setUsuarios] = useState([]);
   const [cargandoUsuarios, setCargandoUsuarios] = useState(false);
   const [alertaUsuarios, setAlertaUsuarios] = useState(null);
@@ -169,7 +183,9 @@ export default function Perfil() {
           rut:    datosOrg.rut    || "",
         });
         if (datosOrg.color_institucional) setColorInst(datosOrg.color_institucional);
-        if (datosOrg.logo_ruta) {
+        // R10.11 — GET /organizaciones/logo es ADMIN_ORG-only (o camino
+        // viejo); un MIEMBRO no debe ni intentar pedirlo (403 silencioso).
+        if (puedeGestionarOrganizacion && datosOrg.logo_ruta) {
           urlCreada = await obtenerLogoBlobUrl();
           setLogoUrl(urlCreada);
         }
@@ -429,8 +445,8 @@ export default function Perfil() {
         {/* ── Card principal ── */}
         <div className="pf-contenido">
 
-          {/* ════════ Sección: datos de la organización (solo ADMIN_ORG, R10.6) ════════ */}
-          {esAdminOrg && (
+          {/* ════════ Sección: datos de la organización (R10.6/R10.11: ADMIN_ORG + camino viejo) ════════ */}
+          {puedeGestionarOrganizacion && (
           <section className="pf-seccion">
             <h2 className="pf-seccion-titulo">Datos de la organización</h2>
 
@@ -545,7 +561,7 @@ export default function Perfil() {
           )}
 
           {/* Divisor — solo si la sección de arriba se mostró */}
-          {esAdminOrg && <hr className="pf-divisor" />}
+          {puedeGestionarOrganizacion && <hr className="pf-divisor" />}
 
           {/* ════════ Sección: cambio de contraseña ════════ */}
           <section className="pf-seccion">
@@ -650,7 +666,8 @@ export default function Perfil() {
 
         </div>{/* fin contenido */}
 
-          {/* ════════ Sección: personalización PDF ════════ */}
+          {/* ════════ Sección: personalización PDF (R10.11: ADMIN_ORG + camino viejo) ════════ */}
+          {puedeGestionarOrganizacion && (
           <div id="personalizacion" className="pf-contenido" style={{ marginTop: "1.5rem" }}>
             <section className="pf-seccion">
               <h2 className="pf-seccion-titulo" style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -778,6 +795,7 @@ export default function Perfil() {
               </div>
             </section>
           </div>
+          )}
 
           {/* ════════ Sección: gestión de usuarios (solo ADMIN_ORG, R10.6) ════════ */}
           {esAdminOrg && (
