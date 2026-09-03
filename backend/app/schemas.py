@@ -590,6 +590,22 @@ class TratamientoListado(BaseModel):
     model_config = {"from_attributes": True}
     
     
+# R10.10 — resumen de riesgos, endpoint propio gateado solo por riesgos_ver
+# (no reusa TratamientoListado a propósito: ese schema trae destinatarios,
+# sale_extranjero, decisiones_automatizadas, datos_sensibles — más de lo que
+# alguien con SOLO riesgos_ver debería recibir).
+class TopRiesgoItem(BaseModel):
+    id: int
+    nombre: str
+    nivel_riesgo: Optional[str] = None
+
+
+class ResumenRiesgosRespuesta(BaseModel):
+    distribucion: dict[str, int]      # {"ALTO": n, "MEDIO": n, "BAJO": n}
+    datos_sensibles: dict[str, int]   # {"con": n, "sin": n}
+    top3: list[TopRiesgoItem]
+
+
 class CampoRatRespuesta(BaseModel):
     id: int
     tratamiento_id: int

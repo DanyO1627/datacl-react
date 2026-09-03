@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { obtenerTratamientos } from '../services/tratamientosService'
+import { obtenerResumenRiesgos } from '../services/riesgosService'
 import BarraLateral from '../components/BarraLateral'
 import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
@@ -13,40 +13,40 @@ const COLORES_RIESGO = { ALTO: '#e53e3e', MEDIO: '#dd6b20', BAJO: '#38a169' }
 
 export default function Riesgos() {
   const navigate = useNavigate()
-  const { token } = useAuth()
-  const [tratamientos, setTratamientos] = useState([])
+  const { tienePermiso } = useAuth()
+  // R10.10 — el Top 3 solo navega a la ficha del tratamiento si además tiene
+  // tratamientos_ver; si no, se muestra igual (nombre + nivel) pero sin link,
+  // para no repetir el rebote silencioso a /dashboard que tenían
+  // MisTratamientos.jsx/Informes.jsx antes de R10.12.
+  const puedeVerFicha = tienePermiso('tratamientos', 'ver')
+
+  const [resumen, setResumen] = useState({ distribucion: {}, datos_sensibles: { con: 0, sin: 0 }, top3: [] })
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
     async function cargar() {
       try {
-        const data = await obtenerTratamientos(token)
-        setTratamientos(data)
+        const data = await obtenerResumenRiesgos()
+        setResumen(data)
       } catch {
-        setTratamientos([])
+        setResumen({ distribucion: {}, datos_sensibles: { con: 0, sin: 0 }, top3: [] })
       } finally {
         setCargando(false)
       }
     }
     cargar()
-  }, [token])
+  }, [])
 
-  const distribucionRiesgo = ['ALTO', 'MEDIO', 'BAJO'].map(nivel => ({
-    name: nivel,
-    value: tratamientos.filter(t => t.nivel_riesgo === nivel).length,
-  })).filter(d => d.value > 0)
+  const distribucionRiesgo = ['ALTO', 'MEDIO', 'BAJO']
+    .map(nivel => ({ name: nivel, value: resumen.distribucion?.[nivel] || 0 }))
+    .filter(d => d.value > 0)
 
   const datosSensibles = [
-    { name: 'Con datos sensibles', value: tratamientos.filter(t => t.datos_sensibles).length },
-    { name: 'Sin datos sensibles', value: tratamientos.filter(t => !t.datos_sensibles).length },
+    { name: 'Con datos sensibles', value: resumen.datos_sensibles?.con || 0 },
+    { name: 'Sin datos sensibles', value: resumen.datos_sensibles?.sin || 0 },
   ]
 
-  const top3 = [...tratamientos]
-    .sort((a, b) => {
-      const orden = { ALTO: 3, MEDIO: 2, BAJO: 1 }
-      return (orden[b.nivel_riesgo] || 0) - (orden[a.nivel_riesgo] || 0)
-    })
-    .slice(0, 3)
+  const top3 = resumen.top3 || []
 
   if (cargando) return <div className="riesgos-cargando">Cargando...</div>
 
@@ -114,8 +114,8 @@ export default function Riesgos() {
               {top3.map((t, i) => (
                 <li
                   key={t.id}
-                  className="riesgos-item"
-                  onClick={() => navigate(`/tratamientos/${t.id}`)}
+                  className={puedeVerFicha ? 'riesgos-item' : 'riesgos-item riesgos-item--sin-link'}
+                  onClick={puedeVerFicha ? () => navigate(`/tratamientos/${t.id}`) : undefined}
                 >
                   <span className="riesgos-item-pos">#{i + 1}</span>
                   <span className="riesgos-item-nombre">{t.nombre}</span>

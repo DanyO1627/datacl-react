@@ -73,6 +73,16 @@
   box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 }
 
+/* R10.10 — sin permiso tratamientos_ver: se muestra igual pero sin invitar
+   al clic (no hay ficha a la que navegar). */
+.riesgos-item--sin-link {
+  cursor: default;
+}
+
+.riesgos-item--sin-link:hover {
+  box-shadow: none;
+}
+
 .riesgos-item-pos {
   font-weight: 700;
   color: #888;

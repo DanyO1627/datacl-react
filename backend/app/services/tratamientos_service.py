@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import datetime
 from typing import Optional
 from sqlalchemy.orm import Session, joinedload
@@ -149,6 +150,46 @@ def listar_tratamientos(
     if estado:
         query = query.filter(models.Tratamiento.estado == estado.upper())
     return query.order_by(models.Tratamiento.creado_en.desc()).all()
+
+
+def obtener_resumen_riesgos(db: Session, organizacion_id: int) -> dict:
+    """
+    R10.10 — agregación en el backend para el endpoint propio de riesgos_ver.
+    A propósito NO reusa listar_tratamientos ni devuelve filas de
+    Tratamiento: solo lo mínimo que Riesgos.jsx necesita pintar (nada de
+    destinatarios/sale_extranjero/decisiones_automatizadas), para que
+    riesgos_ver no termine dando acceso de facto al listado completo.
+    """
+    tratamientos = (
+        db.query(models.Tratamiento)
+        .filter(models.Tratamiento.organizacion_id == organizacion_id)
+        .order_by(models.Tratamiento.creado_en.desc())
+        .all()
+    )
+
+    # nivel_riesgo es nullable (un tratamiento sin evaluar todavía) — se
+    # excluye a propósito de las 3 categorías, mismo comportamiento silencioso
+    # que ya tenía Riesgos.jsx calculando esto en el cliente.
+    conteo = Counter(t.nivel_riesgo for t in tratamientos if t.nivel_riesgo)
+    distribucion = {nivel: conteo.get(nivel, 0) for nivel in ("ALTO", "MEDIO", "BAJO")}
+
+    con_sensibles = sum(1 for t in tratamientos if t.datos_sensibles)
+    datos_sensibles = {"con": con_sensibles, "sin": len(tratamientos) - con_sensibles}
+
+    # sorted() es estable — junto al order_by(creado_en desc) de arriba,
+    # el desempate entre tratamientos del mismo nivel queda igual al
+    # Array.sort() que usaba el frontend antes de este cambio.
+    peso = {"ALTO": 3, "MEDIO": 2, "BAJO": 1}
+    top3 = sorted(tratamientos, key=lambda t: peso.get(t.nivel_riesgo, 0), reverse=True)[:3]
+
+    return {
+        "distribucion": distribucion,
+        "datos_sensibles": datos_sensibles,
+        "top3": [
+            {"id": t.id, "nombre": t.nombre, "nivel_riesgo": t.nivel_riesgo}
+            for t in top3
+        ],
+    }
 
 
 def obtener_tratamiento_por_id(
