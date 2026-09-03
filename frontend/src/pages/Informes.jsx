@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import BarraLateral from '../components/BarraLateral'
+import ConPermiso from '../components/ConPermiso'
 import { obtenerInformes, descargarInforme, eliminarInforme, obtenerAnalisisIA } from '../services/informesService'
 import '../styles/Informes.css'
 
@@ -178,13 +179,15 @@ export default function Informes() {
                         >
                           {descargando === inf.id ? 'Descargando...' : 'Descargar'}
                         </button>
-                        <button
-                          className="btn-eliminar"
-                          onClick={() => handleEliminar(inf.id)}
-                          disabled={eliminando === inf.id}
-                        >
-                          {eliminando === inf.id ? '...' : 'Eliminar'}
-                        </button>
+                        <ConPermiso modulo="informes" accion="eliminar">
+                          <button
+                            className="btn-eliminar"
+                            onClick={() => handleEliminar(inf.id)}
+                            disabled={eliminando === inf.id}
+                          >
+                            {eliminando === inf.id ? '...' : 'Eliminar'}
+                          </button>
+                        </ConPermiso>
                       </td>
                     </tr>
                   ))}

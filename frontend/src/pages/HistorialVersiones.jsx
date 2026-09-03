@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import BarraLateral from '../components/BarraLateral'
+import ConPermiso from '../components/ConPermiso'
 import { descargarInforme } from '../services/informesService'
 import '../styles/historialVersiones.css'
 
@@ -346,12 +347,16 @@ export default function HistorialVersiones() {
           </p>
 
           <div className="hv-vigente-acciones">
-            <button className="hv-btn hv-btn-secundario" onClick={descargarPDF} disabled={generandoPDF}>
-              {generandoPDF ? 'Generando PDF...' : 'Descargar PDF'}
-            </button>
-            <button className="hv-btn hv-btn-secundario" onClick={() => navigate(`/tratamientos/${id}/editar`)}>
-              Editar
-            </button>
+            <ConPermiso modulo="informes" accion="generar">
+              <button className="hv-btn hv-btn-secundario" onClick={descargarPDF} disabled={generandoPDF}>
+                {generandoPDF ? 'Generando PDF...' : 'Descargar PDF'}
+              </button>
+            </ConPermiso>
+            <ConPermiso modulo="tratamientos" accion="editar">
+              <button className="hv-btn hv-btn-secundario" onClick={() => navigate(`/tratamientos/${id}/editar`)}>
+                Editar
+              </button>
+            </ConPermiso>
             <button className="hv-btn hv-btn-primario" onClick={() => navigate(`/tratamientos/${id}`)}>
               Ver RAT completo
             </button>
@@ -462,7 +467,9 @@ export default function HistorialVersiones() {
                                 >
                                   {cargandoVersion === v.numero_version ? 'Cargando...' : 'Ver'}
                                 </button>
-                                <button className="hv-btn-link" onClick={descargarPDF}>PDF</button>
+                                <ConPermiso modulo="informes" accion="generar">
+                                  <button className="hv-btn-link" onClick={descargarPDF}>PDF</button>
+                                </ConPermiso>
                               </div>
                             </td>
                           </tr>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useFormulario } from '../context/FormularioContext'
 import BarraLateral from '../components/BarraLateral'
+import ConPermiso from '../components/ConPermiso'
 import '../styles/misTratamientos.css'
 
 const API = '/api'
@@ -83,12 +84,14 @@ export default function MisTratamientos() {
             </p>
           </div>
           <div className="mt-acciones">
-          <button className="btn-2" onClick={() => { resetForm(); navigate('/subir-archivo') }}>
-            Carga tu archivo (nuevo tratamiento)
-          </button>
-          <button className="btn-nuevo" onClick={() => { resetForm(); navigate('/nuevo-tratamiento') }}>
-            + Nuevo tratamiento
-          </button>
+          <ConPermiso modulo="tratamientos" accion="crear">
+            <button className="btn-2" onClick={() => { resetForm(); navigate('/subir-archivo') }}>
+              Carga tu archivo (nuevo tratamiento)
+            </button>
+            <button className="btn-nuevo" onClick={() => { resetForm(); navigate('/nuevo-tratamiento') }}>
+              + Nuevo tratamiento
+            </button>
+          </ConPermiso>
           </div>
         </div>
 
@@ -142,9 +145,11 @@ export default function MisTratamientos() {
                 : 'Prueba con otros filtros o términos de búsqueda.'}
             </p>
             {tratamientos.length === 0 && (
-              <button className="btn-nuevo" onClick={() => { resetForm(); navigate('/nuevo-tratamiento') }}>
-                + Crear primer tratamiento
-              </button>
+              <ConPermiso modulo="tratamientos" accion="crear">
+                <button className="btn-nuevo" onClick={() => { resetForm(); navigate('/nuevo-tratamiento') }}>
+                  + Crear primer tratamiento
+                </button>
+              </ConPermiso>
             )}
           </div>
         ) : (

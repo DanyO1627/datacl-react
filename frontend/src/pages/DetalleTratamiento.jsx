@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import BarraLateral from '../components/BarraLateral'
+import ConPermiso from '../components/ConPermiso'
 import '../styles/detalleTratamiento.css'
 import BarraRiesgo from '../components/BarraRiesgo'
 import { obtenerImagenProcesoBlob } from '../services/tratamientosService'
@@ -390,12 +391,18 @@ export default function DetalleTratamiento() {
             <span className={`detalle-estado-badge ${estado.clase}`}>{estado.etiqueta}</span>
           </div>
           <div className="detalle-acciones">
-            <button className="btn-editar" onClick={() => navigate(`/tratamientos/${id}/editar`)}>
-              Editar
-            </button>
-            <button className="btn-eliminar" onClick={() => setModalEliminar(true)}>
-              Eliminar
-            </button>
+            {/* R10.12 — Editar navega a una ruta que exige tratamientos_editar,
+                y DELETE /tratamientos/:id (detrás de "Eliminar") exige lo mismo
+                (no existe un permiso tratamientos_eliminar separado) — un
+                mismo ConPermiso alcanza para los dos. */}
+            <ConPermiso modulo="tratamientos" accion="editar">
+              <button className="btn-editar" onClick={() => navigate(`/tratamientos/${id}/editar`)}>
+                Editar
+              </button>
+              <button className="btn-eliminar" onClick={() => setModalEliminar(true)}>
+                Eliminar
+              </button>
+            </ConPermiso>
           </div>
         </div>
 
